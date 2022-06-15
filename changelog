@@ -1,1 +1,32 @@
-hi
+------------------------
+Batlez Tweak Folder V1.2
+
+-Mini update (fixed some regedit issues)
+
+-Added an Custom Driver option in Batlez Tweaks.bat
+
+-Fixed and/or replaced some lines of code in Batlez Tweaks.bat
+
+-Credited people that have helped me while working on this project. (Batlez-Tweak-Folder\Tweak Yourself\Credits!.txt)
+------------------------
+Batlez Tweak Folder V1.1
+
+-Redo everything in my Batlez Tweaks batch file. Much simpler to read and to execute commands.
+
+-Added more Powerplans.
+
+-Made a separate folder for Fixes (go take a look).
+
+-Added more batch files under Privacy. You can now disable Windows 10 spying on you.
+
+-Added some .reg files under the fole Regedit. Mostly for the graphics card.
+
+-Fixed some lines of code in some of the batch files. They all do as told.
+
+-added a debloat.bat in Bloatware Apps. It has two modes, Normal and Advanced. I recommend just running the Normal mode. Also I added a high performance.reg that changes almost all the important registry. I don't recommend running this either, I haven't tested to see the benefits/disadvantages.
+------------------------
+Batlez Tweak Folder V1.0
+
+Batlez Tweaks aims at improving frame rate, latency, connection, privacy, security, and overall performance. Begin by launching the program. There will occasionally be check-boxes/folders to select tweaks. It will apply any changes you make after you select them. There is no need to install any compiled software on your system; simply run the simple script. Free and open-source (both free as in beer and free as in speech).
+
+NOTE: THIS IS PRE-RELEASE. THERE WILL BE ERRORS AND ISSUES.
