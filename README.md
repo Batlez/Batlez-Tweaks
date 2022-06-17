@@ -1,5 +1,17 @@
 # Batlez Tweaks
-Currently one of the best Windows 10 batch files ever!! Over 3 thousand lines of code and many of optimizations for your computer!
+### The goal of Batlez Tweaks is to improve frame rate, latency, connection, privacy, security, and overall performance. Batlez maximises and tweaks your PC for peak performance. You do not need to install any compiled software; simply run any simple script you want. It is free and open-source.
+
+Here are some of the features that will be available in the utility.
+
+**Windows Tweaks:** The Windows Tweaks feature allows you to optimise all of your Windows settings with the click of a button.
+
+**Registry Tweaks:** The Registry Tweaks feature optimises all of your Registry settings and keys, allowing you to achieve the best possible performance with a single click.
+
+**Network Tweaks:** The Network Tweaks feature optimizes your network adapter settings and all your network driver settings to improve latency and speed.
+
+_NOTE: THIS IS PRE-RELEASE. THERE WILL BE ERRORS AND ISSUES._ 
+
+Enjoy!
 
 Check out my Releases to download!
 
