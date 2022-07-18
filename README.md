@@ -9,8 +9,6 @@ Here are some of the features that will be available in the utility.
 
 **Network Tweaks:** The Network Tweaks feature optimizes your network adapter settings and all your network driver settings to improve latency and speed.
 
-_NOTE: THIS IS PRE-RELEASE. THERE WILL BE ERRORS AND ISSUES._ 
-
 Enjoy!
 
 Check out my Releases to download!
