@@ -9,6 +9,11 @@ This application works on Windows 10 21H1. I have not tested it on lower version
 
 # 🔨 Installing 
 
+<ul>
+<li> <a href="https://github.com/Batlez/Batlez/releases">Download</a> the application </li>
+<li> Run it as Administrator. </li>
+<li> Read and Follow Instructions </li>
+<li> Use Common Sense! </li>
 
 # ✨ Features 
 <details>
