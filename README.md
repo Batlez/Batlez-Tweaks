@@ -5,7 +5,7 @@ The goal of Batlez is to improve frame rate, latency, connection, privacy, secur
 # 🛑 Getting Started 
 This application works on Windows 10 21H1. I have not tested it on lower versions, and I do not recommend using it on them because tweaking the Regedit may cause system damage. Even though all of my Regedit tweaks are safe, I don't want any chance of causing harm to your system, so don't come crying to me if you have problems with Windows Vista after using it. I'm also not sure if this will work on Windows 11, so use caution!
 
-**You MUST have an internet connection in order for the app to work.**
+**You MUST have an internet connection in order for the program to work.**
 
 # 🔨 Installing 
 
