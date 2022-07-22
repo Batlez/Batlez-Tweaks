@@ -16,6 +16,7 @@ This application works on Windows 10 21H1. I have not tested it on lower version
 <li> Use Common Sense! </li>
 
 # ✨ Features 
+
 <details>
 <summary>Here are some of the features that will be available in the utility.</summary>
 <ul>
