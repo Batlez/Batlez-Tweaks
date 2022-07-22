@@ -7,6 +7,9 @@ This application works on Windows 10 21H1. I have not tested it on lower version
 
 **You MUST have an internet connection in order for the app to work.**
 
+# 🔨 Installing 
+
+
 # ✨ Features 
 <details>
 <summary>Here are some of the features that will be available in the utility.</summary>
