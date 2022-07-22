@@ -7,6 +7,8 @@ This application works on Windows 10 21H1. I have not tested it on lower version
 
 **You MUST have an internet connection in order for the program to work.**
 
+To contact me directly, send me a message on my discord: Batlez#3740
+
 # 🔨 Installing 
 
 <ul>
