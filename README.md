@@ -22,8 +22,8 @@ To contact me directly, send me a message on my discord: Batlez#3740
 <summary>Here are some of the features that are included.</summary>
 <ul>
 <li> Debloater </li>
-<li> Cleaner </li>
-<li> Apply Custom Regedit </li>
+<li> Service Disabler </li>
+<li> Custom Regedit </li>
 <li> Cache + Log Cleaning </li>
 <li> Network Tweaks </li>
 <li> Game Specific Tweaks </li>
