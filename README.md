@@ -19,13 +19,13 @@ To contact me directly, send me a message on my discord: Batlez#3740
 # ✨ Features 
 
 <details>
-<summary>Here are some of the features that will be available in the utility.</summary>
+<summary>Here are some of the features that are included.</summary>
 <ul>
 <li> Debloater </li>
-<li> RAM Optimization </li>
-<li> Applies Regedits Settings </li>
+<li> Cleaner </li>
+<li> Apply Custom Regedit </li>
 <li> Cache + Log Cleaning </li>
-<li> DNS+MTU Tweaks (Allow faster internet connections + Lower Ping) </li>
+<li> Network Tweaks </li>
 <li> Game Specific Tweaks </li>
 <li> And Much Much More! </li>
 </ul>
