@@ -1,11 +1,11 @@
 # ⚠️ About 
-The goal of Batlez is to improve frame rate, latency, connection, privacy, security, and overall performance. Batlez maximises and tweaks your PC for peak performance. You do not need to install any compiled software; simply run any simple script you want. It is free and open-source.
+The goal of Batlez is to improve frame rate, latency, connection, privacy, security, and overall performance. Batlez maximizes and tweaks your PC for peak performance. You do not need to install any compiled software; simply run any simple script you want. It is free and open-source.
 
 
 # 🛑 Getting Started 
-This application works on Windows 10 21H1. I have not tested it on lower versions, and I do not recommend using it on them because tweaking the Regedit may cause system damage. Even though all of my Regedit tweaks are safe, I don't want any chance of causing harm to your system, so don't come crying to me if you have problems with Windows Vista after using it. I'm also not sure if this will work on Windows 11, so use caution!
+This application is compatible with Windows 10 21H1. I haven't tried it on earlier versions. I would not because tinkering with anything on any PC can result in strange errors and glitches if not thoroughly tested on each Windows version. So don't come to me crying if you have problems with Windows Vista after installing it. I'm also unsure if this will work with Windows 11, so proceed cautiously!
 
-**You MUST have an internet connection in order for the program to work.**
+**You MUST have an internet connection for the program to work!!**
 
 To contact me directly, send me a message on my discord: Batlez#3740
 
