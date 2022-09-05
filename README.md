@@ -15,7 +15,6 @@ To contact me directly, send me a message on my discord: Batlez#3740
 <li> <a href="https://github.com/Batlez/Batlez/releases">Download</a> the application </li>
 <li> Run it as Administrator. </li>
 <li> Read and Follow Instructions </li>
-<li> Use Common Sense! </li>
 
 # ✨ Features 
 
