@@ -3,7 +3,7 @@ The goal of Batlez is to improve frame rate, latency, connection, privacy, secur
 
 
 # 🛑 Getting Started 
-This application is compatible with Windows 10 21H1. I haven't tried it on earlier versions. I would not because tinkering with anything on any PC can result in strange errors and glitches if not thoroughly tested on each Windows version. So don't come to me crying if you have problems with Windows Vista after installing it. I'm also unsure if this will work with Windows 11, so proceed cautiously!
+This application is compatible with Windows 10 21H1. I haven't tried it on earlier versions. I would not because tinkering with anything on any PC can result in strange errors and glitches if not thoroughly tested on each Windows version. I don't want any chance of damage to your system, so don't come crying to me if your Windows Vista got problems after using it. I'm also unsure if this will work with Windows 11, so proceed cautiously!
 
 **You MUST have an internet connection for the program to work!!**
 
