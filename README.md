@@ -16,22 +16,23 @@ To contact me directly, add me on Discord: **Batlez#3740**
 ## 🔨 Installation
  1. [Download](https://github.com/Batlez/Batlez/releases/latest/) the application 
  2. Right-click Batlez Tweaks.bat and run it as admin. 
+ 3. Increase in[ overall performance](https://raw.githubusercontent.com/Batlez/Batlez/main/images/minecraft.png) (GeForce GTX 1060)
 
 ## ✨ Features 
 [![Product Name Screen Shot][product-screenshot]](https://github.com/Batlez/Batlez)
-<details>
-<summary>Here are some of the features that are included.</summary>
-<ul>
+
+**Below are some of the features that are included!**
+
   
 <li> Debloater </li>
-<li> Service Disabler </li>
+<li> Services Optimization </li>
 <li> Custom Regedit </li>
 <li> Cache + Log Cleaning </li>
 <li> Network Tweaks </li>
 <li> Power Plan Tweaks </li>
+<li> System Bug-fixes </li>
 <li> And Much Much More! </li>
-</ul>
-</details>
+
 
 ## 🔍 Contributing
 
