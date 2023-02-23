@@ -1,13 +1,16 @@
 <h1 align="center">
 Batlez Tweaks </h1> <p align="center">
- <img src="https://raw.githubusercontent.com/Batlez/Batlez/main/images/Batlez-Tweaks-logos.png" width="220" height="220"> </p>
+ <img src="https://raw.githubusercontent.com/Batlez/Batlez/main/images/Batlez-Tweaks-logos.png" width="325" height="270"> </p>
  
 ## ⚠️ About
 <h3 align="center">
-The goal of Batlez Tweaks is to improve frame rate, latency, connection, privacy, security, and overall performance. Batlez maximizes and tweaks your PC for peak performance. You do not need to install any compiled software; simply run any simple script you want. It is free and open-source. </h3>
+Batlez Tweaks is a tool designed to enhance your PC's performance by improving frame rate, latency, connection, privacy, security, and overall system performance. Using Batlez, you can maximize and tweak your PC for peak performance without installing any compiled software.</h3>
+Run any of the included scripts to optimize your system. The best part is that Batlez Tweaks is entirely free and open-source, which means you can use and modify it according to your needs. (Remember to give credit where credit is due). Whether you're a gamer, a content creator, or simply looking to improve your system's performance, Batlez Tweaks has something for everyone. Thank you for considering Batlez Tweaks to help improve your PC's performance. 
 
 ## 🛑 Getting Started 
-This application is **compatible with Windows 10**. I have had the chance to test it on every stable Windows release. If some things don't work as intended, please ensure you installed everything correctly or reinstall. I am not liable for any damage caused to your system, so don't come crying to me if your Windows has problems after using this. I'm also **unsure if this works on Windows 8 or 11** because I haven't had the chance to test them on their operating systems.
+**This application has been tested and confirmed to be Windows 10 compatible**, and I have personally tested it on every stable Windows release. However, if you encounter problems or some features do not work as expected, please double-check your installation or reinstall. Please remember that I cannot be held liable for any damage caused to your system due to using this application, so use it at your own risk.
+
+Please remember that **I have not tested this application on Windows 8 or 11**, so I cannot guarantee that it will work with those operating systems. If you use this application on Windows 8 or 11, you do so at your own risk and acknowledge that I cannot support those systems. Thank you very much.
 
 **You MUST have an internet connection for the program to work!!**
 
