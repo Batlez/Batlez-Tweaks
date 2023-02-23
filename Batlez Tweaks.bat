@@ -1,5 +1,5 @@
 @echo off
-set version=1.6
+set version=1.7
 title Batlez Tweaks - %version% 
 if not "%1"=="am_admin" (powershell start -verb runas '%0' am_admin & exit /b)
 
@@ -33,18 +33,18 @@ echo.
 echo.
 echo.
 echo.                  
-echo     %c%    ██████╗ █████╗  ████████╗██╗     ███████╗███████╗  ████████╗ ██╗       ██╗███████╗ █████╗ ██╗  ██╗ ██████╗
+echo     %b%    ██████╗ █████╗  ████████╗██╗     ███████╗███████╗  ████████╗ ██╗       ██╗███████╗ █████╗ ██╗  ██╗ ██████╗
 echo         ██╔══██╗██╔══██╗╚══██╔══╝██║     ██╔════╝╚════██║  ╚══██╔══╝ ██║  ██╗  ██║██╔════╝██╔══██╗██║ ██╔╝██╔════╝
 echo         ██████╦╝███████║   ██║   ██║     █████╗    ███╔═╝     ██║    ╚██╗████╗██╔╝█████╗  ███████║█████═╝ ╚█████╗  %u%
-echo         ██╔══██╗██╔══██║   ██║   ██║     ██╔══╝  ██╔══╝       ██║     ████╔═████║ ██╔══╝  ██╔══██║██╔═██╗  ╚═══██╗
+echo     %r%    ██╔══██╗██╔══██║   ██║   ██║     ██╔══╝  ██╔══╝       ██║     ████╔═████║ ██╔══╝  ██╔══██║██╔═██╗  ╚═══██╗
 echo         ██████╦╝██║  ██║   ██║   ███████╗███████╗███████╗     ██║     ╚██╔╝ ╚██╔╝ ███████╗██║  ██║██║ ╚██╗██████╔╝
-echo         ╚═════╝ ╚═╝  ╚═╝   ╚═╝   ╚══════╝╚══════╝╚══════╝     ╚═╝      ╚═╝   ╚═╝  ╚══════╝╚═╝  ╚═╝╚═╝  ╚═╝╚═════╝
+echo         ╚═════╝ ╚═╝  ╚═╝   ╚═╝   ╚══════╝╚══════╝╚══════╝     ╚═╝      ╚═╝   ╚═╝  ╚══════╝╚═╝  ╚═╝╚═╝  ╚═╝╚═════╝  %u%
 echo.
 echo.
 echo.
-echo %w%                                       Developed by Batlez#3740 
-echo %w%                                   Thank you for using Batlez Tweaks
-echo %w%                                     Press any key to get started            
+echo %w%                                              Developed by Batlez#3740
+echo %w%                                          Thank you for using Batlez Tweaks
+echo %w%                                            %g%Press any key to get started%u%            
 echo.                                
 pause >nul
 :legit
@@ -67,7 +67,7 @@ timeout /t 5 >nul & cls & goto Presets
 :Presets
 cls
 chcp 437>nul
-echo Choose a Colour.
+echo %w%Choose a Colour.%u%
 echo %b%Blue%u%, %d%Cyan%u%, %g%Green%u%, %y%Yellow%u% or %r%Red%u%.
 set /p preset=
 if /i %preset%==Blue goto Blue
@@ -151,7 +151,7 @@ if %M%==3 goto ComingSoon
 if %M%==4 goto ComingSoon
 if %M%==5 goto Backup
 if %M%==6 goto ComingSoon
-if %M%==7 goto ComingSoon
+if %M%==7 goto More
 if %M%==X goto Destruct
 goto Menu
 
@@ -184,6 +184,51 @@ echo                                                    %c%[ Press any key to go
 pause >nul
 goto:menu
 
+:More
+cls
+chcp 437>nul
+chcp 65001 >nul 
+echo.
+echo.
+echo     %c%    ██████╗ █████╗  ████████╗██╗     ███████╗███████╗  ████████╗ ██╗       ██╗███████╗ █████╗ ██╗  ██╗ ██████╗
+echo         ██╔══██╗██╔══██╗╚══██╔══╝██║     ██╔════╝╚════██║  ╚══██╔══╝ ██║  ██╗  ██║██╔════╝██╔══██╗██║ ██╔╝██╔════╝
+echo         ██████╦╝███████║   ██║   ██║     █████╗    ███╔═╝     ██║    ╚██╗████╗██╔╝█████╗  ███████║█████═╝ ╚█████╗  %u%
+echo         ██╔══██╗██╔══██║   ██║   ██║     ██╔══╝  ██╔══╝       ██║     ████╔═████║ ██╔══╝  ██╔══██║██╔═██╗  ╚═══██╗
+echo         ██████╦╝██║  ██║   ██║   ███████╗███████╗███████╗     ██║     ╚██╔╝ ╚██╔╝ ███████╗██║  ██║██║ ╚██╗██████╔╝
+echo         ╚═════╝ ╚═╝  ╚═╝   ╚═╝   ╚══════╝╚══════╝╚══════╝     ╚═╝      ╚═╝   ╚═╝  ╚══════╝╚═╝  ╚═╝╚═╝  ╚═╝╚═════╝   
+echo.
+echo.
+echo.
+echo                                    %c%Batlez is a tweaking script that optimizes your system%u% 
+echo                                       %c%to provide the best gaming experience possible.%u%
+echo.
+echo.                                    
+echo.
+echo                                                 [%c%1%u%] About     [%c%2%u%] Policies
+echo.
+echo.
+echo.
+echo                                                 [%c%3%u%] Credits   [%c%4%u%] Changelog   
+echo.
+echo.
+echo.
+echo                                                          [%c%5%u%] Back
+echo. 
+echo.
+echo.
+echo                                                       %c%[ X to close ]%u%  
+echo.
+set /p M="%c%Choose an option »%u% "
+set choice=%errorlevel%
+if %M%==1 goto Comingsoon
+if %M%==2 goto Comingsoon
+if %M%==3 goto Comingsoon
+if %M%==4 goto changelog
+if %M%==5 goto menu
+if %M%==X goto Destruct
+goto More
+
+
 :Backup
 cls
 chcp 437>nul
@@ -207,12 +252,13 @@ echo.
 echo.
 echo.
 echo.
-set /p input="%c%Would you like to create a Restore and Registry Point? (Y/N) »%u% "
-    if "%input%"=="Y" goto tweaksmain
-    if "%input%"=="N" goto menu
+set /p input="%c%Would you like to create a Restore and Registry Point? %w%(Y/N)%u% %c%»%u% "
+if "%input%"=="Y" goto restorepoint1
+if "%input%"=="N" goto menu
 echo %c%Please enter a valid number!%u% & goto Backup
+
 :: Credits to tarekifla
-:tweaksmain
+:restorepoint1
 echo %c%Backing up the Registry...%u%
 if not exist "C:\RegistryBackup\" mkdir C:\RegistryBackup
 cd /d C:\RegistryBackup
@@ -221,22 +267,22 @@ REG SAVE HKLM\SYSTEM SYSTEM
 REG SAVE HKU\.DEFAULT DEFAULT
 REG SAVE HKLM\SECURITY SECURITY
 REG SAVE HKLM\SAM SAM
-echo %c%The Registry backup is located at "C:\Registry"%u%
-timeout 2 >nul /nobreak
+echo %c%The Registry backup is located at "C:\RegistryBackup"%u%
+timeout 4 >nul /nobreak
 echo %c%Backup succesfully created!%u%
 cls
 
 :restorepoint2
-REG ADD "HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Windows NT\CurrentVersion\SystemRestore" /v SystemRestorePointCreationFrequency /t REG_DWORD /d 0 /f >nul
+reg add "HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Windows NT\CurrentVersion\SystemRestore" /v "SystemRestorePointCreationFrequency" /t REG_DWORD /d "0" /f
 echo %c%Creating a restore point...%u%
-timeout 2 >nul /nobreak
-@powershell -ExecutionPolicy Bypass -Command "Checkpoint-Computer -Description 'Before Batlez Tweaks' -RestorePointType 'MODIFY_SETTINGS'"
+timeout 4 >nul /nobreak
+powershell.exe -ExecutionPolicy Bypass -NoExit -Command "Checkpoint-Computer -Description "PreTweaksBackup" -RestorePointType "MODIFY_SETTINGS""
 set SR_STATUS=%ERRORLEVEL%
 IF %SR_STATUS%==0 & echo %c%System Restore point made succesfully!%u%
-timeout 3 >nul /nobreak
+timeout 4 >nul /nobreak
 cls
 IF NOT %SR_STATUS%==0 & echo %c%Failed to create a restore point, please make sure you have enabled protection in System!%u% 
-timeout 3 >nul /nobreak
+timeout 4 >nul /nobreak
 goto menu
 
 
@@ -712,7 +758,7 @@ Reg.exe add "HKCU\Control Panel\Keyboard" /v "InitialKeyboardIndicators" /t REG_
 Reg.exe add "HKCU\Control Panel\Keyboard" /v "KeyboardDelay" /t REG_SZ /d "0" /f
 Reg.exe add "HKCU\Control Panel\Keyboard" /v "KeyboardSpeed" /t REG_SZ /d "31" /f
 Reg add "HKEY_CURRENT_USER\Control Panel\Mouse" /v "SmoothMouseXCurve" /t REG_BINARY /d "0000000000000000156e000000000000004001000000000029dc0300000000000000280000000000" /f >nul 2>&1
-	Reg add "HKEY_CURRENT_USER\Control Panel\Mouse" /v "SmoothMouseYCurve" /t REG_BINARY /d "0000000000000000fd11010000000000002404000000000000fc12000000000000c0bb0100000000" /f >nul 2>&1
+Reg add "HKEY_CURRENT_USER\Control Panel\Mouse" /v "SmoothMouseYCurve" /t REG_BINARY /d "0000000000000000fd11010000000000002404000000000000fc12000000000000c0bb0100000000" /f >nul 2>&1
 Reg add "HKEY_USERS\.DEFAULT\Control Panel\Mouse" /v "MouseSpeed" /t REG_SZ /d "0" /f >nul 2>&1
 Reg add "HKEY_USERS\.DEFAULT\Control Panel\Mouse" /v "MouseThreshold1" /t REG_SZ /d "0" /f >nul 2>&1
 Reg add "HKEY_USERS\.DEFAULT\Control Panel\Mouse" /v "MouseThreshold2" /t REG_SZ /d "0" /f >nul 2>&1
@@ -759,7 +805,6 @@ echo             %c%Service Tweaks%u%
 echo %g%_____________________________________
 timeout /t 3 >nul
 cls
-echo %c%Activating Service Tweaks...%u%
 Reg.exe add "HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Services\xbgm" /v "Start" /t REG_DWORD /d "4" /f >nul 2>&1
 Reg.exe add "HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Services\XboxGipSvc" /v "Start" /t REG_DWORD /d "4" /f >nul 2>&1
 Reg.exe add "HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Services\WaaSMedicSvc" /v "Start" /t REG_DWORD /d "4" /f >nul 2>&1
