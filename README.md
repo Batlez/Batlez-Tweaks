@@ -17,9 +17,11 @@ Please remember that **I have not tested this application on Windows 8 or 11**, 
 To contact me directly, add me on Discord: **Batlez#3740**
 
 ## 🔨 Installation
- 1. [Download](https://github.com/Batlez/Batlez/releases/latest/) the application 
- 2. Right-click Batlez Tweaks.bat and run it as admin. 
- 3. Increase in[ overall performance](https://raw.githubusercontent.com/Batlez/Batlez/main/images/minecraft.png) (GeForce GTX 1060)
+ 1. [Download](https://github.com/Batlez/Batlez/releases/latest/) the application.
+ 2. Right-click on the 'Batlez Tweaks.bat' file and select 'Run as administrator'.
+ 3. The application will prompt you to select which tweaks you want to apply to your system. Simply follow the on-screen instructions to       select the tweaks that you want to apply.
+ 4. Once you have selected the tweaks, the application will start applying them to your system. This may take some time, so please be           patient.
+ 5. Once the tweaks have been applied, you will notice an increase in[ overall performance on your system](https://raw.githubusercontent.com/Batlez/Batlez/main/images/minecraft.png) (GeForce GTX 1060)
 
 ## ✨ Features 
 [![Product Name Screen Shot][product-screenshot]](https://github.com/Batlez/Batlez)
