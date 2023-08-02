@@ -1,7 +1,3 @@
-<h1 align="center">
-Batlez Tweaks </h1> <p align="center">
- <img src="https://raw.githubusercontent.com/Batlez/Batlez/main/images/Batlez-Tweaks-logos.png" width="325" height="270"> </p>
- 
 ## ⚠️ About
 <h3 align="center">
 Batlez Tweaks is a tool designed to enhance your PC's performance by improving frame rate, latency, connection, privacy, security, and overall system performance. Using Batlez, you can maximize and tweak your PC for peak performance without installing any compiled software.</h3>
