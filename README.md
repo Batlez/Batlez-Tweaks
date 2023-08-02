@@ -1,6 +1,8 @@
 ## ⚠️ About
+[![Product Name Screen Shot][product-screenshot]](https://github.com/Batlez/Batlez)
 <h3 align="center">
 Batlez Tweaks is a tool designed to enhance your PC's performance by improving frame rate, latency, connection, privacy, security, and overall system performance. Using Batlez, you can maximize and tweak your PC for peak performance without installing any compiled software.</h3>
+
 Run any of the included scripts to optimize your system. The best part is that Batlez Tweaks is entirely free and open-source, which means you can use and modify it according to your needs. (Remember to give credit where credit is due). Whether you're a gamer, a content creator, or simply looking to improve your system's performance, Batlez Tweaks has something for everyone. Thank you for considering Batlez Tweaks to help improve your PC's performance. 
 
 ## 🛑 Getting Started 
@@ -20,7 +22,6 @@ To contact me directly, add me on Discord: **Batlez#3740**
  5. Once the tweaks have been applied, you will notice an increase in[ overall performance on your system](https://raw.githubusercontent.com/Batlez/Batlez/main/images/minecraft.png) (GeForce GTX 1060)
 
 ## ✨ Features 
-[![Product Name Screen Shot][product-screenshot]](https://github.com/Batlez/Batlez)
 
 **Below are some of the features that are included!**
 
