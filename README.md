@@ -1,3 +1,7 @@
+## NOMINATED AT THE 2023 BATCH AWARDS!
+I want to thank everybody who nominated my project at the 2023 Batch Awards presented by server.bat. I couldn't have done it without you!
+![image](https://github.com/Batlez/Batlez-Tweaks/assets/63690709/24f46ba5-c777-429e-af7c-8cee57057934)
+
 ## ⚠️ About
 [![Product Name Screen Shot][product-screenshot]](https://github.com/Batlez/Batlez)
 <h3 align="center">
