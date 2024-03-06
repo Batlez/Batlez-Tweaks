@@ -1,5 +1,5 @@
 @echo off
-set version=1.6.2
+set version=1.7
 title Batlez Tweaks - %version% 
 if not "%1"=="am_admin" (powershell start -verb runas '%0' am_admin & exit /b)
 
@@ -1266,7 +1266,7 @@ echo                        %c%║%u%           [%c%2%u%] Startup Programs      
 echo                        %c%║%u%           [%c%3%u%] Visual Effects                     %c%║%u%
 echo                        %c%║%u%           [%c%4%u%] Registry Clean-Up                  %c%║%u%
 echo                        %c%║%u%           [%c%5%u%] Power Settings                     %c%║%u%
-echo                        %c%║%u%           [%c%6%u%] Windows Toolbox                    %c%║%u%
+echo                        %c%║%u%           [%c%6%u%] File Cleaner                       %c%║%u%
 echo %c%                       ╚══════════════════════════════════════════════════╝
 echo %c%                             ║  %u%[%c%7%u%] Theme Presets    [%c%8%u%] Go Back    %c%║%u%
 echo %c%                             ║            %u% [%c%Quit%u%] Leave%c%             ║
@@ -1358,6 +1358,7 @@ goto PrivacyMenu
 
 
 :AdvancedMenu
+:GameBoosters
 cls
 chcp 437>nul
 chcp 65001 >nul 
@@ -1386,12 +1387,12 @@ echo.
 echo.
 echo.
 set /p M="%c%Choose an option »%u% "
-if %M%==1 goto Comingsoon
-if %M%==2 goto Comingsoon
-if %M%==3 goto Comingsoon
-if %M%==4 goto Comingsoon
-if %M%==5 goto Comingsoon
-if %M%==6 goto Comingsoon
+if %M%==1 goto Toolbox
+if %M%==2 goto Boosters
+if %M%==3 goto ScheduledTasks
+if %M%==4 goto MSIMode
+if %M%==5 goto ProgramDebloat
+if %M%==6 goto Affinity
 if %M%==7 goto Presets
 if %M%==8 goto menu
 if %M%==Quit goto Destruct
@@ -1408,8 +1409,1015 @@ echo.
 echo.
 echo %g%======PRESS ANY KEY TO CONTINUE======
 
+:ProgramDebloat
+cls
+Reg.exe add "HKCU\SOFTWARE\Sysinternals\Process Explorer" /v "EulaAccepted" /t REG_DWORD /d "1" /f
+Reg.exe add "HKCU\SOFTWARE\Sysinternals\Process Explorer" /v "Windowplacement" /t REG_BINARY /d "2c0000000200000003000000ffffffffffffffffffffffffffffffff75030000110000009506000069020000" /f
+Reg.exe add "HKCU\SOFTWARE\Sysinternals\Process Explorer" /v "FindWindowplacement" /t REG_BINARY /d "2c00000000000000000000000000000000000000000000000000000096000000960000000000000000000000" /f
+Reg.exe add "HKCU\SOFTWARE\Sysinternals\Process Explorer" /v "SysinfoWindowplacement" /t REG_BINARY /d "2c00000000000000010000000000000000000000ffffffffffffffff28000000280000002b0300002b020000" /f
+Reg.exe add "HKCU\SOFTWARE\Sysinternals\Process Explorer" /v "PropWindowplacement" /t REG_BINARY /d "2c00000000000000000000000000000000000000000000000000000028000000280000000000000000000000" /f
+Reg.exe add "HKCU\SOFTWARE\Sysinternals\Process Explorer" /v "DllPropWindowplacement" /t REG_BINARY /d "2c00000000000000010000000000000000000000ffffffffffffffff2800000028000000e70100009f020000" /f
+Reg.exe add "HKCU\SOFTWARE\Sysinternals\Process Explorer" /v "UnicodeFont" /t REG_BINARY /d "080000000000000000000000000000009001000000000000000000004d00530020005300680065006c006c00200044006c00670000000000000000000000000000000000000000000000000000000000000000000000000000000000" /f
+Reg.exe add "HKCU\SOFTWARE\Sysinternals\Process Explorer" /v "Divider" /t REG_BINARY /d "531f0e151662ea3f" /f
+Reg.exe add "HKCU\SOFTWARE\Sysinternals\Process Explorer" /v "SavedDivider" /t REG_BINARY /d "531f0e151662ea3f" /f
+Reg.exe add "HKCU\SOFTWARE\Sysinternals\Process Explorer" /v "ProcessImageColumnWidth" /t REG_DWORD /d "261" /f
+Reg.exe add "HKCU\SOFTWARE\Sysinternals\Process Explorer" /v "ShowUnnamedHandles" /t REG_DWORD /d "1" /f
+Reg.exe add "HKCU\SOFTWARE\Sysinternals\Process Explorer" /v "ShowDllView" /t REG_DWORD /d "1" /f
+Reg.exe add "HKCU\SOFTWARE\Sysinternals\Process Explorer" /v "HandleSortColumn" /t REG_DWORD /d "0" /f
+Reg.exe add "HKCU\SOFTWARE\Sysinternals\Process Explorer" /v "HandleSortDirection" /t REG_DWORD /d "1" /f
+Reg.exe add "HKCU\SOFTWARE\Sysinternals\Process Explorer" /v "DllSortColumn" /t REG_DWORD /d "0" /f
+Reg.exe add "HKCU\SOFTWARE\Sysinternals\Process Explorer" /v "DllSortDirection" /t REG_DWORD /d "1" /f
+Reg.exe add "HKCU\SOFTWARE\Sysinternals\Process Explorer" /v "ProcessSortColumn" /t REG_DWORD /d "4294967295" /f
+Reg.exe add "HKCU\SOFTWARE\Sysinternals\Process Explorer" /v "ProcessSortDirection" /t REG_DWORD /d "1" /f
+Reg.exe add "HKCU\SOFTWARE\Sysinternals\Process Explorer" /v "HighlightServices" /t REG_DWORD /d "1" /f
+Reg.exe add "HKCU\SOFTWARE\Sysinternals\Process Explorer" /v "HighlightOwnProcesses" /t REG_DWORD /d "1" /f
+Reg.exe add "HKCU\SOFTWARE\Sysinternals\Process Explorer" /v "HighlightRelocatedDlls" /t REG_DWORD /d "0" /f
+Reg.exe add "HKCU\SOFTWARE\Sysinternals\Process Explorer" /v "HighlightJobs" /t REG_DWORD /d "0" /f
+Reg.exe add "HKCU\SOFTWARE\Sysinternals\Process Explorer" /v "HighlightNewProc" /t REG_DWORD /d "1" /f
+Reg.exe add "HKCU\SOFTWARE\Sysinternals\Process Explorer" /v "HighlightDelProc" /t REG_DWORD /d "1" /f
+Reg.exe add "HKCU\SOFTWARE\Sysinternals\Process Explorer" /v "HighlightImmersive" /t REG_DWORD /d "1" /f
+Reg.exe add "HKCU\SOFTWARE\Sysinternals\Process Explorer" /v "HighlightProtected" /t REG_DWORD /d "0" /f
+Reg.exe add "HKCU\SOFTWARE\Sysinternals\Process Explorer" /v "HighlightPacked" /t REG_DWORD /d "1" /f
+Reg.exe add "HKCU\SOFTWARE\Sysinternals\Process Explorer" /v "HighlightNetProcess" /t REG_DWORD /d "0" /f
+Reg.exe add "HKCU\SOFTWARE\Sysinternals\Process Explorer" /v "HighlightSuspend" /t REG_DWORD /d "1" /f
+Reg.exe add "HKCU\SOFTWARE\Sysinternals\Process Explorer" /v "HighlightDuration" /t REG_DWORD /d "1000" /f
+Reg.exe add "HKCU\SOFTWARE\Sysinternals\Process Explorer" /v "ShowCpuFractions" /t REG_DWORD /d "1" /f
+Reg.exe add "HKCU\SOFTWARE\Sysinternals\Process Explorer" /v "ShowLowerpane" /t REG_DWORD /d "1" /f
+Reg.exe add "HKCU\SOFTWARE\Sysinternals\Process Explorer" /v "ShowAllUsers" /t REG_DWORD /d "1" /f
+Reg.exe add "HKCU\SOFTWARE\Sysinternals\Process Explorer" /v "ShowProcessTree" /t REG_DWORD /d "1" /f
+Reg.exe add "HKCU\SOFTWARE\Sysinternals\Process Explorer" /v "SymbolWarningShown" /t REG_DWORD /d "0" /f
+Reg.exe add "HKCU\SOFTWARE\Sysinternals\Process Explorer" /v "HideWhenMinimized" /t REG_DWORD /d "0" /f
+Reg.exe add "HKCU\SOFTWARE\Sysinternals\Process Explorer" /v "AlwaysOntop" /t REG_DWORD /d "0" /f
+Reg.exe add "HKCU\SOFTWARE\Sysinternals\Process Explorer" /v "OneInstance" /t REG_DWORD /d "0" /f
+Reg.exe add "HKCU\SOFTWARE\Sysinternals\Process Explorer" /v "NumColumnSets" /t REG_DWORD /d "0" /f
+Reg.exe add "HKCU\SOFTWARE\Sysinternals\Process Explorer" /v "ConfirmKill" /t REG_DWORD /d "1" /f
+Reg.exe add "HKCU\SOFTWARE\Sysinternals\Process Explorer" /v "RefreshRate" /t REG_DWORD /d "5000" /f
+Reg.exe add "HKCU\SOFTWARE\Sysinternals\Process Explorer" /v "PrcessColumnCount" /t REG_DWORD /d "18" /f
+Reg.exe add "HKCU\SOFTWARE\Sysinternals\Process Explorer" /v "DllColumnCount" /t REG_DWORD /d "5" /f
+Reg.exe add "HKCU\SOFTWARE\Sysinternals\Process Explorer" /v "HandleColumnCount" /t REG_DWORD /d "2" /f
+Reg.exe add "HKCU\SOFTWARE\Sysinternals\Process Explorer" /v "DefaultProcPropPage" /t REG_DWORD /d "0" /f
+Reg.exe add "HKCU\SOFTWARE\Sysinternals\Process Explorer" /v "DefaultSysInfoPage" /t REG_DWORD /d "4" /f
+Reg.exe add "HKCU\SOFTWARE\Sysinternals\Process Explorer" /v "DefaultDllPropPage" /t REG_DWORD /d "1" /f
+Reg.exe add "HKCU\SOFTWARE\Sysinternals\Process Explorer" /v "DbgHelpPath" /t REG_SZ /d "C:\Windows\SYSTEM32\dbghelp.dll" /f
+Reg.exe add "HKCU\SOFTWARE\Sysinternals\Process Explorer" /v "SymbolPath" /t REG_SZ /d "" /f
+Reg.exe add "HKCU\SOFTWARE\Sysinternals\Process Explorer" /v "ColorPacked" /t REG_DWORD /d "16711808" /f
+Reg.exe add "HKCU\SOFTWARE\Sysinternals\Process Explorer" /v "ColorImmersive" /t REG_DWORD /d "15395328" /f
+Reg.exe add "HKCU\SOFTWARE\Sysinternals\Process Explorer" /v "ColorOwn" /t REG_DWORD /d "16765136" /f
+Reg.exe add "HKCU\SOFTWARE\Sysinternals\Process Explorer" /v "ColorServices" /t REG_DWORD /d "13684991" /f
+Reg.exe add "HKCU\SOFTWARE\Sysinternals\Process Explorer" /v "ColorRelocatedDlls" /t REG_DWORD /d "10551295" /f
+Reg.exe add "HKCU\SOFTWARE\Sysinternals\Process Explorer" /v "ColorGraphBk" /t REG_DWORD /d "15790320" /f
+Reg.exe add "HKCU\SOFTWARE\Sysinternals\Process Explorer" /v "ColorJobs" /t REG_DWORD /d "27856" /f
+Reg.exe add "HKCU\SOFTWARE\Sysinternals\Process Explorer" /v "ColorDelProc" /t REG_DWORD /d "4605695" /f
+Reg.exe add "HKCU\SOFTWARE\Sysinternals\Process Explorer" /v "ColorNewProc" /t REG_DWORD /d "4652870" /f
+Reg.exe add "HKCU\SOFTWARE\Sysinternals\Process Explorer" /v "ColorNet" /t REG_DWORD /d "10551295" /f
+Reg.exe add "HKCU\SOFTWARE\Sysinternals\Process Explorer" /v "ColorProtected" /t REG_DWORD /d "8388863" /f
+Reg.exe add "HKCU\SOFTWARE\Sysinternals\Process Explorer" /v "ShowHeatmaps" /t REG_DWORD /d "1" /f
+Reg.exe add "HKCU\SOFTWARE\Sysinternals\Process Explorer" /v "ColorSuspend" /t REG_DWORD /d "8421504" /f
+Reg.exe add "HKCU\SOFTWARE\Sysinternals\Process Explorer" /v "StatusBarColumns" /t REG_DWORD /d "13589" /f
+Reg.exe add "HKCU\SOFTWARE\Sysinternals\Process Explorer" /v "ShowAllCpus" /t REG_DWORD /d "0" /f
+Reg.exe add "HKCU\SOFTWARE\Sysinternals\Process Explorer" /v "ShowAllGpus" /t REG_DWORD /d "0" /f
+Reg.exe add "HKCU\SOFTWARE\Sysinternals\Process Explorer" /v "Opacity" /t REG_DWORD /d "100" /f
+Reg.exe add "HKCU\SOFTWARE\Sysinternals\Process Explorer" /v "GpuNodeUsageMask" /t REG_DWORD /d "1" /f
+Reg.exe add "HKCU\SOFTWARE\Sysinternals\Process Explorer" /v "GpuNodeUsageMask1" /t REG_DWORD /d "0" /f
+Reg.exe add "HKCU\SOFTWARE\Sysinternals\Process Explorer" /v "VerifySignatures" /t REG_DWORD /d "0" /f
+Reg.exe add "HKCU\SOFTWARE\Sysinternals\Process Explorer" /v "VirusTotalCheck" /t REG_DWORD /d "1" /f
+Reg.exe add "HKCU\SOFTWARE\Sysinternals\Process Explorer" /v "VirusTotalSubmitUnknown" /t REG_DWORD /d "0" /f
+Reg.exe add "HKCU\SOFTWARE\Sysinternals\Process Explorer" /v "ToolbarBands" /t REG_BINARY /d "0601000000000000000000004b00000001000000000000004b00000002000000000000004b00000003000000000000004b0000000400000000000000400000000500000000000000500000000600000000000000930400000700000000000000" /f
+Reg.exe add "HKCU\SOFTWARE\Sysinternals\Process Explorer" /v "UseGoogle" /t REG_DWORD /d "0" /f
+Reg.exe add "HKCU\SOFTWARE\Sysinternals\Process Explorer" /v "ShowNewProcesses" /t REG_DWORD /d "0" /f
+Reg.exe add "HKCU\SOFTWARE\Sysinternals\Process Explorer" /v "TrayCPUHistory" /t REG_DWORD /d "1" /f
+Reg.exe add "HKCU\SOFTWARE\Sysinternals\Process Explorer" /v "ShowIoTray" /t REG_DWORD /d "0" /f
+Reg.exe add "HKCU\SOFTWARE\Sysinternals\Process Explorer" /v "ShowNetTray" /t REG_DWORD /d "0" /f
+Reg.exe add "HKCU\SOFTWARE\Sysinternals\Process Explorer" /v "ShowDiskTray" /t REG_DWORD /d "0" /f
+Reg.exe add "HKCU\SOFTWARE\Sysinternals\Process Explorer" /v "ShowPhysTray" /t REG_DWORD /d "0" /f
+Reg.exe add "HKCU\SOFTWARE\Sysinternals\Process Explorer" /v "ShowCommitTray" /t REG_DWORD /d "0" /f
+Reg.exe add "HKCU\SOFTWARE\Sysinternals\Process Explorer" /v "ShowGpuTray" /t REG_DWORD /d "0" /f
+Reg.exe add "HKCU\SOFTWARE\Sysinternals\Process Explorer" /v "FormatIoBytes" /t REG_DWORD /d "1" /f
+Reg.exe add "HKCU\SOFTWARE\Sysinternals\Process Explorer" /v "StackWindowPlacement" /t REG_BINARY /d "0000000000000000000000000000000000000000000000000000000000000000000000000000000000000000" /f
+Reg.exe add "HKCU\SOFTWARE\Sysinternals\Process Explorer" /v "ETWstandardUserWarning" /t REG_DWORD /d "0" /f
+Reg.exe add "HKCU\SOFTWARE\Sysinternals\Process Explorer\DllColumnMap" /v "0" /t REG_DWORD /d "26" /f
+Reg.exe add "HKCU\SOFTWARE\Sysinternals\Process Explorer\DllColumnMap" /v "1" /t REG_DWORD /d "42" /f
+Reg.exe add "HKCU\SOFTWARE\Sysinternals\Process Explorer\DllColumnMap" /v "2" /t REG_DWORD /d "1033" /f
+Reg.exe add "HKCU\SOFTWARE\Sysinternals\Process Explorer\DllColumnMap" /v "3" /t REG_DWORD /d "1111" /f
+Reg.exe add "HKCU\SOFTWARE\Sysinternals\Process Explorer\DllColumnMap" /v "4" /t REG_DWORD /d "1670" /f
+Reg.exe add "HKCU\SOFTWARE\Sysinternals\Process Explorer\DllColumns" /v "0" /t REG_DWORD /d "110" /f
+Reg.exe add "HKCU\SOFTWARE\Sysinternals\Process Explorer\DllColumns" /v "1" /t REG_DWORD /d "180" /f
+Reg.exe add "HKCU\SOFTWARE\Sysinternals\Process Explorer\DllColumns" /v "2" /t REG_DWORD /d "140" /f
+Reg.exe add "HKCU\SOFTWARE\Sysinternals\Process Explorer\DllColumns" /v "3" /t REG_DWORD /d "300" /f
+Reg.exe add "HKCU\SOFTWARE\Sysinternals\Process Explorer\DllColumns" /v "4" /t REG_DWORD /d "100" /f
+Reg.exe add "HKCU\SOFTWARE\Sysinternals\Process Explorer\HandleColumnMap" /v "0" /t REG_DWORD /d "21" /f
+Reg.exe add "HKCU\SOFTWARE\Sysinternals\Process Explorer\HandleColumnMap" /v "1" /t REG_DWORD /d "22" /f
+Reg.exe add "HKCU\SOFTWARE\Sysinternals\Process Explorer\HandleColumns" /v "0" /t REG_DWORD /d "100" /f
+Reg.exe add "HKCU\SOFTWARE\Sysinternals\Process Explorer\HandleColumns" /v "1" /t REG_DWORD /d "450" /f
+Reg.exe add "HKCU\SOFTWARE\Sysinternals\Process Explorer\ProcessColumnMap" /v "0" /t REG_DWORD /d "3" /f
+cls
+Reg.exe add "HKCU\SOFTWARE\Sysinternals\Process Explorer\ProcessColumnMap" /v "1" /t REG_DWORD /d "1055" /f
+Reg.exe add "HKCU\SOFTWARE\Sysinternals\Process Explorer\ProcessColumnMap" /v "2" /t REG_DWORD /d "1650" /f
+Reg.exe add "HKCU\SOFTWARE\Sysinternals\Process Explorer\ProcessColumnMap" /v "3" /t REG_DWORD /d "1200" /f
+Reg.exe add "HKCU\SOFTWARE\Sysinternals\Process Explorer\ProcessColumnMap" /v "4" /t REG_DWORD /d "1092" /f
+Reg.exe add "HKCU\SOFTWARE\Sysinternals\Process Explorer\ProcessColumnMap" /v "5" /t REG_DWORD /d "1333" /f
+Reg.exe add "HKCU\SOFTWARE\Sysinternals\Process Explorer\ProcessColumnMap" /v "6" /t REG_DWORD /d "1622" /f
+Reg.exe add "HKCU\SOFTWARE\Sysinternals\Process Explorer\ProcessColumnMap" /v "7" /t REG_DWORD /d "1636" /f
+Reg.exe add "HKCU\SOFTWARE\Sysinternals\Process Explorer\ProcessColumnMap" /v "8" /t REG_DWORD /d "1179" /f
+Reg.exe add "HKCU\SOFTWARE\Sysinternals\Process Explorer\ProcessColumnMap" /v "9" /t REG_DWORD /d "1340" /f
+Reg.exe add "HKCU\SOFTWARE\Sysinternals\Process Explorer\ProcessColumnMap" /v "10" /t REG_DWORD /d "5" /f
+Reg.exe add "HKCU\SOFTWARE\Sysinternals\Process Explorer\ProcessColumnMap" /v "11" /t REG_DWORD /d "1339" /f
+Reg.exe add "HKCU\SOFTWARE\Sysinternals\Process Explorer\ProcessColumnMap" /v "12" /t REG_DWORD /d "1060" /f
+Reg.exe add "HKCU\SOFTWARE\Sysinternals\Process Explorer\ProcessColumnMap" /v "13" /t REG_DWORD /d "1063" /f
+Reg.exe add "HKCU\SOFTWARE\Sysinternals\Process Explorer\ProcessColumnMap" /v "14" /t REG_DWORD /d "4" /f
+Reg.exe add "HKCU\SOFTWARE\Sysinternals\Process Explorer\ProcessColumnMap" /v "15" /t REG_DWORD /d "1065" /f
+Reg.exe add "HKCU\SOFTWARE\Sysinternals\Process Explorer\ProcessColumnMap" /v "16" /t REG_DWORD /d "18" /f
+Reg.exe add "HKCU\SOFTWARE\Sysinternals\Process Explorer\ProcessColumnMap" /v "17" /t REG_DWORD /d "1670" /f
+Reg.exe add "HKCU\SOFTWARE\Sysinternals\Process Explorer\ProcessColumnMap" /v "18" /t REG_DWORD /d "1653" /f
+Reg.exe add "HKCU\SOFTWARE\Sysinternals\Process Explorer\ProcessColumnMap" /v "19" /t REG_DWORD /d "1653" /f
+Reg.exe add "HKCU\SOFTWARE\Sysinternals\Process Explorer\ProcessColumns" /v "0" /t REG_DWORD /d "261" /f
+Reg.exe add "HKCU\SOFTWARE\Sysinternals\Process Explorer\ProcessColumns" /v "1" /t REG_DWORD /d "35" /f
+Reg.exe add "HKCU\SOFTWARE\Sysinternals\Process Explorer\ProcessColumns" /v "2" /t REG_DWORD /d "37" /f
+Reg.exe add "HKCU\SOFTWARE\Sysinternals\Process Explorer\ProcessColumns" /v "3" /t REG_DWORD /d "82" /f
+Reg.exe add "HKCU\SOFTWARE\Sysinternals\Process Explorer\ProcessColumns" /v "4" /t REG_DWORD /d "81" /f
+Reg.exe add "HKCU\SOFTWARE\Sysinternals\Process Explorer\ProcessColumns" /v "5" /t REG_DWORD /d "65" /f
+Reg.exe add "HKCU\SOFTWARE\Sysinternals\Process Explorer\ProcessColumns" /v "6" /t REG_DWORD /d "93" /f
+Reg.exe add "HKCU\SOFTWARE\Sysinternals\Process Explorer\ProcessColumns" /v "7" /t REG_DWORD /d "76" /f
+Reg.exe add "HKCU\SOFTWARE\Sysinternals\Process Explorer\ProcessColumns" /v "8" /t REG_DWORD /d "55" /f
+Reg.exe add "HKCU\SOFTWARE\Sysinternals\Process Explorer\ProcessColumns" /v "9" /t REG_DWORD /d "60" /f
+Reg.exe add "HKCU\SOFTWARE\Sysinternals\Process Explorer\ProcessColumns" /v "10" /t REG_DWORD /d "39" /f
+Reg.exe add "HKCU\SOFTWARE\Sysinternals\Process Explorer\ProcessColumns" /v "11" /t REG_DWORD /d "80" /f
+Reg.exe add "HKCU\SOFTWARE\Sysinternals\Process Explorer\ProcessColumns" /v "12" /t REG_DWORD /d "70" /f
+Reg.exe add "HKCU\SOFTWARE\Sysinternals\Process Explorer\ProcessColumns" /v "13" /t REG_DWORD /d "70" /f
+Reg.exe add "HKCU\SOFTWARE\Sysinternals\Process Explorer\ProcessColumns" /v "14" /t REG_DWORD /d "31" /f
+Reg.exe add "HKCU\SOFTWARE\Sysinternals\Process Explorer\ProcessColumns" /v "15" /t REG_DWORD /d "52" /f
+Reg.exe add "HKCU\SOFTWARE\Sysinternals\Process Explorer\ProcessColumns" /v "16" /t REG_DWORD /d "52" /f
+Reg.exe add "HKCU\SOFTWARE\Sysinternals\Process Explorer\ProcessColumns" /v "17" /t REG_DWORD /d "44" /f
+PowerShell -Command "Get-AppxPackage *Microsoft.BingNews* | Remove-AppxPackage"
+PowerShell -Command "Get-AppxPackage *Microsoft.BingWeather* | Remove-AppxPackage"
+PowerShell -Command "Get-AppxPackage *Microsoft.GetHelp* | Remove-AppxPackage"
+PowerShell -Command "Get-AppxPackage *Microsoft.Getstarted* | Remove-AppxPackage"
+PowerShell -Command "Get-AppxPackage *Microsoft.Messaging* | Remove-AppxPackage"
+PowerShell -Command "Get-AppxPackage *Microsoft.Microsoft3DViewer* | Remove-AppxPackage"
+PowerShell -Command "Get-AppxPackage *Microsoft.MicrosoftOfficeHub* | Remove-AppxPackage"
+PowerShell -Command "Get-AppxPackage *Microsoft.MicrosoftSolitaireCollection* | Remove-AppxPackage"
+PowerShell -Command "Get-AppxPackage *Microsoft.NetworkSpeedTest* | Remove-AppxPackage"
+PowerShell -Command "Get-AppxPackage *Microsoft.News* | Remove-AppxPackage"
+PowerShell -Command "Get-AppxPackage *Microsoft.Office.Lens* | Remove-AppxPackage"
+PowerShell -Command "Get-AppxPackage *Microsoft.Office.OneNote* | Remove-AppxPackage"
+PowerShell -Command "Get-AppxPackage *Microsoft.Office.Sway* | Remove-AppxPackage"
+PowerShell -Command "Get-AppxPackage *Microsoft.OneConnect* | Remove-AppxPackage"
+PowerShell -Command "Get-AppxPackage *Microsoft.People* | Remove-AppxPackage"
+PowerShell -Command "Get-AppxPackage *Microsoft.Print3D* | Remove-AppxPackage"
+PowerShell -Command "Get-AppxPackage *Microsoft.SkypeApp* | Remove-AppxPackage"
+PowerShell -Command "Get-AppxPackage *Microsoft.Office.Todo.List* | Remove-AppxPackage"
+PowerShell -Command "Get-AppxPackage *Microsoft.Whiteboard* | Remove-AppxPackage"
+PowerShell -Command "Get-AppxPackage *Microsoft.WindowsAlarms* | Remove-AppxPackage"
+PowerShell -Command "Get-AppxPackage *microsoft.windowscommunicationsapps* | Remove-AppxPackage"
+PowerShell -Command "Get-AppxPackage *Microsoft.WindowsFeedbackHub* | Remove-AppxPackage"
+PowerShell -Command "Get-AppxPackage *Microsoft.WindowsMaps* | Remove-AppxPackage"
+PowerShell -Command "Get-AppxPackage *Microsoft.WindowsSoundRecorder* | Remove-AppxPackage"
+PowerShell -Command "Get-AppxPackage *Microsoft.Xbox.TCUI* | Remove-AppxPackage"
+PowerShell -Command "Get-AppxPackage *Microsoft.WindowsStore* | Remove-AppxPackage"
+PowerShell -Command "Get-AppxPackage *Microsoft.StorePurchaseApp* | Remove-AppxPackage"
+PowerShell -Command "Get-AppxPackage *Microsoft.XboxApp* | Remove-AppxPackage"
+PowerShell -Command "Get-AppxPackage *Microsoft.XboxGameOverlay* | Remove-AppxPackage"
+PowerShell -Command "Get-AppxPackage *Microsoft.XboxIdentityProvider* | Remove-AppxPackage"
+PowerShell -Command "Get-AppxPackage *Microsoft.XboxSpeechToTextOverlay* | Remove-AppxPackage"
+PowerShell -Command "Get-AppxPackage *Microsoft.ZuneMusic* | Remove-AppxPackage"
+PowerShell -Command "Get-AppxPackage *Microsoft.ZuneVideo* | Remove-AppxPackage"
+PowerShell -Command "Get-AppxPackage *EclipseManager* | Remove-AppxPackage"
+PowerShell -Command "Get-AppxPackage *ActiproSoftwareLLC* | Remove-AppxPackage"
+PowerShell -Command "Get-AppxPackage *AdobeSystemsIncorporated.AdobePhotoshopExpress* | Remove-AppxPackage"
+PowerShell -Command "Get-AppxPackage *Duolingo-LearnLanguagesforFree* | Remove-AppxPackage"
+PowerShell -Command "Get-AppxPackage *PandoraMediaInc* | Remove-AppxPackage"
+PowerShell -Command "Get-AppxPackage *CandyCrush* | Remove-AppxPackage"
+PowerShell -Command "Get-AppxPackage *BubbleWitch3Saga* | Remove-AppxPackage"
+PowerShell -Command "Get-AppxPackage *Wunderlist* | Remove-AppxPackage"
+PowerShell -Command "Get-AppxPackage *Flipboard* | Remove-AppxPackage"
+PowerShell -Command "Get-AppxPackage *Facebook* | Remove-AppxPackage"
+PowerShell -Command "Get-AppxPackage *Royal Revolt* | Remove-AppxPackage"
+PowerShell -Command "Get-AppxPackage *Sway* | Remove-AppxPackage"
+PowerShell -Command "Get-AppxPackage *Speed Test* | Remove-AppxPackage"
+PowerShell -Command "Get-AppxPackage *Dolby* | Remove-AppxPackage"
+PowerShell -Command "Get-AppxPackage *Microsoft.MSPaint* | Remove-AppxPackage"
+PowerShell -Command "Get-AppxPackage *Microsoft.MicrosoftStickyNotes* | Remove-AppxPackage"
+PowerShell -ExecutionPolicy Unrestricted -Command "Get-AppxPackage 'Microsoft.549981C3F5F10' | Remove-AppxPackage"
+PowerShell -ExecutionPolicy Unrestricted -Command "Get-AppxPackage 'Microsoft.WindowsFeedbackHub' | Remove-AppxPackage"
+PowerShell -ExecutionPolicy Unrestricted -Command "Get-AppxPackage 'Microsoft.WindowsMaps' | Remove-AppxPackage"
+PowerShell -ExecutionPolicy Unrestricted -Command "Get-AppxPackage 'Microsoft.Advertising.Xaml' | Remove-AppxPackage"
+PowerShell -ExecutionPolicy Unrestricted -Command "Get-AppxPackage 'Microsoft.NetworkSpeedTest' | Remove-AppxPackage"
+PowerShell -ExecutionPolicy Unrestricted -Command "Get-AppxPackage 'Microsoft.BingWeather' | Remove-AppxPackage"
+PowerShell -ExecutionPolicy Unrestricted -Command "Get-AppxPackage 'Microsoft.BingSports' | Remove-AppxPackage"
+PowerShell -ExecutionPolicy Unrestricted -Command "Get-AppxPackage 'Microsoft.BingNews' | Remove-AppxPackage"
+PowerShell -ExecutionPolicy Unrestricted -Command "Get-AppxPackage 'Microsoft.BingFinance' | Remove-AppxPackage"
+PowerShell -ExecutionPolicy Unrestricted -Command "Get-AppxPackage 'Microsoft.MicrosoftOfficeHub' | Remove-AppxPackage"
+PowerShell -ExecutionPolicy Unrestricted -Command "Get-AppxPackage 'Microsoft.XboxApp' | Remove-AppxPackage"
+PowerShell -ExecutionPolicy Unrestricted -Command "Get-AppxPackage 'Microsoft.Xbox.TCUI' | Remove-AppxPackage"
+PowerShell -ExecutionPolicy Unrestricted -Command "Get-AppxPackage 'Microsoft.XboxGamingOverlay' | Remove-AppxPackage"
+PowerShell -ExecutionPolicy Unrestricted -Command "Get-AppxPackage 'Microsoft.XboxGameOverlay' | Remove-AppxPackage"
+PowerShell -ExecutionPolicy Unrestricted -Command "Get-AppxPackage 'Microsoft.XboxIdentityProvider' | Remove-AppxPackage"
+PowerShell -ExecutionPolicy Unrestricted -Command "Get-AppxPackage 'Microsoft.XboxSpeechToTextOverlay' | Remove-AppxPackage"
+PowerShell -ExecutionPolicy Unrestricted -Command "$package = Get-AppxPackage -AllUsers 'Microsoft.Windows.Holographic.FirstRun'; if (!$package) {; Write-Host 'Not installed'; exit 0; }; $directories = @($package.InstallLocation, "^""$env:LOCALAPPDATA\Packages\$($package.PackageFamilyName)"^""); foreach($dir in $directories) {; if ( !$dir -Or !(Test-Path "^""$dir"^"") ) { continue }; cmd /c ('takeown /f "^""' + $dir + '"^"" /r /d y 1> nul'); if($LASTEXITCODE) { throw 'Failed to take ownership' }; cmd /c ('icacls "^""' + $dir + '"^"" /grant administrators:F /t 1> nul'); if($LASTEXITCODE) { throw 'Failed to take ownership' }; $files = Get-ChildItem -File -Path $dir -Recurse -Force; foreach($file in $files) {; if($file.Name.EndsWith('.OLD')) { continue }; $newName =  $file.FullName + '.OLD'; Write-Host "^""Rename '$($file.FullName)' to '$newName'"^""; Move-Item -LiteralPath "^""$($file.FullName)"^"" -Destination "^""$newName"^"" -Force; }; }"
+PowerShell -ExecutionPolicy Unrestricted -Command "$package = Get-AppxPackage -AllUsers 'Microsoft.Windows.ParentalControls'; if (!$package) {; Write-Host 'Not installed'; exit 0; }; $directories = @($package.InstallLocation, "^""$env:LOCALAPPDATA\Packages\$($package.PackageFamilyName)"^""); foreach($dir in $directories) {; if ( !$dir -Or !(Test-Path "^""$dir"^"") ) { continue }; cmd /c ('takeown /f "^""' + $dir + '"^"" /r /d y 1> nul'); if($LASTEXITCODE) { throw 'Failed to take ownership' }; cmd /c ('icacls "^""' + $dir + '"^"" /grant administrators:F /t 1> nul'); if($LASTEXITCODE) { throw 'Failed to take ownership' }; $files = Get-ChildItem -File -Path $dir -Recurse -Force; foreach($file in $files) {; if($file.Name.EndsWith('.OLD')) { continue }; $newName =  $file.FullName + '.OLD'; Write-Host "^""Rename '$($file.FullName)' to '$newName'"^""; Move-Item -LiteralPath "^""$($file.FullName)"^"" -Destination "^""$newName"^"" -Force; }; }"
+PowerShell -ExecutionPolicy Unrestricted -Command "$package = Get-AppxPackage -AllUsers 'Microsoft.WindowsFeedback'; if (!$package) {; Write-Host 'Not installed'; exit 0; }; $directories = @($package.InstallLocation, "^""$env:LOCALAPPDATA\Packages\$($package.PackageFamilyName)"^""); foreach($dir in $directories) {; if ( !$dir -Or !(Test-Path "^""$dir"^"") ) { continue }; cmd /c ('takeown /f "^""' + $dir + '"^"" /r /d y 1> nul'); if($LASTEXITCODE) { throw 'Failed to take ownership' }; cmd /c ('icacls "^""' + $dir + '"^"" /grant administrators:F /t 1> nul'); if($LASTEXITCODE) { throw 'Failed to take ownership' }; $files = Get-ChildItem -File -Path $dir -Recurse -Force; foreach($file in $files) {; if($file.Name.EndsWith('.OLD')) { continue }; $newName =  $file.FullName + '.OLD'; Write-Host "^""Rename '$($file.FullName)' to '$newName'"^""; Move-Item -LiteralPath "^""$($file.FullName)"^"" -Destination "^""$newName"^"" -Force; }; }"
+PowerShell -ExecutionPolicy Unrestricted -Command "$package = Get-AppxPackage -AllUsers 'Windows.CBSPreview'; if (!$package) {; Write-Host 'Not installed'; exit 0; }; $directories = @($package.InstallLocation, "^""$env:LOCALAPPDATA\Packages\$($package.PackageFamilyName)"^""); foreach($dir in $directories) {; if ( !$dir -Or !(Test-Path "^""$dir"^"") ) { continue }; cmd /c ('takeown /f "^""' + $dir + '"^"" /r /d y 1> nul'); if($LASTEXITCODE) { throw 'Failed to take ownership' }; cmd /c ('icacls "^""' + $dir + '"^"" /grant administrators:F /t 1> nul'); if($LASTEXITCODE) { throw 'Failed to take ownership' }; $files = Get-ChildItem -File -Path $dir -Recurse -Force; foreach($file in $files) {; if($file.Name.EndsWith('.OLD')) { continue }; $newName =  $file.FullName + '.OLD'; Write-Host "^""Rename '$($file.FullName)' to '$newName'"^""; Move-Item -LiteralPath "^""$($file.FullName)"^"" -Destination "^""$newName"^"" -Force; }; }"
+echo Applied Debloat Tweaks.
+timeout /t 3 >nul
 pause >nul
-goto AdvancedMenu
+goto :GameBoosters
+
+:Affinity
+cls
+for /f "tokens=*" %%f in ('wmic cpu get NumberOfCores /value ^| find "="') do set %%f
+for /f "tokens=*" %%f in ('wmic cpu get NumberOfLogicalProcessors /value ^| find "="') do set %%f
+if "!NumberOfCores!" == "2" (
+	goto HyperThreading
+)
+if !NumberOfCores! gtr 4 (
+	for /f %%i in ('wmic path Win32_VideoController get PNPDeviceID^| findstr /l "PCI\VEN_"') do (
+		reg add "HKLM\SYSTEM\CurrentControlSet\Enum\%%i\Device Parameters\Interrupt Management\Affinity Policy" /v "DevicePolicy" /t REG_DWORD /d "3" /f
+		reg delete "HKLM\SYSTEM\CurrentControlSet\Enum\%%i\Device Parameters\Interrupt Management\Affinity Policy" /v "AssignmentSetOverride" /f
+	) > nul 2> nul
+	for /f %%i in ('wmic path Win32_NetworkAdapter get PNPDeviceID^| findstr /l "PCI\VEN_"') do (
+		reg add "HKLM\SYSTEM\CurrentControlSet\Enum\%%i\Device Parameters\Interrupt Management\Affinity Policy" /v "DevicePolicy" /t REG_DWORD /d "5" /f
+		reg delete "HKLM\SYSTEM\CurrentControlSet\Enum\%%i\Device Parameters\Interrupt Management\Affinity Policy" /v "AssignmentSetOverride" /f
+	) > nul 2> nul
+)
+
+:: Hyper Threading ; Credits to HoneCtrl
+:HyperThreading
+if !NumberOfLogicalProcessors! gtr !NumberOfCores! (
+for /f %%i in ('wmic path Win32_USBController get PNPDeviceID^| findstr /l "PCI\VEN_"') do (
+	reg add "HKLM\SYSTEM\CurrentControlSet\Enum\%%i\Device Parameters\Interrupt Management\Affinity Policy" /v "DevicePolicy" /t REG_DWORD /d "4" /f
+	reg add "HKLM\SYSTEM\CurrentControlSet\Enum\%%i\Device Parameters\Interrupt Management\Affinity Policy" /v "AssignmentSetOverride" /t REG_BINARY /d "C0" /f
+	) > nul 2> nul
+for /f %%i in ('wmic path Win32_VideoController get PNPDeviceID^| findstr /l "PCI\VEN_"') do (
+	reg add "HKLM\SYSTEM\CurrentControlSet\Enum\%%i\Device Parameters\Interrupt Management\Affinity Policy" /v "DevicePolicy" /t REG_DWORD /d "4" /f
+	reg add "HKLM\SYSTEM\CurrentControlSet\Enum\%%i\Device Parameters\Interrupt Management\Affinity Policy" /v "AssignmentSetOverride" /t REG_BINARY /d "C0" /f
+	) > nul 2> nul
+for /f %%i in ('wmic path Win32_NetworkAdapter get PNPDeviceID^| findstr /l "PCI\VEN_"') do (
+	reg add "HKLM\SYSTEM\CurrentControlSet\Enum\%%i\Device Parameters\Interrupt Management\Affinity Policy" /v "DevicePolicy" /t REG_DWORD /d "4" /f
+	reg add "HKLM\SYSTEM\CurrentControlSet\Enum\%%i\Device Parameters\Interrupt Management\Affinity Policy" /v "AssignmentSetOverride" /t REG_BINARY /d "30" /f
+	) > nul 2> nul
+)
+echo Applied Affinity Tweaks.
+timeout /t 3 >nul
+pause >nul
+goto :GameBoosters
+
+:MSIMode
+cls
+for /f %%i in ('wmic path Win32_USBController get PNPDeviceID ^| findstr /l "PCI\VEN_"') do (
+	reg add "HKLM\SYSTEM\CurrentControlSet\Enum\%%i\Device Parameters\Interrupt Management\MessageSignaledInterruptProperties" /v "MSISupported" /t REG_DWORD /d "1" /f
+	reg delete "HKLM\SYSTEM\CurrentControlSet\Enum\%%i\Device Parameters\Interrupt Management\Affinity Policy" /v "DevicePriority" /f
+) > nul 2> nul
+
+for /f %%i in ('wmic path Win32_VideoController get PNPDeviceID ^| findstr /l "PCI\VEN_"') do (
+	reg add "HKLM\SYSTEM\CurrentControlSet\Enum\%%i\Device Parameters\Interrupt Management\MessageSignaledInterruptProperties" /v "MSISupported" /t REG_DWORD /d "1" /f
+	reg delete "HKLM\SYSTEM\CurrentControlSet\Enum\%%i\Device Parameters\Interrupt Management\Affinity Policy" /v "DevicePriority" /f
+) > nul 2> nul
+
+for /f %%i in ('wmic path Win32_NetworkAdapter get PNPDeviceID ^| findstr /l "PCI\VEN_"') do (
+	reg add "HKLM\SYSTEM\CurrentControlSet\Enum\%%i\Device Parameters\Interrupt Management\MessageSignaledInterruptProperties" /v "MSISupported" /t REG_DWORD /d "1" /f
+	reg delete "HKLM\SYSTEM\CurrentControlSet\Enum\%%i\Device Parameters\Interrupt Management\Affinity Policy" /v "DevicePriority" /f
+) > nul 2> nul
+
+for /f %%i in ('wmic path Win32_IDEController get PNPDeviceID ^| findstr /l "PCI\VEN_"') do (
+	reg add "HKLM\SYSTEM\CurrentControlSet\Enum\%%i\Device Parameters\Interrupt Management\MessageSignaledInterruptProperties" /v "MSISupported" /t REG_DWORD /d "1" /f
+	reg delete "HKLM\SYSTEM\CurrentControlSet\Enum\%%i\Device Parameters\Interrupt Management\Affinity Policy" /v "DevicePriority" /f
+) > nul 2> nul
+
+:: Set Priority to Normal if used on VMWare
+for /f %%i in ('wmic path win32_NetworkAdapter get PNPDeviceID') do set "str=%%i" & if "!str:PCI\VEN_=!" neq "!str!" (
+for /f "delims=" %%# in ('"wmic computersystem get manufacturer /format:value"') do set "%%#" >nul & if "!Manufacturer:VMWare=!" neq "!Manufacturer!" (set "VMWare= /t REG_DWORD /d 2") else (set "VMWare=")
+	reg add "HKLM\SYSTEM\CurrentControlSet\Enum\%%i\Device Parameters\Interrupt Management\Affinity Policy" /v "DevicePriority"%VMWare% /f
+	reg add "HKLM\SYSTEM\CurrentControlSet\Enum\%%i\Device Parameters\Interrupt Management\MessageSignaledInterruptProperties" /v "MSISupported" /t REG_DWORD /d "1" /f
+	reg add "HKLM\SYSTEM\CurrentControlSet\Enum\%%i\Device Parameters\Interrupt Management\Affinity Policy" /v "DevicePriority" /t REG_DWORD /d "2" /f
+) > nul 2> nul
+echo Applied MSI Mode.
+timeout /t 3 >nul
+pause >nul
+goto :GameBoosters
+
+:ScheduledTasks
+cls
+schtasks /change /TN "\Microsoft\Windows\Customer Experience Improvement Program\Consolidator" /DISABLE
+schtasks /change /TN "\Microsoft\Windows\Customer Experience Improvement Program\KernelCeipTask" /DISABLE
+schtasks /change /TN "\Microsoft\Windows\Customer Experience Improvement Program\UsbCeip" /DISABLE
+schtasks /Change /TN "Microsoft\Windows\ErrorDetails\EnableErrorDetailsUpdate" /Disable
+schtasks /Change /TN "Microsoft\Windows\Windows Error Reporting\QueueReporting" /Disable
+schtasks /change /TN "Microsoft\Windows\Device Information\Device" /disable
+schtasks /change /TN "Microsoft\Windows\Application Experience\ProgramDataUpdater" /disable
+schtasks /change /TN "Microsoft\Windows\Application Experience\AitAgent" /disable
+schtasks /change /TN "Microsoft\Windows\Application Experience\StartupAppTask" /disable
+schtasks /change /TN "Microsoft\Windows\Application Experience\Microsoft Compatibility Appraiser" /disable
+schtasks /Change /TN "Microsoft\Windows\ExploitGuard\ExploitGuard MDM policy Refresh" /Disable 2>nul
+schtasks /Change /TN "Microsoft\Windows\Windows Defender\Windows Defender Cache Maintenance" /Disable 2>nul
+schtasks /Change /TN "Microsoft\Windows\Windows Defender\Windows Defender Cleanup" /Disable 2>nul
+schtasks /Change /TN "Microsoft\Windows\Windows Defender\Windows Defender Scheduled Scan" /Disable 2>nul
+schtasks /Change /TN "Microsoft\Windows\Windows Defender\Windows Defender Verification" /Disable 2>nul
+schtasks /Change /TN "Microsoft\Windows\Application Experience\Microsoft Compatibility Appraiser" /Disable
+schtasks /Change /TN "Microsoft\Windows\Application Experience\ProgramDataUpdater" /Disable
+schtasks /Change /TN "Microsoft\Windows\Application Experience\StartupAppTask" /Disable
+schtasks /Change /TN "Microsoft\Windows\Customer Experience Improvement Program\Consolidator" /Disable
+schtasks /Change /TN "Microsoft\Windows\Customer Experience Improvement Program\KernelCeipTask" /Disable
+schtasks /Change /TN "Microsoft\Windows\Customer Experience Improvement Program\UsbCeip" /Disable
+schtasks /Change /TN "Microsoft\Windows\Customer Experience Improvement Program\Uploader" /Disable
+schtasks /Change /TN "Microsoft\Windows\Shell\FamilySafetyUpload" /Disable
+schtasks /Change /TN "Microsoft\Office\OfficeTelemetryAgentLogOn" /Disable
+schtasks /Change /TN "Microsoft\Office\OfficeTelemetryAgentFallBack" /Disable
+schtasks /Change /TN "Microsoft\Office\Office 15 Subscription Heartbeat" /Disable
+powerrun "schtasks.exe" /change /disable /TN "\Microsoft\Windows\Diagnosis\Scheduled" >nul 2>&1
+powerrun "schtasks.exe" /change /disable /TN "\Microsoft\Windows\DiskDiagnostic\Microsoft-Windows-DiskDiagnosticDataCollector" >nul 2>&1
+powerrun "schtasks.exe" /change /disable /TN "\Microsoft\Windows\DiskFootprint\Diagnostics" >nul 2>&1
+powerrun "schtasks.exe" /change /disable /TN "\Microsoft\Windows\InstallService\ScanForUpdates" >nul 2>&1
+powerrun "schtasks.exe" /change /disable /TN "\Microsoft\Windows\InstallService\ScanForUpdatesAsUser" >nul 2>&1
+powerrun "schtasks.exe" /change /disable /TN "\Microsoft\Windows\Registry\RegIdleBackup" >nul 2>&1
+powerrun "schtasks.exe" /change /disable /TN "\Microsoft\Windows\StateRepository\MaintenanceTasks" >nul 2>&1
+powerrun "schtasks.exe" /change /disable /TN "\Microsoft\Windows\SystemRestore\SR" >nul 2>&1
+powerrun "schtasks.exe" /change /disable /TN "\Microsoft\Windows\WDI\ResolutionHost" >nul 2>&1
+powerrun "schtasks.exe" /change /disable /TN "\Microsoft\Windows\Windows Error Reporting\QueueReporting" >nul 2>&1
+powerrun "schtasks.exe" /change /disable /TN "\Microsoft\Windows\ApplicationData\appuriverifierdaily" >nul 2>&11
+powerrun "schtasks.exe" /change /disable /TN "\Microsoft\Windows\Application Experience\StartupAppTask" >nul 2>&1
+powerrun "schtasks.exe" /change /disable /TN "\Microsoft\Windows\Application Experience\Microsoft Compatibility Appraiser" >nul 2>&1
+powerrun "schtasks.exe" /change /disable /TN "\Microsoft\Windows\Application Experience\MareBackup" >nul 2>&1
+powerrun "schtasks.exe" /change /disable /TN "\Microsoft\Windows\Application Experience\ProgramDataUpdater" >nul 2>&1
+powerrun "schtasks.exe" /change /disable /TN "\Microsoft\Windows\Autochk\Proxy" >nul 2>&1
+powerrun "schtasks.exe" /change /disable /TN "\Microsoft\Windows\Customer Experience Improvement Program\Consolidator" >nul 2>&1
+powerrun "schtasks.exe" /change /disable /TN "\Microsoft\Windows\Customer Experience Improvement Program\KernelCeipTask" >nul 2>&1
+powerrun "schtasks.exe" /change /disable /TN "\Microsoft\Windows\Customer Experience Improvement Program\UsbCeip" >nul 2>&1
+powerrun "schtasks.exe" /change /disable /TN "\Microsoft\Windows\Device Information\Device User" >nul 2>&1
+powerrun "schtasks.exe" /change /disable /TN "\Microsoft\Windows\Device Information\Device" >nul 2>&1
+powerrun "schtasks.exe" /change /disable /TN "\Microsoft\Windows\Feedback\Siuf\DmClient" >nul 2>&1
+powerrun "schtasks.exe" /change /disable /TN "\Microsoft\Windows\Feedback\Siuf\DmClientOnScenarioDownload" >nul 2>&1
+powerrun "schtasks.exe" /change /disable /TN "\Microsoft\Windows\Flighting\FeatureConfig\ReconcileFeatures" >nul 2>&1
+powerrun "schtasks.exe" /change /disable /TN "\Microsoft\Windows\Flighting\FeatureConfig\UsageDataFlushing" >nul 2>&1
+powerrun "schtasks.exe" /change /disable /TN "\Microsoft\Windows\Flighting\FeatureConfig\UsageDataReporting" >nul 2>&1
+powerrun "schtasks.exe" /change /disable /TN "\Microsoft\Windows\Input\InputSettingsRestoreDataAvailable" >nul 2>&1
+powerrun "schtasks.exe" /change /disable /TN "\Microsoft\Windows\Input\LocalUserSyncDataAvailable" >nul 2>&1
+powerrun "schtasks.exe" /change /disable /TN "\Microsoft\Windows\Input\MouseSyncDataAvailable" >nul 2>&1
+powerrun "schtasks.exe" /change /disable /TN "\Microsoft\Windows\Input\PenSyncDataAvailable" >nul 2>&1
+powerrun "schtasks.exe" /change /disable /TN "\Microsoft\Windows\Input\syncpensettings" >nul 2>&1
+powerrun "schtasks.exe" /change /disable /TN "\Microsoft\Windows\Input\TouchpadSyncDataAvailable" >nul 2>&1
+powerrun "schtasks.exe" /change /disable /TN "\Microsoft\Windows\Location\Notifications" >nul 2>&1
+powerrun "schtasks.exe" /change /disable /TN "\Microsoft\Windows\Location\WindowsActionDialog" >nul 2>&1
+powerrun "schtasks.exe" /change /disable /TN "\Microsoft\Windows\ApplicationData\DsSvcCleanup" >nul 2>&1
+powerrun "schtasks.exe" /change /disable /TN "\Microsoft\Windows\CloudExperienceHost\CreateObjectTask" >nul 2>&1
+powerrun "schtasks.exe" /change /disable /TN "\Microsoft\Windows\Maintenance\WinSAT" >nul 2>&1
+powerrun "schtasks.exe" /change /disable /TN "\Microsoft\Windows\PI\Sqm-Tasks" >nul 2>&1
+powerrun "schtasks.exe" /change /disable /TN "\Microsoft\Windows\Power Efficiency Diagnostics\AnalyzeSystem" >nul 2>&1
+powerrun "schtasks.exe" /change /disable /TN "\Microsoft\Windows\Shell\IndexerAutomaticMaintenance" >nul 2>&1
+powerrun "schtasks.exe" /change /disable /TN "\Microsoft\Windows\Maps\MapsToastTask" >nul 2>&1
+powerrun "schtasks.exe" /change /disable /TN "\Microsoft\Windows\Maps\MapsUpdateTask" >nul 2>&1
+powerrun "schtasks.exe" /change /disable /TN "\Microsoft\Windows\MemoryDiagnostic\ProcessMemoryDiagnosticEvents" >nul 2>&1
+powerrun "schtasks.exe" /change /disable /TN "\Microsoft\Windows\MemoryDiagnostic\RunFullMemoryDiagnostic" >nul 2>&1
+powerrun "schtasks.exe" /delete /f /tn "\Microsoft\Windows\TaskScheduler" >nul 2>&1
+powerrun "schtasks.exe" /delete /f /tn "\Microsoft\Windows\WaaSMedic" >nul 2>&1
+powerrun "schtasks.exe" /delete /f /tn "\Microsoft\Windows\WindowsUpdate" >nul 2>&1
+powerrun "schtasks.exe" /delete /f /tn "\Microsoft\Windows\WindowsUpdate\Scheduled Start" >nul 2>&1
+powerrun "schtasks.exe" /delete /f /tn "\Microsoft\Windows\UpdateOrchestrator\Schedule Scan" >nul 2>&1
+powerrun "schtasks.exe" /delete /f /tn "\Microsoft\Windows\UpdateOrchestrator\Schedule Scan Static Task" >nul 2>&1
+powerrun "schtasks.exe" /delete /f /tn "\Microsoft\Windows\UpdateOrchestrator\Schedule Wake To Work" >nul 2>&1
+powerrun "schtasks.exe" /delete /f /tn "\Microsoft\Windows\UpdateOrchestrator\Start Oobe Expedite Work" >nul 2>&1
+schtasks /Change /TN "Microsoft\Windows\ErrorDetails\EnableErrorDetailsUpdate" /Disable >nul 2>&1
+schtasks /Change /TN "Microsoft\Windows\Windows Error Reporting\QueueReporting" /Disable >nul 2>&1
+schtasks /Change /TN "\Microsoft\Windows\Application Experience\AitAgent" /DISABLE >nul
+schtasks /Change /TN "\Microsoft\Windows\Media Center\ehDRMInit" /DISABLE > nul
+schtasks /change /TN NvTmMon_{B2FE1952-0186-46C3-BAEC-A80AA35AC5B8} /DISABLE
+schtasks /change /TN NvTmRep_{B2FE1952-0186-46C3-BAEC-A80AA35AC5B8} /DISABLE
+schtasks /change /TN NvTmRepOnLogon_{B2FE1952-0186-46C3-BAEC-A80AA35AC5B8} /DISABLE
+schtasks /change /TN "Microsoft\Office\OfficeTelemetryAgentFallBack" /DISABLE
+schtasks /change /TN "Microsoft\Office\OfficeTelemetryAgentFallBack2016" /DISABLE
+schtasks /change /TN "Microsoft\Office\OfficeTelemetryAgentLogOn" /DISABLE
+schtasks /change /TN "Microsoft\Office\OfficeTelemetryAgentLogOn2016" /DISABLE
+schtasks /change /tn "\Microsoft\Windows\Windows Error Reporting\QueueReporting" /disable
+schtasks /Change /TN "Microsoft\Windows\AppID\SmartScreenSpecific" /Disable
+schtasks /Change /TN "Microsoft\Windows\Autochk\Proxy" /Disable
+schtasks /Change /TN "Microsoft\Windows\DiskDiagnostic\Microsoft-Windows-DiskDiagnosticDataCollector" /Disable
+schtasks /Change /TN "Microsoft\Windows\FileHistory\File History (maintenance mode)" /Disable
+schtasks /Change /TN "Microsoft\Windows\Maintenance\WinSAT" /Disable
+schtasks /Change /TN "Microsoft\Windows\NetTrace\GatherNetworkInfo" /Disable
+schtasks /Change /TN "Microsoft\Windows\PI\Sqm-Tasks" /Disable
+schtasks /Change /TN "Microsoft\Windows\Time Synchronization\ForceSynchronizeTime" /Disable
+schtasks /Change /TN "Microsoft\Windows\Time Synchronization\SynchronizeTime" /Disable
+schtasks /Change /TN "Microsoft\Windows\Windows Error Reporting\QueueReporting" /Disable
+schtasks /Change /TN "Microsoft\Windows\Windows Defender\Windows Defender Cache Maintenance" /Enable
+schtasks /Change /TN "Microsoft\Windows\Windows Defender\Windows Defender Cleanup" /Enable
+schtasks /Change /TN "Microsoft\Windows\Windows Defender\Windows Defender Scheduled Scan" /Enable
+schtasks /Change /TN "Microsoft\Windows\Windows Defender\Windows Defender Verification" /Enable
+schtasks /Delete /TN "\Microsoft\Windows\Defrag\ScheduledDefrag" /F
+schtasks /end /tn "\Microsoft\Windows\Customer Experience Improvement Program\Consolidator"
+schtasks /change /tn "\Microsoft\Windows\Customer Experience Improvement Program\Consolidator" /disable
+schtasks /end /tn "\Microsoft\Windows\Customer Experience Improvement Program\BthSQM"
+schtasks /change /tn "\Microsoft\Windows\Customer Experience Improvement Program\BthSQM" /disable
+schtasks /end /tn "\Microsoft\Windows\Customer Experience Improvement Program\KernelCeipTask"
+schtasks /change /tn "\Microsoft\Windows\Customer Experience Improvement Program\KernelCeipTask" /disable
+schtasks /end /tn "\Microsoft\Windows\Customer Experience Improvement Program\UsbCeip"
+schtasks /change /tn "\Microsoft\Windows\Customer Experience Improvement Program\UsbCeip" /disable
+schtasks /end /tn "\Microsoft\Windows\Customer Experience Improvement Program\Uploader"
+schtasks /change /tn "\Microsoft\Windows\Customer Experience Improvement Program\Uploader" /disable
+schtasks /end /tn "\Microsoft\Windows\Application Experience\Microsoft Compatibility Appraiser"
+schtasks /change /tn "\Microsoft\Windows\Application Experience\Microsoft Compatibility Appraiser" /disable
+schtasks /end /tn "\Microsoft\Windows\Application Experience\ProgramDataUpdater"
+schtasks /change /tn "\Microsoft\Windows\Application Experience\ProgramDataUpdater" /disable
+schtasks /end /tn "\Microsoft\Windows\Application Experience\StartupAppTask"
+schtasks /change /tn "\Microsoft\Windows\Application Experience\StartupAppTask" /disable
+schtasks /end /tn "\Microsoft\Windows\DiskDiagnostic\Microsoft-Windows-DiskDiagnosticDataCollector"
+schtasks /change /tn "\Microsoft\Windows\DiskDiagnostic\Microsoft-Windows-DiskDiagnosticDataCollector" /disable
+schtasks /end /tn "\Microsoft\Windows\DiskDiagnostic\Microsoft-Windows-DiskDiagnosticResolver"
+schtasks /change /tn "\Microsoft\Windows\DiskDiagnostic\Microsoft-Windows-DiskDiagnosticResolver" /disable
+schtasks /end /tn "\Microsoft\Windows\Power Efficiency Diagnostics\AnalyzeSystem"
+schtasks /change /tn "\Microsoft\Windows\Power Efficiency Diagnostics\AnalyzeSystem" /disable
+schtasks /end /tn "\Microsoft\Windows\Shell\FamilySafetyMonitor"
+schtasks /change /tn "\Microsoft\Windows\Shell\FamilySafetyMonitor" /disable
+schtasks /end /tn "\Microsoft\Windows\Shell\FamilySafetyRefresh"
+schtasks /change /tn "\Microsoft\Windows\Shell\FamilySafetyRefresh" /disable
+schtasks /end /tn "\Microsoft\Windows\Shell\FamilySafetyUpload"
+schtasks /change /tn "\Microsoft\Windows\Shell\FamilySafetyUpload" /disable
+schtasks /end /tn "\Microsoft\Windows\Autochk\Proxy"
+schtasks /change /tn "\Microsoft\Windows\Autochk\Proxy" /disable
+schtasks /end /tn "\Microsoft\Windows\Maintenance\WinSAT"
+schtasks /change /tn "\Microsoft\Windows\Maintenance\WinSAT" /disable
+schtasks /end /tn "\Microsoft\Windows\Application Experience\AitAgent"
+schtasks /change /tn "\Microsoft\Windows\Application Experience\AitAgent" /disable
+schtasks /end /tn "\Microsoft\Windows\Windows Error Reporting\QueueReporting"
+schtasks /change /tn "\Microsoft\Windows\Windows Error Reporting\QueueReporting" /disable
+schtasks /end /tn "\Microsoft\Windows\CloudExperienceHost\CreateObjectTask"
+schtasks /change /tn "\Microsoft\Windows\CloudExperienceHost\CreateObjectTask" /disable
+schtasks /end /tn "\Microsoft\Windows\DiskFootprint\Diagnostics"
+schtasks /change /tn "\Microsoft\Windows\DiskFootprint\Diagnostics" /disable
+schtasks /end /tn "\Microsoft\Windows\FileHistory\File History (maintenance mode)"
+schtasks /change /tn "\Microsoft\Windows\FileHistory\File History (maintenance mode)" /disable
+schtasks /end /tn "\Microsoft\Windows\PI\Sqm-Tasks"
+schtasks /change /tn "\Microsoft\Windows\PI\Sqm-Tasks" /disable
+schtasks /end /tn "\Microsoft\Windows\NetTrace\GatherNetworkInfo"
+schtasks /change /tn "\Microsoft\Windows\NetTrace\GatherNetworkInfo" /disable
+schtasks /end /tn "\Microsoft\Windows\AppID\SmartScreenSpecific"
+schtasks /change /tn "\Microsoft\Windows\AppID\SmartScreenSpecific" /disable
+schtasks /end /tn "\Microsoft\Office\OfficeTelemetryAgentFallBack2016"
+schtasks /change /tn "\Microsoft\Office\OfficeTelemetryAgentFallBack2016" /disable
+schtasks /end /tn "\Microsoft\Office\OfficeTelemetryAgentLogOn2016"
+schtasks /change /tn "\Microsoft\Office\OfficeTelemetryAgentLogOn2016" /disable
+schtasks /end /tn "\Microsoft\Office\OfficeTelemetryAgentLogOn"
+schtasks /change /TN "\Microsoft\Office\OfficeTelemetryAgentLogOn" /disable
+schtasks /end /tn "\Microsoftd\Office\OfficeTelemetryAgentFallBack"
+schtasks /change /TN "\Microsoftd\Office\OfficeTelemetryAgentFallBack" /disable
+schtasks /end /tn "\Microsoft\Office\Office 15 Subscription Heartbeat"
+schtasks /change /TN "\Microsoft\Office\Office 15 Subscription Heartbeat" /disable
+schtasks /end /tn "\Microsoft\Windows\Time Synchronization\ForceSynchronizeTime"
+schtasks /change /TN "\Microsoft\Windows\Time Synchronization\ForceSynchronizeTime" /disable
+schtasks /end /tn "\Microsoft\Windows\Time Synchronization\SynchronizeTime"
+schtasks /change /TN "\Microsoft\Windows\Time Synchronization\SynchronizeTime" /disable
+schtasks /end /tn "\Microsoft\Windows\WindowsUpdate\Automatic App Update"
+schtasks /change /TN "\Microsoft\Windows\WindowsUpdate\Automatic App Update" /disable
+schtasks /end /tn "\Microsoft\Windows\Device Information\Device"
+schtasks /change /TN "\Microsoft\Windows\Device Information\Device" /disable
+schtasks /Change /TN "Microsoft\Windows\Application Experience\Microsoft Compatibility Appraiser" /Disable
+schtasks /Change /TN "Microsoft\Windows\Application Experience\PcaPatchDbTask" /Disable
+schtasks /Change /TN "Microsoft\Windows\Application Experience\ProgramDataUpdater" /Disable
+schtasks /Change /TN "Microsoft\Windows\Application Experience\StartupAppTask" /Disable
+schtasks /Change /TN "Microsoft\Windows\Autochk\Proxy" /Disable
+schtasks /Change /TN "Microsoft\Windows\Customer Experience Improvement Program\Consolidator" /Disable
+schtasks /Change /TN "Microsoft\Windows\Customer Experience Improvement Program\UsbCeip" /Disable
+schtasks /Change /TN "Microsoft\Windows\Defrag\ScheduledDefrag" /Disable
+schtasks /Change /TN "Microsoft\Windows\Device Information\Device" /Disable
+schtasks /Change /TN "Microsoft\Windows\Device Information\Device User" /Disable
+schtasks /Change /TN "Microsoft\Windows\DiskCleanup\SilentCleanup" /Disable
+schtasks /Change /TN "Microsoft\Windows\DiskDiagnostic\Microsoft-Windows-DiskDiagnosticDataCollector" /Disable
+schtasks /Change /TN "Microsoft\Windows\DiskFootprint\Diagnostics" /Disable
+schtasks /Change /TN "Microsoft\Windows\DiskFootprint\StorageSense" /Disable
+schtasks /Change /TN "Microsoft\Windows\DUSM\dusmtask" /Disable
+schtasks /Change /TN "Microsoft\Windows\EnterpriseMgmt\MDMMaintenenceTask" /Disable
+schtasks /Change /TN "Microsoft\Windows\Feedback\Siuf\DmClient" /Disable
+schtasks /Change /TN "Microsoft\Windows\Feedback\Siuf\DmClientOnScenarioDownload" /Disable
+schtasks /Change /TN "Microsoft\Windows\Flighting\FeatureConfig\ReconcileFeatures" /Disable
+schtasks /Change /TN "Microsoft\Windows\Flighting\FeatureConfig\UsageDataFlushing" /Disable
+schtasks /Change /TN "Microsoft\Windows\Flighting\FeatureConfig\UsageDataReporting" /Disable
+schtasks /Change /TN "Microsoft\Windows\Flighting\OneSettings\RefreshCache" /Disable
+schtasks /Change /TN "Microsoft\Windows\Input\LocalUserSyncDataAvailable" /Disable
+schtasks /Change /TN "Microsoft\Windows\Input\MouseSyncDataAvailable" /Disable
+schtasks /Change /TN "Microsoft\Windows\Input\PenSyncDataAvailable" /Disable
+schtasks /Change /TN "Microsoft\Windows\Input\TouchpadSyncDataAvailable" /Disable
+schtasks /Change /TN "Microsoft\Windows\International\Synchronize Language Settings" /Disable
+schtasks /Change /TN "Microsoft\Windows\LanguageComponentsInstaller\Installation" /Disable
+schtasks /Change /TN "Microsoft\Windows\LanguageComponentsInstaller\ReconcileLanguageResources" /Disable
+schtasks /Change /TN "Microsoft\Windows\LanguageComponentsInstaller\Uninstallation" /Disable
+schtasks /Change /TN "Microsoft\Windows\License Manager\TempSignedLicenseExchange" /Disable
+schtasks /Change /TN "Microsoft\Windows\License Manager\TempSignedLicenseExchange" /Disable
+schtasks /Change /TN "Microsoft\Windows\Management\Provisioning\Cellular" /Disable
+schtasks /Change /TN "Microsoft\Windows\Management\Provisioning\Logon" /Disable
+schtasks /Change /TN "Microsoft\Windows\Maintenance\WinSAT" /Disable
+schtasks /Change /TN "Microsoft\Windows\Maps\MapsToastTask" /Disable
+schtasks /Change /TN "Microsoft\Windows\Maps\MapsUpdateTask" /Disable
+schtasks /Change /TN "Microsoft\Windows\Mobile Broadband Accounts\MNO Metadata Parser" /Disable
+schtasks /Change /TN "Microsoft\Windows\MUI\LPRemove" /Disable
+schtasks /Change /TN "Microsoft\Windows\NetTrace\GatherNetworkInfo" /Disable
+schtasks /Change /TN "Microsoft\Windows\PI\Sqm-Tasks" /Disable
+schtasks /Change /TN "Microsoft\Windows\Power Efficiency Diagnostics\AnalyzeSystem" /Disable
+schtasks /Change /TN "Microsoft\Windows\PushToInstall\Registration" /Disable
+schtasks /Change /TN "Microsoft\Windows\Ras\MobilityManager" /Disable
+schtasks /Change /TN "Microsoft\Windows\RecoveryEnvironment\VerifyWinRE" /Disable
+schtasks /Change /TN "Microsoft\Windows\RemoteAssistance\RemoteAssistanceTask" /Disable
+schtasks /Change /TN "Microsoft\Windows\RetailDemo\CleanupOfflineContent" /Disable
+schtasks /Change /TN "Microsoft\Windows\Servicing\StartComponentCleanup" /Disable
+schtasks /Change /TN "Microsoft\Windows\SettingSync\NetworkStateChangeTask" /Disable
+schtasks /Change /TN "Microsoft\Windows\Setup\SetupCleanupTask" /Disable
+schtasks /Change /TN "Microsoft\Windows\Setup\SnapshotCleanupTask" /Disable
+schtasks /Change /TN "Microsoft\Windows\SpacePort\SpaceAgentTask" /Disable
+schtasks /Change /TN "Microsoft\Windows\SpacePort\SpaceManagerTask" /Disable
+schtasks /Change /TN "Microsoft\Windows\Speech\SpeechModelDownloadTask" /Disable
+schtasks /Change /TN "Microsoft\Windows\Storage Tiers Management\Storage Tiers Management Initialization" /Disable
+schtasks /Change /TN "Microsoft\Windows\Sysmain\ResPriStaticDbSync" /Disable
+schtasks /Change /TN "Microsoft\Windows\Sysmain\WsSwapAssessmentTask" /Disable
+schtasks /Change /TN "Microsoft\Windows\Task Manager\Interactive" /Disable
+schtasks /Change /TN "Microsoft\Windows\TPM\Tpm-HASCertRetr" /Disable
+schtasks /Change /TN "Microsoft\Windows\TPM\Tpm-Maintenance" /Disable
+schtasks /Change /TN "Microsoft\Windows\UPnP\UPnPHostConfig" /Disable
+schtasks /Change /TN "Microsoft\Windows\User Profile Service\HiveUploadTask" /Disable
+schtasks /Change /TN "Microsoft\Windows\WDI\ResolutionHost" /Disable
+schtasks /Change /TN "Microsoft\Windows\Windows Filtering Platform\BfeOnServiceStartTypeChange" /Disable
+schtasks /Change /TN "Microsoft\Windows\WOF\WIM-Hash-Management" /Disable
+schtasks /Change /TN "Microsoft\Windows\WOF\WIM-Hash-Validation" /Disable
+schtasks /Change /TN "Microsoft\Windows\Work Folders\Work Folders Logon Synchronization" /Disable
+schtasks /Change /TN "Microsoft\Windows\Work Folders\Work Folders Maintenance Work" /Disable
+schtasks /Change /TN "Microsoft\Windows\Workplace Join\Automatic-Device-Join" /Disable
+schtasks /Change /TN "Microsoft\Windows\WwanSvc\NotificationTask" /Disable
+schtasks /Change /TN "Microsoft\Windows\WwanSvc\OobeDiscovery" /Disable
+schtasks /Change /Disable /TN "\Microsoft\Windows\Defrag\ScheduledDefrag" > nul 2> nul
+schtasks /Change /Disable /TN "\Microsoft\Windows\WindowsUpdate\Scheduled Start" > nul 2> nul
+schtasks /Change /Disable /TN "\Microsoft\Windows\WindowsUpdate\sihpostreboot" > nul 2> nul
+schtasks /Change /Disable /TN "\Microsoft\Windows\UpdateOrchestrator\Schedule Scan" > nul 2> nul
+schtasks /Change /Disable /TN "\Microsoft\Windows\UpdateOrchestrator\Schedule Scan Static Task" > nul 2> nul
+schtasks /Change /Disable /TN "\Microsoft\Windows\DiskDiagnostic\Microsoft-Windows-DiskDiagnosticDataCollector" > nul 2> nul
+schtasks /Change /Disable /TN "\Microsoft\Windows\MemoryDiagnostic\ProcessMemoryDiagnosticEvents" > nul 2> nul
+schtasks /Change /Disable /TN "\Microsoft\Windows\MemoryDiagnostic\RunFullMemoryDiagnostic" > nul 2> nul
+schtasks /Change /Disable /TN "\Microsoft\Windows\Power Efficiency Diagnostics\AnalyzeSystem" > nul 2> nul
+schtasks /Change /Disable /TN "\Microsoft\Windows\Application Experience\PcaPatchDbTask" > nul 2> nul
+schtasks /Change /Disable /TN "\Microsoft\Windows\Application Experience\StartupAppTask" > nul 2> nul
+schtasks /Change /Disable /TN "\Microsoft\Windows\Application Experience\Microsoft Compatibility Appraiser" > nul 2> nul
+schtasks /Change /Disable /TN "\Microsoft\Windows\Application Experience\ProgramDataUpdater" > nul 2> nul
+schtasks /Change /Disable /TN "\Microsoft\Windows\Device Information\Device" > nul 2> nul
+schtasks /Change /Disable /TN "\Microsoft\Windows\Device Information\Device User" > nul 2> nul
+schtasks /Change /Disable /TN "\Microsoft\Windows\Shell\IndexerAutomaticMaintenance" > nul 2> nul
+schtasks /Change /Disable /TN "\Microsoft\Windows\WaaSMedic\PerformRemediation" > nul 2> nul
+schtasks /Change /Disable /TN "\Microsoft\Windows\DiskFootprint\Diagnostics" > nul 2> nul
+schtasks /Change /Disable /TN "\Microsoft\Windows\DiskFootprint\StorageSense" > nul 2> nul
+schtasks /Change /Disable /TN "\Microsoft\Windows\BrokerInfrastructure\BgTaskRegistrationMaintenanceTask" > nul 2> nul
+schtasks /Change /Disable /TN "\Microsoft\Windows\CloudExperienceHost\CreateObjectTask" > nul 2> nul
+schtasks /Change /Disable /TN "\Microsoft\Windows\Registry\RegIdleBackup" > nul 2> nul
+schtasks /Change /Disable /TN "\Microsoft\Windows\Windows Filtering Platform\BfeOnServiceStartTypeChange" > nul 2> nul
+schtasks /Change /Disable /TN "\Microsoft\Windows\SoftwareProtectionPlatform\SvcRestartTaskNetwork"  > nul 2> nul
+schtasks /Change /Disable /TN "\Microsoft\Windows\SoftwareProtectionPlatform\SvcRestartTaskLogon" > nul 2> nul
+schtasks /Change /Disable /TN "\Microsoft\Windows\StateRepository\MaintenanceTasks" > nul 2> nul
+schtasks /Change /Disable /TN "\Microsoft\Windows\UPnP\UPnPHostConfig" > nul 2> nul
+schtasks /Change /Disable /TN "\Microsoft\Windows\RetailDemo\CleanupOfflineContent" > nul 2> nul
+schtasks /Change /Disable /TN "\Microsoft\Windows\InstallService\ScanForUpdates" > nul 2> nul
+schtasks /Change /Disable /TN "\Microsoft\Windows\InstallService\ScanForUpdatesAsUser" > nul 2> nul
+schtasks /Change /Disable /TN "\Microsoft\Windows\InstallService\SmartRetry" > nul 2> nul
+schtasks /Change /Disable /TN "\Microsoft\Windows\International\Synchronize Language Settings" > nul 2> nul
+schtasks /Change /Disable /TN "\Microsoft\Windows\Printing\EduPrintProv" > nul 2> nul
+schtasks /Change /Disable /TN "\Microsoft\Windows\Ras\MobilityManager" > nul 2> nul
+schtasks /Change /Disable /TN "\Microsoft\Windows\Time Zone\SynchronizeTimeZone" > nul 2> nul
+schtasks /Change /Disable /TN "\Microsoft\Windows\Time Synchronization\SynchronizeTime" > nul 2> nul
+schtasks /Change /Disable /TN "\Microsoft\Windows\Time Synchronization\ForceSynchronizeTime" > nul 2> nul
+schtasks /Change /Disable /TN "\Microsoft\Windows\DiskCleanup\SilentCleanup" > nul 2> nul
+schtasks /Change /Disable /TN "\Microsoft\Windows\Diagnosis\Scheduled" > nul 2> nul
+schtasks /Change /Disable /TN "\Microsoft\Windows\Wininet\CacheTask" > nul 2> nul
+schtasks /Change /Disable /TN "\Microsoft\Windows\Mobile Broadband Accounts\MNO Metadata Parser" > nul 2> nul
+schtasks /Change /Disable /TN "\Microsoft\Windows\NetTrace\GatherNetworkInfo" > nul 2> nul
+schtasks /Change /Disable /TN "\Microsoft\Windows\TPM\Tpm-HASCertRetr" > nul 2> nul
+schtasks /Change /Disable /TN "\Microsoft\Windows\TPM\Tpm-Maintenance" > nul 2> nul
+schtasks /Change /Disable /TN "\Microsoft\Windows\Sysmain\ResPriStaticDbSync" > nul 2> nul
+schtasks /Change /Disable /TN "\Microsoft\Windows\ApplicationData\appuriverifierdaily" > nul 2> nul
+schtasks /Change /Disable /TN "\Microsoft\Windows\ApplicationData\appuriverifierinstall" > nul 2> nul
+schtasks /Change /Disable /TN "\Microsoft\Windows\ApplicationData\DsSvcCleanup" > nul 2> nul
+schtasks /Change /Disable /TN "\Microsoft\Windows\.NET Framework\.NET Framework NGEN v4.0.30319" > nul 2> nul
+schtasks /Change /Disable /TN "\Microsoft\Windows\.NET Framework\.NET Framework NGEN v4.0.30319 64" > nul 2> nul
+schtasks /Change /Disable /TN "\Microsoft\Windows\.NET Framework\.NET Framework NGEN v4.0.30319 64 Critical" > nul 2> nul
+schtasks /Change /Disable /TN "\Microsoft\Windows\.NET Framework\.NET Framework NGEN v4.0.30319 Critical" > nul 2> nul
+schtasks /Change /Disable /TN "\Microsoft\XblGameSave\XblGameSaveTask" > nul 2> nul
+schtasks /Change /Disable /TN "\Microsoft\XblGameSave\XblGameSaveTaskLogon" > nul 2> nul
+schtasks /Change /Disable /TN "\Microsoft\WindowsManagement\Provisioning\Cellular" > nul 2> nul
+echo Applied Scheduled Tasks Tweaks.
+timeout /t 3 >nul
+pause >nul
+goto :GameBoosters
+
+:Boosters
+cls
+color 03
+cls
+echo ---------------------------------------------------------------------------------------------------------------------
+echo       Game Boosters
+echo ---------------------------------------------------------------------------------------------------------------------
+echo 0. Go Back
+echo 1. Valorant
+echo 2. Counter-Strike 2
+echo 3. Minecraft
+echo 4. Fortnite
+echo 5. Warzone                                                                                                                                                                                                                                                             
+echo --------------------------------------------------------------------------------------------------------------------
+set choice=
+set /p choice=Type A Number:
+if not '%choice%'=='' set choice=%choice:~0,100%
+if '%choice%'=='0' goto AdvancedMenu
+if '%choice%'=='1' goto Valorant
+if '%choice%'=='2' goto CS2
+if '%choice%'=='3' goto Minecraft
+if '%choice%'=='4' goto Fortnite
+if '%choice%'=='4' goto Warzone
+
+:Valorant
+:: Enable CFG for Valorant
+for %%i in (valorant valorant-win64-shipping vgtray vgc) do (
+    PowerShell -NoProfile -Command "Set-ProcessMitigation -Name %%i.exe -Enable CFG"
+)
+bcdedit /set testsigning Off
+bcdedit /set nointegritychecks Off
+
+::reg add "HKLM\SYSTEM\CurrentControlSet\Control\Session Manager\kernel" /v "MitigationAuditOptions" /t REG_BINARY /d "222222222222222222222222222222222222222222222222" /f
+::reg add "HKLM\SYSTEM\CurrentControlSet\Control\Session Manager\kernel" /v "MitigationOptions" /t REG_BINARY /d "232222222223222222222222222222222222222222222222" /f
+
+reg add "HKLM\SOFTWARE\Policies\Microsoft\Windows\QoS\VALORANT" /v "Version" /t REG_SZ /d "1.0" /f 
+reg add "HKLM\SOFTWARE\Policies\Microsoft\Windows\QoS\VALORANT" /v "Application Name" /t REG_SZ /d "valorant.exe" /f 
+reg add "HKLM\SOFTWARE\Policies\Microsoft\Windows\QoS\VALORANT" /v "Protocol" /t REG_SZ /d "*" /f 
+reg add "HKLM\SOFTWARE\Policies\Microsoft\Windows\QoS\VALORANT" /v "Local Port" /t REG_SZ /d "*" /f 
+reg add "HKLM\SOFTWARE\Policies\Microsoft\Windows\QoS\VALORANT" /v "Local IP" /t REG_SZ /d "*" /f 
+reg add "HKLM\SOFTWARE\Policies\Microsoft\Windows\QoS\VALORANT" /v "Local IP Prefix Length" /t REG_SZ /d "*" /f 
+reg add "HKLM\SOFTWARE\Policies\Microsoft\Windows\QoS\VALORANT" /v "Remote Port" /t REG_SZ /d "*" /f 
+reg add "HKLM\SOFTWARE\Policies\Microsoft\Windows\QoS\VALORANT" /v "Remote IP" /t REG_SZ /d "*" /f 
+reg add "HKLM\SOFTWARE\Policies\Microsoft\Windows\QoS\VALORANT" /v "Remote IP Prefix Length" /t REG_SZ /d "*" /f 
+reg add "HKLM\SOFTWARE\Policies\Microsoft\Windows\QoS\VALORANT" /v "DSCP Value" /t REG_SZ /d "46" /f 
+reg add "HKLM\SOFTWARE\Policies\Microsoft\Windows\QoS\VALORANT" /v "Throttle Rate" /t REG_SZ /d "-1" /f 
+reg add "HKLM\SOFTWARE\Policies\Microsoft\Windows\QoS\VALORANT" /v "Version" /t REG_SZ /d "1.0" /f 
+reg add "HKLM\SOFTWARE\Policies\Microsoft\Windows\QoS\VALORANT" /v "Application Name" /t REG_SZ /d "VALORANT-Win64-Shipping.exe" /f 
+reg add "HKLM\SOFTWARE\Policies\Microsoft\Windows\QoS\VALORANT" /v "Protocol" /t REG_SZ /d "*" /f 
+reg add "HKLM\SOFTWARE\Policies\Microsoft\Windows\QoS\VALORANT" /v "Local Port" /t REG_SZ /d "*" /f 
+reg add "HKLM\SOFTWARE\Policies\Microsoft\Windows\QoS\VALORANT" /v "Local IP" /t REG_SZ /d "*" /f 
+reg add "HKLM\SOFTWARE\Policies\Microsoft\Windows\QoS\VALORANT" /v "Local IP Prefix Length" /t REG_SZ /d "*" /f 
+reg add "HKLM\SOFTWARE\Policies\Microsoft\Windows\QoS\VALORANT" /v "Remote Port" /t REG_SZ /d "*" /f 
+reg add "HKLM\SOFTWARE\Policies\Microsoft\Windows\QoS\VALORANT" /v "Remote IP" /t REG_SZ /d "*" /f 
+reg add "HKLM\SOFTWARE\Policies\Microsoft\Windows\QoS\VALORANT" /v "Remote IP Prefix Length" /t REG_SZ /d "*" /f 
+reg add "HKLM\SOFTWARE\Policies\Microsoft\Windows\QoS\VALORANT" /v "DSCP Value" /t REG_SZ /d "46" /f 
+reg add "HKLM\SOFTWARE\Policies\Microsoft\Windows\QoS\VALORANT" /v "Throttle Rate" /t REG_SZ /d "-1" /f
+wmic process where name="RiotClientServices.exe" CALL setpriority "high priority"
+reg add "HKCU\Software\Riot Games\Riot Client" /v "autoUpdateOnLaunch" /t REG_DWORD /d 0 /f
+reg add "HKCU\Software\Riot Games\Riot Client" /v "pingUrl" /t REG_SZ /d "" /f
+echo.
+echo Applied Valorant Tweaks.
+timeout /t 3 >nul
+pause >nul
+goto :GameBoosters
+
+:Fortnite
+reg add "HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Image File Execution Options\FortniteClient-Win64-Shipping.exe\PerfOptions" /t REG_DWORD /v CpuPriorityClass /d 3 /f
+cd %localappdata%
+rmdir /s /q FortniteGame
+reg add "HKLM\SYSTEM\CurrentControlSet\Control\Session Manager\PriorityControl" /v "Win32PrioritySeparation" /t REG_DWORD /d 00000026 /f
+reg add "HKLM\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Multimedia\SystemProfile" /v "SystemResponsiveness" /t REG_DWORD /d 00000010 /f
+reg add "HKLM\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Multimedia\WMPlayer" /v "Priority" /t REG_DWORD /d 00000002 /f
+reg add "HKLM\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Multimedia\Audio" /v "Priority" /t REG_DWORD /d 00000001 /f
+reg add "HKCU\Software\Epic Games\Unreal Engine\Identifiers\Fortnite" /v "sg.ResolutionQuality" /t REG_DWORD /d 30 /f
+reg add "HKCU\Software\Epic Games\Unreal Engine\Identifiers\Fortnite" /v "sg.ShadowQuality" /t REG_DWORD /d 0 /f
+reg add "HKCU\Software\Epic Games\Unreal Engine\Identifiers\Fortnite" /v "sg.EffectsQuality" /t REG_DWORD /d 0 /f
+reg add "HKCU\Software\Epic Games\Unreal Engine\Identifiers\Fortnite" /v "sg.TexturesQuality" /t REG_DWORD /d 0 /f
+reg add "HKCU\Software\Epic Games\Unreal Engine\Identifiers\Fortnite" /v "sg.bSmoothFrameRate" /t REG_DWORD /d 0 /f
+reg add "HKCU\Software\Epic Games\Unreal Engine\Identifiers\Fortnite" /v "sg.ViewDistanceQuality" /t REG_DWORD /d 0 /f
+reg add "HKCU\Software\Epic Games\Unreal Engine\Identifiers\Fortnite" /v "sg.GameThreadPriority" /t REG_DWORD /d 0 /f
+reg add "HKCU\System\GameConfigStore" /v "GameDVR_Enabled" /t REG_DWORD /d 0 /f
+reg add "HKCU\System\GameConfigStore" /v "GameDVR_FSEBehavior" /t REG_DWORD /d 2 /f
+reg add "HKCU\System\GameConfigStore" /v "GameDVR_FSEBehaviorMode" /t REG_DWORD /d 2 /f
+reg add "HKCU\Control Panel\Mouse" /v "MouseSensitivity" /t REG_DWORD /d 10 /f
+reg add "HKCU\Control Panel\Mouse" /v "MouseSpeed" /t REG_DWORD /d 1 /f
+cls
+echo Applied Fortnite Tweaks.
+timeout /t 3 >nul
+pause >nul
+goto :GameBoosters
+
+:CS2
+mic process where name="cs2.exe" CALL setpriority "high priority"
+reg add "HKCU\Control Panel\Mouse" /v "MouseSensitivity" /t REG_DWORD /d 10 /f
+reg add "HKCU\Control Panel\Mouse" /v "MouseSpeed" /t REG_DWORD /d 1 /f
+reg add "HKCU\Software\Microsoft\Windows NT\CurrentVersion\AppCompatFlags\Layers" /v "Path\To\cs2.exe" /t REG_SZ /d "~DISABLEMOUSEACCELERATION" /f
+reg add "HKCU\System\GameConfigStore" /v "GameDVR_Enabled" /t REG_DWORD /d 0 /f
+reg add "HKCU\System\GameConfigStore" /v "GameDVR_FSEBehavior" /t REG_DWORD /d 2 /f
+reg add "HKCU\System\GameConfigStore" /v "GameDVR_FSEBehaviorMode" /t REG_DWORD /d 2 /f
+reg add "HKCU\Software\Microsoft\Windows\CurrentVersion\Internet Settings" /v "MaxConnectionsPerServer" /t REG_DWORD /d 8 /f
+reg add "HKCU\Software\Microsoft\Windows\CurrentVersion\Internet Settings" /v "MaxConnectionsPer1_0Server" /t REG_DWORD /d 8 /f
+wmic computersystem where name="%computername%" set AutomaticManagedPagefile=false
+wmic pagefileset where name="_Total" set InitialSize=8192, MaximumSize=8192
+reg add "HKCU\System\GameConfigStore" /v "GameBarEnabled" /t REG_DWORD /d 0 /f
+taskkill /f /im "steam.exe"
+reg add "HKCU\Software\Valve\Steam" /v "EnableOverlay" /t REG_DWORD /d 0 /f
+reg add "HKCU\Software\Valve\Steam" /v "TcpAckFrequency" /t REG_DWORD /d 1 /f
+reg add "HKCU\Software\Valve\Steam" /v "TcpNoDelay" /t REG_DWORD /d 1 /f
+rd /s /q "%APPDATA%\Steam\htmlcache"
+rd /s /q "%PROGRAMFILES(X86)%\Steam\appcache"
+reg add "HKCU\Software\Valve\Steam" /v "AutoUpdateEnabled" /t REG_DWORD /d 0 /f
+reg add "HKCU\Software\Valve\Steam" /v "SilentStartup" /t REG_DWORD /d 1 /f
+cls
+echo Applied CS2 Tweaks.
+timeout /t 3 >nul
+pause >nul
+goto :GameBoosters
+
+:Warzone
+reg add "HKCU\Software\Microsoft\Windows NT\CurrentVersion\Image File Execution Options\ModernWarfare.exe" /v "Win32PrioritySeparation" /t REG_DWORD /d 26 /f
+reg add "HKCU\Software\Activision\ModernWarfare" /v "VideoMemoryScale" /t REG_DWORD /d 0 /f
+reg add "HKCU\Software\Activision\ModernWarfare" /v "VerticalSyncEnabled" /t REG_DWORD /d 0 /f
+reg add "HKCU\System\GameConfigStore" /v "GameDVR_Enabled" /t REG_DWORD /d 0 /f
+reg add "HKCU\System\GameConfigStore" /v "GameDVR_FSEBehavior" /t REG_DWORD /d 2 /f
+reg add "HKCU\System\GameConfigStore" /v "GameDVR_FSEBehaviorMode" /t REG_DWORD /d 2 /f
+reg add "HKLM\SYSTEM\CurrentControlSet\Services\Tcpip\Parameters" /v "TcpAckFrequency" /t REG_DWORD /d 1 /f
+reg add "HKLM\SYSTEM\CurrentControlSet\Services\Tcpip\Parameters" /v "TCPNoDelay" /t REG_DWORD /d 1 /f
+reg add "HKLM\SYSTEM\CurrentControlSet\Services\Tcpip\Parameters" /v "TcpWindowSize" /t REG_DWORD /d 65536 /f
+reg add "HKLM\SYSTEM\CurrentControlSet\Services\Tcpip\Parameters" /v "GlobalMaxTcpWindowSize" /t REG_DWORD /d 65536 /f
+reg add "HKCU\Control Panel\Mouse" /v "MouseSensitivity" /t REG_DWORD /d 10 /f
+reg add "HKCU\Control Panel\Mouse" /v "MouseSpeed" /t REG_DWORD /d 1 /f
+wmic computersystem where name="%computername%" set AutomaticManagedPagefile=false
+wmic pagefileset where name="_Total" set InitialSize=8192, MaximumSize=8192
+cls
+echo Applied Warzone Tweaks.
+timeout /t 3 >nul
+pause >nul
+goto :GameBoosters
+
+:Minecraft
+echo   Open Minecraft launcher and put the code inside JVMarguments in JVM Arguments
+timeout /t 3 >nul
+pause >nul
+(
+	echo of -XX:+UnlockExperimentalVMOptions -XX:+UseG1GC -XX:+ParallelRefProcEnabled -XX:+DisableExplicitGC -XX:+AlwaysPreTouch -XX:G1HeapWastePercent=10 -XX:G1MixedGCCountTarget=4 -XX:G1MixedGCLiveThresholdPercent=90 -XX:G1RSetUpdatingPauseTimePercent=5 -XX:SurvivorRatio=32 -XX:+PerfDisableSharedMem -XX:MaxTenuringThreshold=1 -Dusing.aikars.flags=true -Daikars.new.flags=true
+) > JVMarguments.txt
+echo.
+cd %APPDATA%\.minecraft\
+(
+	echo ofFogType:3
+	echo ofFogStart:0.6
+	echo ofMipmapType:0
+	echo ofOcclusionFancy:false
+	echo ofSmoothFps:false
+	echo ofSmoothWorld:false
+	echo ofAoLevel:0.0
+	echo ofClouds:3
+	echo ofCloudsHeight:0.0
+	echo ofTrees:1
+	echo ofDroppedItems:1
+	echo ofRain:3
+	echo ofAnimatedWater:0
+	echo ofAnimatedLava:0
+	echo ofAnimatedFire:true
+	echo ofAnimatedPortal:true
+	echo ofAnimatedRedstone:false
+	echo ofAnimatedExplosion:true
+	echo ofAnimatedFlame:true
+	echo ofAnimatedSmoke:true
+	echo ofVoidParticles:false
+	echo ofWaterParticles:true
+	echo ofPortalParticles:true
+	echo ofPotionParticles:true
+	echo ofFireworkParticles:true
+	echo ofDrippingWaterLava:true
+	echo ofAnimatedTerrain:true
+	echo ofAnimatedTextures:true
+	echo ofRainSplash:false
+	echo ofLagometer:false
+	echo ofShowFps:false
+	echo ofAutoSaveTicks:28800
+	echo ofBetterGrass:3
+	echo ofConnectedTextures:3
+	echo ofWeather:false
+	echo ofSky:false
+	echo ofStars:fale
+	echo ofSunMoon:true
+	echo ofVignette:1
+	echo ofChunkUpdates:1
+	echo ofChunkUpdatesDynamic:false
+	echo ofTime:0
+	echo ofAaLevel:0
+	echo ofAfLevel:1
+	echo ofProfiler:false
+	echo ofBetterSnow:false
+	echo ofSwampColors:false
+	echo ofRandomEntities:false
+	echo ofCustomFonts:false
+	echo ofCustomColors:false
+	echo ofCustomItems:false
+	echo ofCustomSky:true
+	echo ofShowCapes:true
+	echo ofNaturalTextures:false
+	echo ofEmissiveTextures:false
+	echo ofLazyChunkLoading:true
+	echo ofRenderRegions:true
+	echo ofSmartAnimations:true
+	echo ofDynamicFov:false
+	echo ofAlternateBlocks:false
+	echo ofDynamicLights:3
+	echo ofScreenshotSize:1
+	echo ofCustomEntityModels:false
+	echo ofCustomGuis:false
+	echo ofShowGlErrors:false
+	echo ofFastMath:true
+	echo ofFastRender:true
+	echo ofTranslucentBlocks:0
+	echo ofChatBackground:3
+	echo ofChatShadow:false
+	echo ofTelemetry:2
+	echo key_of.key.zoom:key.keyboard.left.control
+) > optionsof.txt
+echo Applied Minecraft Tweaks.
+timeout /t 3 >nul
+pause >nul
+goto :GameBoosters
+
+:Toolbox
+cls
+color 03
+echo ____________________________________________________________________________________________
+echo.
+color 03
+echo                                          Hello %username%
+echo.
+echo.
+echo                               You are currently on version %version%
+echo.
+echo                             - Thank you for using Batlez Toolbox! -
+echo ____________________________________________________________________________________________
+echo.                                                        
+echo           ===========================================================================
+echo           " For Batlez Toolbox - please note that this is currently in development! "
+echo           ===========================================================================
+echo           ===========================================================================
+echo           "  Currently working on every Windows build Please be aware of any bugs   "
+echo           ===========================================================================
+echo.
+echo                               Press any key to start Batlez Toolbox!
+pause >nul
+:continue
+cls
+color 03
+cls
+echo ---------------------------------------------------------------------------------------------------------------------
+echo       Tweaks and Software
+echo ---------------------------------------------------------------------------------------------------------------------
+echo 0. Go Back
+echo 1. Software Installs (Chocolately)                                                                                                                                                                                                                                                               
+echo --------------------------------------------------------------------------------------------------------------------
+set choice=
+set /p choice=Type A Number:
+if not '%choice%'=='' set choice=%choice:~0,100%
+if '%choice%'=='0' goto AdvancedMenu
+if '%choice%'=='1' goto continue1
+
+:continue1
+cls
+if exist "C:\ProgramData\chocolatey" goto 89
+if not exist "C:\ProgramData\chocolatey" goto InstallChoco
+
+:InstallChoco
+cls
+mode con cols=100 lines=30
+echo Installing Chocolatey Please Wait.
+timeout 1 > nul
+powershell -NoProfile -InputFormat None -ExecutionPolicy Bypass -Command "iex ((New-Object System.Net.WebClient).DownloadString('https://chocolatey.org/install.ps1'))"
+SET "PATH=%PATH%;%ALLUSERSPROFILE%\chocolatey\bin"
+"%ALLUSERSPROFILE%\chocolatey\bin\RefreshEnv.cmd
+if %errorlevel% equ 0 goto ChocoFailed
+if %errorlevel% neq 0 goto ChocoNice
+goto 89
+
+:ChocoFailed
+:: Dialog Box to show Chocolatey Failed to install.
+cls
+set msgboxTitle=Chocolatey Installation
+set msgboxBody=Failed to install Chocolatey. Any software you try to install in the Toolbox will NOT work.
+set tmpmsgbox=%temp%\~tmpmsgbox.vbs
+if exist "%tmpmsgbox%" DEL /F /Q "%tmpmsgbox%"
+echo msgbox "%msgboxBody%",0,"%msgboxTitle%">"%tmpmsgbox%"
+WSCRIPT "%tmpmsgbox%" && goto start
+
+:ChocoNice
+cls
+:: Dialog Box to show Chocolatey installed successfully.
+set msgboxTitle=Chocolatey Installation
+set msgboxBody=Successfully installed Chocolatey. All softwares you try to install in the optimizer should work.
+set tmpmsgbox=%temp%\~tmpmsgbox.vbs
+if exist "%tmpmsgbox%" DEL /F /Q "%tmpmsgbox%"
+echo msgbox "%msgboxBody%",0,"%msgboxTitle%">"%tmpmsgbox%"
+WSCRIPT "%tmpmsgbox%" && goto 89
+
+:89
+cls
+title Batlez Tweaks - Toolbox
+echo -----------------------------------------------------------------------------------------------------------------------
+echo Users Request
+echo 1. Avast                         17. Paint.net
+echo 2. AnyDesk                       18. Rufus
+echo 3. Audacity                      19. Winrar Themes
+echo 4. Blender                       20. Image Glass
+echo 5. "C++ RunTime"                 21. Windows Terminal and Icons Mod
+echo 6. MS Office                     22. Google Chrome
+echo 7. .NET Framework 3              23. GitHub
+echo 8. winrar                        24. Visual Studio Code
+echo 9. DirectX                       25. Discord and Discord Canary
+echo 10. VMware 16.0                  26. Spotify and Toastify Mod
+echo 11. Adobe Acrobat Reader DC      27. Razer Cortex
+echo 12. JavaSE RuntimeEnvironment 8  28. ApowerMirror
+echo 13. Notepad++                    29. Aimp 
+echo 14. VLC                          30. Google Chrome
+echo 15. Pyhton                       31. Google Drive
+echo 16. Office 365 Business          32. Steam
+echo 33. Epic Games                   34. Glary Utilities 5
+echo 35. Malwarebytes                 36. CCleaner
+echo 37. Winamp                       38. Foobar2000
+echo 39. Twitch                       40. WPS Office
+echo 41. Camtasia                     42. Sysinternals
+echo 43. Chromium                     44. CygWim
+echo 45. Dropbox                      46. Virtualbox
+echo 47. Winaero Tweaker              48. Iobit Program Pack
+echo 49. Process Explorer             50. WinDirStat
+echo 51. Everything                   52. Visual Studio 2022 Pro
+echo 53. Adobe Shockwave Player       54. Roblox
+echo 55. Opera Browser                56. Mario Bros
+echo 57. Popcorn Time                 58. Qbitorrent
+echo 59. TeamViewer                   60. AnyDesk
+echo 61. OneDrive                     62. Process Hacker    
+echo ---------------------------------------------------------------------------------------------------------------------
+echo 0. Back to menu
+set choice=
+set /p choice=Type A Number:
+if not '%choice%'=='' set choice=%choice:~0,100%
+if '%choice%'=='1' choco install avastfreeantivirus -y
+if '%choice%'=='2' choco install anydesk anydesk.install anydesk.portable -y
+if '%choice%'=='3' choco install audacity -y
+if '%choice%'=='4' choco install blender -y
+if '%choice%'=='5' choco install vcredist2005 vcredist2008 vcredist2010  vcredist2012 msvisualcplusplus2012-redist vcredist2013 msvisualcplusplus2013-redis vcredist2017 vcredist140 vcredist-all -y
+if '%choice%'=='6' choco install office365business -y
+if '%choice%'=='7' DISM /Online /Enable-Feature /FeatureName:NetFx3 /All 
+if '%choice%'=='8' choco install winrar -y
+if '%choice%'=='9' choco install directx -y
+if '%choice%'=='10' choco install vmware-workstation-player -y
+if '%choice%'=='11' choco install adobereader -y
+if '%choice%'=='12' choco install jre8 -y
+if '%choice%'=='13' choco install notepadplusplus.install -y
+if '%choice%'=='14' choco install vlc -y
+if '%choice%'=='15' choco install python3 -y
+if '%choice%'=='16' choco install office365business -y
+if '%choice%'=='17' choco install paint.net -y
+if '%choice%'=='18' choco install rufus -y
+if '%choice%'=='19' choco install winrar -y
+if '%choice%'=='20' choco install imageglass -y
+if '%choice%'=='21' choco install microsoft-windows-te          rminal terminal-icons.powershell -y
+if '%choice%'=='22' choco install googlechrome -y
+if '%choice%'=='23' choco install github github-desktop -y
+if '%choice%'=='24' choco install vscode -y
+if '%choice%'=='25' choco install discord discord.install discord-canary -y
+if '%choice%'=='26' choco install spotify toastify -y
+if '%choice%'=='27' choco install gamebooster -y
+if "%choice%"=="28" (
+    choco install curl
+    curl -o "%TEMP%\apowermirror-setup.exe" "https://download.apowersoft.com/down.php?softid=apowermirror"
+    pause /5
+    start "" "%TEMP%\apowermirror-setup.exe"
+)
+if '%choice%'=='29' choco install aimp -y
+if '%choice%'=='30' choco install googlechrome  google-translate-chrome save-to-google-drive-chrome -y
+if '%choice%'=='31' choco install googledrive -y
+if '%choice%'=='32' choco install steam-client -y
+if '%choice%'=='33' choco install epicgameslauncher -y
+if '%choice%'=='34' choco install glaryutilities-pro
+if '%choice%'=='35' choco install malwarebytes -y
+if '%choice%'== '36' choco install ccleaner ccleaner.portable -y
+if '%choice%'== '37' choco install winamp -y
+if '%choice%'== '38' choco install foobar2000 -y
+if '%choice%'== '39' choco install twitch -y
+if '%choice%'== '40' choco install wps-office-free -y
+if '%choice%'== '41' choco install camtasia -y
+if '%choice%'== '42' choco install sysinternals -y
+if '%choice%'== '43' choco install chromium -y
+if '%choice%'== '44' choco install cygwin -y
+if '%choice%'== '45' choco install dropbox -y
+if '%choice%'== '46' choco install virtualbox -y
+if '%choice%'== '47' choco install winaero-tweaker -y
+if '%choice%'== '48' choco install iobit-uninstaller iobit-malware-fighter io-unlocker -y
+if '%choice%'== '49' choco install procexp -y
+if '%choice%'== '50' choco install windirstat -y
+if '%choice%'== '51' choco install everything -y
+if '%choice%'== '52' choco install visualstudio2022professional -y
+if '%choice%'== '53' choco install adobeshockwaveplayer -y
+if "%choice%"=="54" (
+    choco install curl
+    curl -o %TEMP%\RobloxPlayerLauncher.exe https://setup.rbxcdn.com/version-c1236188328f4133-Roblox.exe
+    start "" %TEMP%\RobloxPlayerLauncher.exe
+)
+if '%choice%'== '55' choco install opera -y
+if '%choice%'== '56' choco install super-mario-bros-java -y
+if '%choice%'== '57' choco install popcorntime -y
+if '%choice%'== '58' choco install qbittorrent-enhanced -y
+if '%choice%'== '59' choco install teamviewer -y  
+if '%choice%'== '60' choco install anydesk -y
+if '%choice%'== '61' choco install onedrive onedrivebully -y
+if '%choice%'== '62' choco install processhacker.install -y 
+if '%choice%'=='0' goto start
+ECHO.
+goto Toolbox
 
 :Destruct
 title Thanks for using Batlez Tweaks!
