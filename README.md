@@ -1,20 +1,15 @@
-## NOMINATED AT THE 2023 BATCH AWARDS!
-I want to thank everybody who nominated my project at the 2023 Batch Awards presented by server.bat. I couldn't have done it without you!
-![image](https://github.com/Batlez/Batlez-Tweaks/assets/63690709/24f46ba5-c777-429e-af7c-8cee57057934)
-
+![image](https://github.com/Batlez/Batlez-Tweaks/blob/main/images/Logo.jpg)
 ## ⚠️ About
-[![Product Name Screen Shot][product-screenshot]](https://github.com/Batlez/Batlez)
-<h3 align="center">
 Batlez Tweaks is a tool designed to enhance your PC's performance by improving frame rate, latency, connection, privacy, security, and overall system performance. Using Batlez, you can maximize and tweak your PC for peak performance without installing any compiled software.</h3>
 
 Run any of the included scripts to optimize your system. The best part is that Batlez Tweaks is entirely free and open-source, which means you can use and modify it according to your needs. (Remember to give credit where credit is due). Whether you're a gamer, a content creator, or simply looking to improve your system's performance, Batlez Tweaks has something for everyone. Thank you for considering Batlez Tweaks to help improve your PC's performance. 
 
 ## 🛑 Getting Started 
-**This application has been tested and confirmed to be Windows 10 compatible**, and I have personally tested it on every stable Windows release. However, if you encounter problems or some features do not work as expected, please double-check your installation or reinstall. Please remember that I cannot be held liable for any damage caused to your system due to using this application, so use it at your own risk.
+[![Product Name Screen Shot][product-screenshot]](https://github.com/Batlez/Batlez)
+<h3 align="center">
+This application has been tested and confirmed to be Windows 10 compatible, and I have personally tested it on every stable Windows release. However, if you encounter problems or some features do not work as expected, please double-check your installation or reinstall. Please remember that I cannot be held liable for any damage caused to your system due to using this application, so use it at your own risk.
 
-Please remember that **I have not tested this application on Windows 8 or 11**, so I cannot guarantee that it will work with those operating systems. If you use this application on Windows 8 or 11, you do so at your own risk and acknowledge that I cannot support those systems. Thank you very much.
-
-**You MUST have an internet connection for the program to work!!**
+You MUST have an internet connection for the program to work!!
 
 To contact me directly, add me on Discord: **Batlez#3740**
 
@@ -29,7 +24,6 @@ To contact me directly, add me on Discord: **Batlez#3740**
 
 **Below are some of the features that are included!**
 
-  
 <li> Debloater </li>
 <li> Services Optimization </li>
 <li> Custom Regedit </li>
@@ -47,6 +41,5 @@ Contributions make the open-source community a fantastic place to learn, inspire
 ## 📖 License
 
 It is distributed under the Apache 2.0 license. See `LICENSE` for more information.
-
 
 [product-screenshot]: https://raw.githubusercontent.com/Batlez/Batlez/main/images/BatlezTweaks.PNG
