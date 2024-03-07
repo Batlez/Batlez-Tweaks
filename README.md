@@ -1,17 +1,20 @@
 ![image](https://github.com/Batlez/Batlez-Tweaks/blob/main/images/Logo.jpg)
 ## ⚠️ About
-Batlez Tweaks is a tool designed to enhance your PC's performance by improving frame rate, latency, connection, privacy, security, and overall system performance. Using Batlez, you can maximize and tweak your PC for peak performance without installing any compiled software.</h3>
+Batlez Tweaks is a free, open-source tool that enhances your PC's performance for gaming, everyday tasks, and more. It delivers smoother gameplay, faster system responsiveness, and improved privacy and security settings.
+With Batlez Tweaks, you can:
 
-Run any of the included scripts to optimize your system. The best part is that Batlez Tweaks is entirely free and open-source, which means you can use and modify it according to your needs. (Remember to give credit where credit is due). Whether you're a gamer, a content creator, or simply looking to improve your system's performance, Batlez Tweaks has something for everyone. Thank you for considering Batlez Tweaks to help improve your PC's performance. 
+Optimize your gaming experience: Enjoy higher frame rates, reduced lag, and better network performance.
+
+Boost overall system speed: Experience faster, more efficient computing.
+
+Protect your privacy and security: Gain greater control over your data and system settings.
 
 ## 🛑 Getting Started 
 [![Product Name Screen Shot][product-screenshot]](https://github.com/Batlez/Batlez)
 <h3 align="center">
-This application has been tested and confirmed to be Windows 10 compatible, and I have personally tested it on every stable Windows release. However, if you encounter problems or some features do not work as expected, please double-check your installation or reinstall. Please remember that I cannot be held liable for any damage caused to your system due to using this application, so use it at your own risk.
+Batlez Tweaks has been tested on Windows 10 and 11, including all stable releases. If you experience issues, please verify your installation or try reinstalling. While every effort is made to ensure safety, use this application at your own risk. I cannot be held responsible for any potential system issues. Please note: Batlez Tweaks requires an internet connection to function correctly.
 
-You MUST have an internet connection for the program to work!!
-
-To contact me directly, add me on Discord: **Batlez#3740**
+To contact me directly add me on Discord: **Croakq**
 
 ## 🔨 Installation
  1. [Download](https://github.com/Batlez/Batlez/releases/latest/) the application.
@@ -40,6 +43,6 @@ Contributions make the open-source community a fantastic place to learn, inspire
 
 ## 📖 License
 
-It is distributed under the Apache 2.0 license. See `LICENSE` for more information.
+It is distributed under the Unlicense license. See `LICENSE` for more information.
 
 [product-screenshot]: https://raw.githubusercontent.com/Batlez/Batlez/main/images/BatlezTweaks.PNG
