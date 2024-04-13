@@ -1,20 +1,21 @@
 ![image](https://github.com/Batlez/Batlez-Tweaks/blob/main/images/Logo.jpg)
 ## ⚠️ About
+> [!NOTE]  
+> **If you experience issues, please verify your installation or try reinstalling.**
+
 Batlez Tweaks is a free, open-source tool that enhances your PC's performance for gaming, everyday tasks, and more. It delivers smoother gameplay, faster system responsiveness, and improved privacy and security settings.
 With Batlez Tweaks, you can:
 
-Optimize your gaming experience: Enjoy higher frame rates, reduced lag, and better network performance.
+- Optimize your gaming experience: Enjoy higher frame rates, reduced lag, and better network performance.
+* Boost overall system speed: Optimize your computing experience for speed, efficiency, and clarity.
++ Protect your privacy and security: Gain greater control over your data and system settings.
 
-Boost overall system speed: Experience faster, more efficient computing.
-
-Protect your privacy and security: Gain greater control over your data and system settings.
+To contact me, please add me on discord **croakq**
 
 ## 🛑 Getting Started 
 [![Product Name Screen Shot][product-screenshot]](https://github.com/Batlez/Batlez)
-<h3 align="center">
-Batlez Tweaks has been tested on Windows 10 and 11, including all stable releases. If you experience issues, please verify your installation or try reinstalling. While every effort is made to ensure safety, use this application at your own risk. I cannot be held responsible for any potential system issues. Please note: Batlez Tweaks requires an internet connection to function correctly.
-
-To contact me directly add me on Discord: **Croakq**
+> [!WARNING]  
+> **Batlez Tweaks has been tested on Windows 10 and 11, including all stable releases. While every effort is made to ensure safety, use this application at your own risk. I cannot be held responsible for any potential system issues. Batlez Tweaks requires an internet connection to function correctly.**
 
 ## 🔨 Installation
  1. [Download](https://github.com/Batlez/Batlez/releases/latest/) the application.
