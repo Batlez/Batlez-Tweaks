@@ -1,5 +1,5 @@
 @echo off
-set version=1.7
+set version=1.8
 title Batlez Tweaks - %version% 
 if not "%1"=="am_admin" (powershell start -verb runas '%0' am_admin & exit /b)
 
@@ -470,7 +470,7 @@ echo %g%_____________________________________
 timeout /t 3 >nul
 cls
 powercfg -restoredefaultschemes
-powershell Invoke-WebRequest "https://cdn.discordapp.com/attachments/1145945307205611623/1145945358707470386/Batlez_Tweaks.pow" -OutFile "%temp%\Batlez_Tweaks.pow"
+powershell Invoke-WebRequest "https://cdn.discordapp.com/attachments/1145945307205611623/1219858329312952400/BatlezTweaks.pow?ex=66a86599&is=66a71419&hm=c95fa894df1850327db4d4d910d9ec4691da35ca3ccc3bc10c96d6476f0438cd&" -OutFile "%temp%\Batlez_Tweaks.pow"
 cls
 powercfg /d 44444444-4444-4444-4444-444444444449 >nul 2>&1 
 powercfg -import "%temp%\Batlez_Tweaks.pow" 44444444-4444-4444-4444-444444444449 >nul 2>&1 
@@ -501,6 +501,14 @@ md c:\windows\temp
 del /s /f /q %temp%\*.*
 rd /s /q %temp%
 md %temp%
+deltree /y c:\windows\tempor~1
+deltree /y c:\windows\temp
+deltree /y c:\windows\tmp
+deltree /y c:\windows\ff*.tmp
+deltree /y c:\windows\history
+deltree /y c:\windows\cookies
+deltree /y c:\windows\recent
+deltree /y c:\windows\spool\printers
 del /s /f /q c:\windows\tempor~1
 del /s /f /q c:\windows\temp
 del /s /f /q c:\windows\tmp
@@ -524,6 +532,21 @@ del /s /f /q %SystemRoot%\Panther\*
 del /s /f /q %SystemRoot%\inf\setupapi.app.log
 del /s /f /q %SystemRoot%\inf\setupapi.dev.log
 del /s /f /q %SystemRoot%\inf\setupapi.offline.log
+del /f /s /q %systemdrive%\*.tmp
+del /f /s /q %systemdrive%\*._mp
+del /f /s /q %systemdrive%\*.log
+del /f /s /q %systemdrive%\*.gid
+del /f /s /q %systemdrive%\*.chk
+del /f /s /q %systemdrive%\*.old
+del /f /s /q %systemdrive%\recycled\*.*
+del /f /s /q %windir%\*.bak
+del /f /s /q %windir%\prefetch\*.*
+del /f /s /q %systemdrive%\$Recycle.Bin\*.*
+@RD /S /Q "C:\Users\Administrator\AppData\Local\FortniteGame\Saved\PersistentDownloadDir"
+@RD /S /Q "C:\Users\Administrator\AppData\Local\FortniteGame\Saved\Logs"
+@RD /S /Q "C:\Users\Administrator\AppData\Local\FortniteGame\Saved\Demos"
+@RD /S /Q "C:\Users\Administrator\AppData\Local\FortniteGame\Saved\Cloud"
+@RD /S /Q "C:\Users\Administrator\AppData\Local\FortniteGame\Saved\Config\CrashReportClient"
 reg delete "HKCU\Software\Microsoft\Windows\CurrentVersion\Applets\Regedit" /va /f
 reg delete "HKLM\SOFTWARE\Microsoft\Windows\CurrentVersion\Applets\Regedit" /va /f
 reg delete "HKCU\Software\Microsoft\Windows\CurrentVersion\Applets\Regedit\Favorites" /va /f
@@ -600,6 +623,19 @@ reg add "HKLM\SYSTEM\CurrentControlSet\Services\Tcpip\Parameters" /v "MaxUserPor
 reg add "HKLM\SYSTEM\CurrentControlSet\Services\Tcpip\Parameters" /v "SackOpts" /t reg_DWORD /d "0" /f
 reg add "HKLM\SYSTEM\CurrentControlSet\Services\Tcpip\Parameters" /v "DefaultTTL" /t reg_DWORD /d "64" /f
 reg add "HKLM\SOFTWARE\Microsoft\MSMQ\Parameters" /v "TCPNoDelay" /t reg_DWORD /d "1" /f
+reg add "HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Image File Execution Options\csrss.exe\PerfOptions" /v "CpuPriorityClass" /t REG_DWORD /d 3 /f
+reg add "HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Image File Execution Options\csrss.exe\PerfOptions" /v "IoPriority" /t REG_DWORD /d 3 /f
+reg add "HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Control\Session Manager\Memory Management" /v FeatureSettingsOverride /t REG_DWORD /d 3 /f
+reg add "HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Control\Session Manager\Memory Management" /v FeatureSettingsOverrideMask /t REG_DWORD /d 3 /f
+reg add "HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Services\DiagTrack" /v "Start" /t REG_DWORD /d 4 /f
+reg add "HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Services\dmwappushservice" /v "Start" /t REG_DWORD /d 4 /f
+reg add "HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Services\diagsvc" /v "Start" /t REG_DWORD /d 4 /f
+reg add "HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Services\DPS" /v "Start" /t REG_DWORD /d 4 /f
+reg add "HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Services\diagnosticshub.standardcollector.service" /v "Start" /t REG_DWORD /d 4 /f
+reg add "HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Services\WdiServiceHost" /v "Start" /t REG_DWORD /d 4 /f
+reg add "HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Services\WdiSystemHost" /v "Start" /t REG_DWORD /d 4 /f
+reg add "HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Services\MapsBroker" /v "Start" /t REG_DWORD /d 4 /f
+
 taskkill /f /im explorer.exe
 start explorer.exe
 echo.
@@ -989,6 +1025,24 @@ wmic process where ProcessId=%pid% CALL setpriority "realtime"
 sc start vds
 for /f "tokens=3" %%a in ('sc queryex "vds" ^| findstr "PID"') do (set pid=%%a)
 wmic process where ProcessId=%pid% CALL setpriority "realtime"
+reg add "HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Control\Session Manager\Memory Management" /v "ClearPageFileAtShutdown" /t REG_DWORD /d 1 /f
+reg add "HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Control\Session Manager\Memory Management" /v "FeatureSettings" /t REG_DWORD /d 0 /f
+reg add "HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Control\Session Manager\Memory Management" /v "FeatureSettingsOverrideMask" /t REG_DWORD /d 3 /f
+reg add "HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Control\Session Manager\Memory Management" /v "FeatureSettingsOverride" /t REG_DWORD /d 3 /f
+reg add "HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Control\Session Manager\Memory Management" /v "LargeSystemCache" /t REG_DWORD /d 1 /f
+reg add "HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Control\Session Manager\Memory Management" /v "NonPagedPoolQuota" /t REG_DWORD /d 0 /f
+reg add "HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Control\Session Manager\Memory Management" /v "NonPagedPoolSize" /t REG_DWORD /d 0 /f
+reg add "HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Control\Session Manager\Memory Management" /v "SessionViewSize" /t REG_DWORD /d 192 /f
+reg add "HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Control\Session Manager\Memory Management" /v "SystemPages" /t REG_DWORD /d 0 /f
+reg add "HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Control\Session Manager\Memory Management" /v "SecondLevelDataCache" /t REG_DWORD /d 3072 /f
+reg add "HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Control\Session Manager\Memory Management" /v "SessionPoolSize" /t REG_DWORD /d 192 /f
+reg add "HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Control\Session Manager\Memory Management" /v "DisablePagingExecutive" /t REG_DWORD /d 1 /f
+reg add "HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Control\Session Manager\Memory Management" /v "PagedPoolSize" /t REG_DWORD /d 192 /f
+reg add "HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Control\Session Manager\Memory Management" /v "PagedPoolQuota" /t REG_DWORD /d 0 /f
+reg add "HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Control\Session Manager\Memory Management" /v "PhysicalAddressExtension" /t REG_DWORD /d 1 /f
+reg add "HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Control\Session Manager\Memory Management" /v "IoPageLockLimit" /t REG_DWORD /d 1048576 /f
+reg add "HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Control\Session Manager\Memory Management" /v "PoolUsageMaximum" /t REG_DWORD /d 96 /f
+
 echo.
 echo %g%======PRESS ANY KEY TO CONTINUE======
 
@@ -1022,14 +1076,37 @@ reg add "HKCU\Control Panel\Accessibility\MouseKeys" /v "Flags" /t reg_SZ /d "38
 reg add "HKCU\Control Panel\Keyboard" /v "InitialKeyboardIndicators" /t reg_SZ /d "0" /f
 reg add "HKCU\Control Panel\Keyboard" /v "KeyboardDelay" /t reg_SZ /d "0" /f
 reg add "HKCU\Control Panel\Keyboard" /v "KeyboardSpeed" /t reg_SZ /d "31" /f
-reg add "HKEY_CURRENT_USER\Control Panel\Mouse" /v "SmoothMouseXCurve" /t reg_BINARY /d "0000000000000000156e000000000000004001000000000029dc0300000000000000280000000000" /f >nul 2>&1
-reg add "HKEY_CURRENT_USER\Control Panel\Mouse" /v "SmoothMouseYCurve" /t reg_BINARY /d "0000000000000000fd11010000000000002404000000000000fc12000000000000c0bb0100000000" /f >nul 2>&1
-reg add "HKEY_USERS\.DEFAULT\Control Panel\Mouse" /v "MouseSpeed" /t reg_SZ /d "0" /f >nul 2>&1
-reg add "HKEY_USERS\.DEFAULT\Control Panel\Mouse" /v "MouseThreshold1" /t reg_SZ /d "0" /f >nul 2>&1
-reg add "HKEY_USERS\.DEFAULT\Control Panel\Mouse" /v "MouseThreshold2" /t reg_SZ /d "0" /f >nul 2>&1
-reg add "HKEY_CURRENT_USER\Control Panel\Mouse" /v "MouseSensitivity" /t reg_SZ /d "10" /f >nul 2>&1
 reg add "HKEY_CURRENT_USER\Control Panel\Mouse" /v "SmoothMouseYCurve" /t reg_BINARY /d 
 reg add "HKU\.DEFAULT\Control Panel\Mouse" /v "MouseHoverTime" /t reg_SZ /d "100" /f
+:: Set registry values for mouse settings
+:: HKEY_USERS\.DEFAULT\Control Panel\Mouse
+reg add "HKEY_USERS\.DEFAULT\Control Panel\Mouse" /v "MouseSpeed" /t REG_SZ /d "0" /f
+reg add "HKEY_USERS\.DEFAULT\Control Panel\Mouse" /v "MouseThreshold1" /t REG_SZ /d "0" /f
+reg add "HKEY_USERS\.DEFAULT\Control Panel\Mouse" /v "MouseThreshold2" /t REG_SZ /d "0" /f
+
+:: HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Input\Settings\ControllerProcessor\CursorSpeed
+reg add "HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Input\Settings\ControllerProcessor\CursorSpeed" /v "CursorSensitivity" /t REG_DWORD /d 10000 /f
+reg add "HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Input\Settings\ControllerProcessor\CursorSpeed" /v "CursorUpdateInterval" /t REG_DWORD /d 1 /f
+reg add "HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Input\Settings\ControllerProcessor\CursorSpeed" /v "IRRemoteNavigationDelta" /t REG_DWORD /d 1 /f
+
+:: HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Input\Settings\ControllerProcessor\CursorMagnetism
+reg add "HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Input\Settings\ControllerProcessor\CursorMagnetism" /v "AttractionRectInsetInDIPS" /t REG_DWORD /d 5 /f
+reg add "HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Input\Settings\ControllerProcessor\CursorMagnetism" /v "DistanceThresholdInDIPS" /t REG_DWORD /d 40 /f
+reg add "HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Input\Settings\ControllerProcessor\CursorMagnetism" /v "MagnetismDelayInMilliseconds" /t REG_DWORD /d 50 /f
+reg add "HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Input\Settings\ControllerProcessor\CursorMagnetism" /v "MagnetismUpdateIntervalInMilliseconds" /t REG_DWORD /d 10 /f
+reg add "HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Input\Settings\ControllerProcessor\CursorMagnetism" /v "VelocityInDIPSPerSecond" /t REG_DWORD /d 360 /f
+
+:: HKEY_CURRENT_USER\Control Panel\Mouse
+reg add "HKEY_CURRENT_USER\Control Panel\Mouse" /v "MouseHoverTime" /t REG_SZ /d "8" /f
+
+:: HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Services\mouclass\Parameters
+reg add "HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Services\mouclass\Parameters" /v "MouseDataQueueSize" /t REG_DWORD /d 20 /f
+reg add "HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Services\mouclass\Parameters" /v "ThreadPriority" /t REG_DWORD /d 31 /f
+
+:: Additional settings
+reg add "HKEY_CURRENT_USER\Control Panel\Mouse" /v "MouseSensitivity" /t REG_SZ /d "10" /f
+reg add "HKEY_CURRENT_USER\Control Panel\Mouse" /v "SmoothMouseXCurve" /t REG_BINARY /d 000000000000000000000000000000000000000000000000C0CC0C000000000000000000000000000809919000000000000000000000000406626000000000000000000000000003333000000000000" /f
+reg add "HKEY_CURRENT_USER\Control Panel\Mouse" /v "SmoothMouseYCurve" /t REG_BINARY /d 000000000000000000000000000000000000000000000000000038000000000000000000000000000000000070000000000000000000000000000000000A800000000000000000000000000000000E000000000000000000000000000000" /f
 echo.
 echo %g%======PRESS ANY KEY TO CONTINUE======
 
@@ -1049,9 +1126,14 @@ echo %g%_____________________________________
 timeout /t 3 >nul
 cls
 ipconfig /all
-ipconfig /flushdns
 ipconfig /release
 ipconfig /renew
+arp -d *
+nbtstat -R
+nbtstat -RR
+ipconfig /flushdns
+ipconfig /registerdns
+netsh int tcp set global autotuninglevel=disabled
 echo.
 echo %g%======PRESS ANY KEY TO CONTINUE======
 
@@ -1113,6 +1195,23 @@ reg add "HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Services\TimeBrokerSvc" /v 
 reg add "HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Services\VaultSvc" /v "Start" /t reg_DWORD /d "3" /f >nul 2>&1
 reg add "HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Services\wuauserv" /v "Start" /t reg_DWORD /d "3" /f >nul 2>&1
 reg add "HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Services\CertPropSvc" /v "Start" /t reg_DWORD /d "3" /f >nul 2>&1
+reg add "HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Services\Ndu" /v "Start" /d "00000002" /t REG_DWORD /f >nul 2>&1
+reg add "HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Services\TimeBrokerSvc" /v "Start" /d "00000003" /t REG_DWORD /f >nul 2>&1
+reg add "HKCR\CLSID\{018D5C66-4533-4307-9B53-224DE2ED1FE6}\ShellFolder" /f /v "Attributes" /t REG_DWORD /d "0" 
+reg add "HKCR\Wow6432Node\CLSID\{018D5C66-4533-4307-9B53-224DE2ED1FE6}\ShellFolder" /f /v "Attributes" /t REG_DWORD /d "0" 
+reg add "HKLM\SOFTWARE\Policies\Microsoft\Windows\OneDrive" /v "DisableFileSync" /t REG_DWORD /d "1" /f 
+reg add "HKLM\SOFTWARE\Policies\Microsoft\Windows\OneDrive" /v "DisableFileSyncNGSC" /t REG_DWORD /d "1" /f 
+reg add "HKLM\SOFTWARE\Policies\Microsoft\Windows\OneDrive" /v "DisableMeteredNetworkFileSync" /t REG_DWORD /d "0" /f 
+reg add "HKLM\SOFTWARE\Policies\Microsoft\Windows\OneDrive" /v "DisableLibrariesDefaultSaveToOneDrive" /t REG_DWORD /d "0" /f 
+reg add "HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Services\WbioSrvc" /v "Start" /t REG_DWORD /d 4 /f
+reg add "HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Services\FontCache" /v "Start" /t REG_DWORD /d 4 /f
+reg add "HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Services\FontCache3.0.0.0" /v "Start" /t REG_DWORD /d 4 /f
+reg add "HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Services\GraphicsPerfSvc" /v "Start" /t REG_DWORD /d 4 /f
+reg add "HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Services\stisvc" /v "Start" /t REG_DWORD /d 4 /f
+reg add "HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Services\WerSvc" /v "Start" /t REG_DWORD /d 4 /f
+reg add "HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Services\PcaSvc" /v "Start" /t REG_DWORD /d 4 /f
+reg add "HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Services\Wecsvc" /v "Start" /t REG_DWORD /d 4 /f
+
 echo.
 echo %g%======PRESS ANY KEY TO CONTINUE======
 
@@ -1131,57 +1230,263 @@ echo            %c%Debloater%u%
 echo %g%_____________________________________
 timeout /t 3 >nul
 cls
-"powershell.exe" "get-appxpackage -AllUsers *windowsalarms* | Remove-AppxPackage"
-"powershell.exe" "get-appxpackage -AllUsers *windowscommunicationsapps* | Remove-AppxPackage"
-"powershell.exe" "get-appxpackage -AllUsers *officehub* | Remove-AppxPackage"
-"powershell.exe" "get-appxpackage -AllUsers *skypeapp* | Remove-AppxPackage"
-"powershell.exe" "get-appxpackage -AllUsers *getstarted* | Remove-AppxPackage"
-"powershell.exe" "get-appxpackage -AllUsers *zunemusic* | Remove-AppxPackage"
-"powershell.exe" "get-appxpackage -AllUsers *windowsmaps* | Remove-AppxPackage"
-"powershell.exe" "get-appxpackage -AllUsers *solitairecollection* | Remove-AppxPackage"
-"powershell.exe" "get-appxpackage -AllUsers *bingfinance* | Remove-AppxPackage"
-"powershell.exe" "get-appxpackage -AllUsers *zunevideo* | Remove-AppxPackage"
-"powershell.exe" "get-appxpackage -AllUsers *bingnews* | Remove-AppxPackage"
-"powershell.exe" "get-appxpackage -AllUsers *onenote* | Remove-AppxPackage"
-"powershell.exe" "get-appxpackage -AllUsers *people* | Remove-AppxPackage"
-"powershell.exe" "get-appxpackage -AllUsers *windowsphone* | Remove-AppxPackage"
-"powershell.exe" "get-appxpackage -AllUsers *photos* | Remove-AppxPackage"
-"powershell.exe" "get-appxpackage -AllUsers *bingsports* | Remove-AppxPackage"
-"powershell.exe" "get-appxpackage -AllUsers *soundrecorder* | Remove-AppxPackage"
-"powershell.exe" "get-appxpackage -AllUsers *bingweather* | Remove-AppxPackage"
-"powershell.exe" "get-appxpackage -AllUsers *AdobeSystemsIncorporated.AdobePhotoshopExpress* | Remove-AppxPackage"
-"powershell.exe" "get-appxpackage -AllUsers *Duolingo-LearnLanguagesforFree* | Remove-AppxPackage"
-"powershell.exe" "get-appxpackage -AllUsers *Microsoft.ZuneVideo* | Remove-AppxPackage"
-"powershell.exe" "get-appxpackage -AllUsers *Microsoft.ZuneMusic* | Remove-AppxPackage"
-"powershell.exe" "get-appxpackage -AllUsers *Microsoft.MSPaint* | Remove-AppxPackage"
-"powershell.exe" "get-appxpackage -AllUsers *Dolby* | Remove-AppxPackage"
-"powershell.exe" "get-appxpackage -AllUsers *Speed Test* | Remove-AppxPackage"
-"powershell.exe" "get-appxpackage -AllUsers *PandoraMediaInc* | Remove-AppxPackage"
-"powershell.exe" "get-appxpackage -AllUsers *connectivitystore* | Remove-AppxPackage"
-"powershell.exe" "get-appxpackage -AllUsers *messaging* | Remove-AppxPackage"
-"powershell.exe" "get-appxpackage -AllUsers *sway* | Remove-AppxPackage"
-"powershell.exe" "get-appxpackage -AllUsers *3d* | Remove-AppxPackage"
-"powershell.exe" "get-appxpackage -AllUsers *holographic* | Remove-AppxPackage"
-"powershell.exe" "get-appxpackage -AllUsers  Microsoft.XboxGamingOverlay | Remove-AppxPackage"
-"powershell.exe" "get-appxpackage -AllUsers *3dbuilder* | Remove-AppxPackage"
-"powershell.exe" "get-appxpackage -AllUsers Microsoft.MicrosoftEdge.Stable | Remove-AppxPackage"
-"powershell.exe" "get-appxpackage -AllUsers Microsoft.549981C3F5F10 | Remove-AppxPackage"
-"powershell.exe" "get-appxpackage -AllUsers Microsoft.PowerAutomateDesktop | Remove-AppxPackage"
-"powershell.exe" "get-appxpackage -AllUsers Microsoft.XboxGameOverlay | Remove-AppxPackage"
-"powershell.exe" "get-appxpackage -AllUsers Microsoft.YourPhone | Remove-AppxPackage"
-"powershell.exe" "get-appxpackage -AllUsers MicrosoftWindows.Client.WebExperience | Remove-AppxPackage"
-"powershell.exe" "get-appxpackage -AllUsers Microsoft.WindowsFeedbackHub | Remove-AppxPackage"
-"powershell.exe" "get-appxpackage -AllUsers Microsoft.GetHelp | Remove-AppxPackage"
-"powershell.exe" "get-appxpackage -AllUsers Microsoft.MicrosoftStickyNotes | Remove-AppxPackage"
-"powershell.exe" "get-appxpackage -AllUsers Microsoft.ScreenSketch | Remove-AppxPackage"
-"powershell.exe" "get-AppxProvisionedPackage -online Microsoft.ScreenSketch | Remove-AppxProvisionedPackage -online"
-"powershell.exe" "get-AppxProvisionedPackage -online Microsoft.MicrosoftStickyNotes | Remove-AppxProvisionedPackage -online"
-"powershell.exe" "get-AppxProvisionedPackage -online Microsoft.GetHelp | Remove-AppxProvisionedPackage -online"
-"powershell.exe" "get-AppxProvisionedPackage -online Microsoft.WindowsFeedbackHub | Remove-AppxProvisionedPackage -online"
-"powershell.exe" "get-AppxProvisionedPackage -online MicrosoftWindows.Client.WebExperience | Remove-AppxProvisionedPackage -online"
-"powershell.exe" "get-AppxProvisionedPackage -online Microsoft.YourPhone | Remove-AppxProvisionedPackage -online"
-"powershell.exe" "get-AppxProvisionedPackage -online Microsoft.XboxGameOverlay | Remove-AppxProvisionedPackage -online"
+powershell.exe "get-appxpackage -AllUsers *windowsalarms* | Remove-AppxPackage"
+powershell.exe "get-appxpackage -AllUsers *windowscommunicationsapps* | Remove-AppxPackage"
+powershell.exe "get-appxpackage -AllUsers *officehub* | Remove-AppxPackage"
+powershell.exe "get-appxpackage -AllUsers *skypeapp* | Remove-AppxPackage"
+powershell.exe "get-appxpackage -AllUsers *getstarted* | Remove-AppxPackage"
+powershell.exe "get-appxpackage -AllUsers *zunemusic* | Remove-AppxPackage"
+powershell.exe "get-appxpackage -AllUsers *windowsmaps* | Remove-AppxPackage"
+powershell.exe "Get-AppxPackage *Microsoft.3DBuilder* | Remove-AppxPackage"
+powershell.exe "Get-AppxPackage *Microsoft.Appconnector* | Remove-AppxPackage"
+powershell.exe "Get-AppxPackage *Microsoft.BingFinance* | Remove-AppxPackage"
+powershell.exe "Get-AppxPackage *Microsoft.BingNews* | Remove-AppxPackage"
+powershell.exe "Get-AppxPackage *Microsoft.BingSports* | Remove-AppxPackage"
+powershell.exe "Get-AppxPackage *Microsoft.BingTranslator* | Remove-AppxPackage"
+powershell.exe "Get-AppxPackage *Microsoft.BingWeather* | Remove-AppxPackage"
+powershell.exe "Get-AppxPackage *Microsoft.FreshPaint* | Remove-AppxPackage"
+powershell.exe "Get-AppxPackage *Microsoft.DesktopAppInstaller* | Remove-AppxPackage"
+powershell.exe "Get-AppxPackage *Microsoft.Getstarted* | Remove-AppxPackage"
+powershell.exe "Get-AppxPackage *Microsoft.GetHelp* | Remove-AppxPackage"
+powershell.exe "get-appxpackage -AllUsers *solitairecollection* | Remove-AppxPackage"
+powershell.exe "get-appxpackage -AllUsers *bingfinance* | Remove-AppxPackage"
+powershell.exe "get-appxpackage -AllUsers *zunevideo* | Remove-AppxPackage"
+powershell.exe "get-appxpackage -AllUsers *bingnews* | Remove-AppxPackage"
+powershell.exe "get-appxpackage -AllUsers *onenote* | Remove-AppxPackage"
+powershell.exe "get-appxpackage -AllUsers *people* | Remove-AppxPackage"
+powershell.exe "get-appxpackage -AllUsers *windowsphone* | Remove-AppxPackage"
+powershell.exe "get-appxpackage -AllUsers *photos* | Remove-AppxPackage"
+powershell.exe "get-appxpackage -AllUsers *bingsports* | Remove-AppxPackage"
+powershell.exe "get-appxpackage -AllUsers *soundrecorder* | Remove-AppxPackage"
+powershell.exe "get-appxpackage -AllUsers *bingweather* | Remove-AppxPackage"
+powershell.exe "get-appxpackage -AllUsers *AdobeSystemsIncorporated.AdobePhotoshopExpress* | Remove-AppxPackage"
+powershell.exe "get-appxpackage -AllUsers *Duolingo-LearnLanguagesforFree* | Remove-AppxPackage"
+powershell.exe "get-appxpackage -AllUsers *Microsoft.ZuneVideo* | Remove-AppxPackage"
+powershell.exe "Get-AppxPackage *Microsoft.Messaging* | Remove-AppxPackage"
+powershell.exe "Get-AppxPackage *Microsoft.Microsoft3DViewer* | Remove-AppxPackage"
+powershell.exe "Get-AppxPackage *Microsoft.MicrosoftOfficeHub* | Remove-AppxPackage"
+powershell.exe "Get-AppxPackage *Microsoft.MicrosoftPowerBIForWindows* | Remove-AppxPackage"
+powershell.exe "Get-AppxPackage *Microsoft.MicrosoftSolitaireCollection* | Remove-AppxPackage"
+powershell.exe "Get-AppxPackage *Microsoft.MicrosoftStickyNotes* | Remove-AppxPackage"
+powershell.exe "Get-AppxPackage *Microsoft.MinecraftUWP* | Remove-AppxPackage"
+powershell.exe "Get-AppxPackage *Microsoft.NetworkSpeedTest* | Remove-AppxPackage"
+powershell.exe "Get-AppxPackage *Microsoft.WindowsPhone* | Remove-AppxPackage"
 cls
+powershell.exe "Get-AppxPackage *Microsoft.CommsPhone* | Remove-AppxPackage"
+powershell.exe "get-appxpackage -AllUsers *Microsoft.ZuneMusic* | Remove-AppxPackage"
+powershell.exe "get-appxpackage -AllUsers *Microsoft.MSPaint* | Remove-AppxPackage"
+powershell.exe "get-appxpackage -AllUsers *Dolby* | Remove-AppxPackage"
+powershell.exe "get-appxpackage -AllUsers *Speed Test* | Remove-AppxPackage"
+powershell.exe "get-appxpackage -AllUsers *PandoraMediaInc* | Remove-AppxPackage"
+powershell.exe "get-appxpackage -AllUsers *connectivitystore* | Remove-AppxPackage"
+powershell.exe "get-appxpackage -AllUsers *messaging* | Remove-AppxPackage"
+powershell.exe "get-appxpackage -AllUsers *sway* | Remove-AppxPackage"
+powershell.exe "Get-AppxPackage *Microsoft.ConnectivityStore* | Remove-AppxPackage"
+powershell.exe "Get-AppxPackage *Microsoft.Office.Sway* | Remove-AppxPackage"
+powershell.exe "Get-AppxPackage *Microsoft.BingFoodAndDrink* | Remove-AppxPackage"
+powershell.exe "Get-AppxPackage *Microsoft.BingTravel* | Remove-AppxPackage"
+powershell.exe "Get-AppxPackage *Microsoft.BingHealthAndFitness* | Remove-AppxPackage"
+powershell.exe "Get-AppxPackage *9E2F88E3.Twitter* | Remove-AppxPackage"
+powershell.exe "Get-AppxPackage *PandoraMediaInc.29680B314EFC2* | Remove-AppxPackage"
+powershell.exe "Get-AppxPackage *Flipboard.Flipboard* | Remove-AppxPackage"
+powershell.exe "Get-AppxPackage *ShazamEntertainmentLtd.Shazam* | Remove-AppxPackage"
+powershell.exe "Get-AppxPackage *king.com.CandyCrushSaga* | Remove-AppxPackage"
+powershell.exe "Get-AppxPackage *king.com.CandyCrushSodaSaga* | Remove-AppxPackage"
+powershell.exe "Get-AppxPackage *king.com.* | Remove-AppxPackage"
+powershell.exe "Get-AppxPackage *ClearChannelRadioDigital.iHeartRadio* | Remove-AppxPackage"
+powershell.exe "Get-AppxPackage *4DF9E0F8.Netflix* | Remove-AppxPackage"
+powershell.exe "Get-AppxPackage *6Wunderkinder.Wunderlist* | Remove-AppxPackage"
+powershell.exe "Get-AppxPackage *Drawboard.DrawboardPDF* | Remove-AppxPackage"
+powershell.exe "Get-AppxPackage *22StokedOnIt.NotebookPro* | Remove-AppxPackage"
+powershell.exe "Get-AppxPackage *2FE3CB00.PicsArt-PhotoStudio* | Remove-AppxPackage"
+powershell.exe "Get-AppxPackage *41038Axilesoft.ACGMediaPlayer* | Remove-AppxPackage"
+powershell.exe "Get-AppxPackage *5CB722CC.SeekersNotesMysteriesofDarkwood* | Remove-AppxPackage"
+powershell.exe "Get-AppxPackage *7458BE2C.WorldofTanksBlitz* | Remove-AppxPackage"
+powershell.exe "Get-AppxPackage *D52A8D61.FarmVille2CountryEscape | Remove-AppxPackage"
+powershell.exe "Get-AppxPackage *TuneIn.TuneInRadio* | Remove-AppxPackage"
+powershell.exe "Get-AppxPackage *GAMELOFTSA.Asphalt8Airborne* | Remove-AppxPackage"
+powershell.exe "Get-AppxPackage *TheNewYorkTimes.NYTCrossword* | Remove-AppxPackage"
+powershell.exe "Get-AppxPackage *DB6EA5DB.CyberLinkMediaSuiteEssentials* | Remove-AppxPackage"
+powershell.exe "Get-AppxPackage *Facebook.Facebook* | Remove-AppxPackage"
+powershell.exe "Get-AppxPackage *flaregamesGmbH.RoyalRevolt2* | Remove-AppxPackage"
+powershell.exe "Get-AppxPackage *Playtika.CaesarsSlotsFreeCasino* | Remove-AppxPackage"
+powershell.exe "Get-AppxPackage *A278AB0D.MarchofEmpires* | Remove-AppxPackage"
+powershell.exe "Get-AppxPackage *KeeperSecurityInc.Keeper* | Remove-AppxPackage"
+powershell.exe "Get-AppxPackage *ThumbmunkeysLtd.PhototasticCollage* | Remove-AppxPackage"
+powershell.exe "Get-AppxPackage *INGAG.XING* | Remove-AppxPackage"
+powershell.exe "Get-AppxPackage *89006A2E.AutodeskSketchBook* | Remove-AppxPackage"
+powershell.exe "Get-AppxPackage *D5EA27B7.Duolingo-LearnLanguagesforFree* | Remove-AppxPackage"
+powershell.exe "Get-AppxPackage *46928bounde.EclipseManager* | Remove-AppxPackage"
+powershell.exe "Get-AppxPackage *ActiproSoftwareLLC.562882FEEB49* | Remove-AppxPackage"
+powershell.exe "Get-AppxPackage *DolbyLaboratories.DolbyAccess* | Remove-AppxPackage"
+powershell.exe "Get-AppxPackage *SpotifyAB.SpotifyMusic* | Remove-AppxPackage"
+powershell.exe "Get-AppxPackage *A278AB0D.DisneyMagicKingdoms* | Remove-AppxPackage"
+powershell.exe "Get-AppxPackage *WinZipComputing.WinZipUniversal* | Remove-AppxPackage"
+powershell.exe "Get-AppxPackage *Microsoft.MSPaint* | Remove-AppxPackage"
+powershell.exe "Get-AppxPackage *Microsoft.Office.OneNote* | Remove-AppxPackage"
+powershell.exe "get-appxpackage -AllUsers *3d* | Remove-AppxPackage"
+powershell.exe "get-appxpackage -AllUsers *holographic* | Remove-AppxPackage"
+powershell.exe "get-appxpackage -AllUsers  Microsoft.XboxGamingOverlay | Remove-AppxPackage"
+powershell.exe "get-appxpackage -AllUsers *3dbuilder* | Remove-AppxPackage"
+powershell.exe "get-appxpackage -AllUsers Microsoft.MicrosoftEdge.Stable | Remove-AppxPackage"
+powershell.exe "get-appxpackage -AllUsers Microsoft.549981C3F5F10 | Remove-AppxPackage"
+powershell.exe "get-appxpackage -AllUsers Microsoft.PowerAutomateDesktop | Remove-AppxPackage"
+powershell.exe "get-appxpackage -AllUsers Microsoft.XboxGameOverlay | Remove-AppxPackage"
+powershell.exe "get-appxpackage -AllUsers Microsoft.YourPhone | Remove-AppxPackage"
+cls
+powershell.exe "Get-AppxPackage *Microsoft.OneConnect* | Remove-AppxPackage"
+powershell.exe "Get-AppxPackage *Microsoft.People* | Remove-AppxPackage"
+powershell.exe "Get-AppxPackage *Microsoft.Print3D* | Remove-AppxPackage"
+powershell.exe "Get-AppxPackage *Microsoft.SkypeApp* | Remove-AppxPackage"
+powershell.exe "Get-AppxPackage *Microsoft.Wallet* | Remove-AppxPackage"
+powershell.exe "Get-AppxPackage *Microsoft.Windows.Photos* | Remove-AppxPackage"
+powershell.exe "Get-AppxPackage *Microsoft.WindowsAlarms* | Remove-AppxPackage"
+powershell.exe "Get-AppxPackage *Microsoft.WindowsCamera* | Remove-AppxPackage"
+powershell.exe "Get-AppxPackage *Microsoft.windowscommunicationsapps* | Remove-AppxPackage"
+powershell.exe "Get-AppxPackage *Microsoft.WindowsFeedbackHub* | Remove-AppxPackage"
+powershell.exe "Get-AppxPackage *Microsoft.WindowsMaps* | Remove-AppxPackage"
+powershell.exe "Get-AppxPackage *Microsoft.WindowsSoundRecorder* | Remove-AppxPackage"
+powershell.exe "Get-AppxPackage *Microsoft.XboxApp* | Remove-AppxPackage"
+powershell.exe "Get-AppxPackage *Microsoft.Xbox.TCUI* | Remove-AppxPackage"
+powershell.exe "Get-AppxPackage *Microsoft.ZuneMusic* | Remove-AppxPackage"
+powershell.exe "Get-AppxPackage *Microsoft.ZuneVideo* | Remove-AppxPackage"
+powershell.exe "Get-AppxPackage *828B5831.HiddenCityMysteryofShadows* | Remove-AppxPackage"
+powershell.exe "Get-AppxPackage *king.com.BubbleWitch3Saga* | Remove-AppxPackage"
+powershell.exe "Get-AppxPackage *Fitbit.FitbitCoach* | Remove-AppxPackage"
+powershell.exe "Get-AppxPackage *Facebook.InstagramBeta* | Remove-AppxPackage"
+powershell.exe "Get-AppxPackage *Facebook.317180B0BB486* | Remove-AppxPackage"
+powershell.exe "Get-AppxPackage *Expedia.ExpediaHotelsFlightsCarsActivities* | Remove-AppxPackage"
+powershell.exe "Get-AppxPackage *CAF9E577.Plex* | Remove-AppxPackage"
+powershell.exe "Get-AppxPackage *AdobeSystemsIncorporated.PhotoshopElements2018* | Remove-AppxPackage"
+powershell.exe "Get-AppxPackage *A278AB0D.DragonManiaLegends* | Remove-AppxPackage"
+powershell.exe "Get-AppxPackage *A278AB0D.AsphaltStreetStormRacing* | Remove-AppxPackage"
+powershell.exe "Get-AppxPackage *828B5831.TheSecretSociety-HiddenMystery* | Remove-AppxPackage"
+powershell.exe "get-appxpackage -AllUsers MicrosoftWindows.Client.WebExperience | Remove-AppxPackage"
+powershell.exe "get-appxpackage -AllUsers Microsoft.WindowsFeedbackHub | Remove-AppxPackage"
+powershell.exe "get-appxpackage -AllUsers Microsoft.GetHelp | Remove-AppxPackage"
+powershell.exe "get-appxpackage -AllUsers Microsoft.MicrosoftStickyNotes | Remove-AppxPackage"
+powershell.exe "get-appxpackage -AllUsers Microsoft.ScreenSketch | Remove-AppxPackage"
+powershell.exe "Get-AppxPackage *USATODAY.USATODAY* | Remove-AppxPackage"
+powershell.exe "Get-AppxPackage *SiliconBendersLLC.Sketchable* | Remove-AppxPackage"
+powershell.exe "Get-AppxPackage *Nordcurrent.CookingFever* | Remove-AppxPackage"
+powershell.exe "Get-AppxPackage *NAVER.LINEwin8* | Remove-AppxPackage"
+powershell.exe "Get-AppxPackage *microsoft.microsoftskydrive* | Remove-AppxPackage"
+powershell.exe "Get-AppxPackage *Microsoft.AgeCastles* | Remove-AppxPackage"
+powershell.exe "Get-AppxPackage *Microsoft.ScreenSketch* | Remove-AppxPackage"
+powershell.exe "Get-AppxPackage *Microsoft.YourPhone* | Remove-AppxPackage"
+powershell.exe "Get-AppxPackage *Microsoft.WebMediaExtensions* | Remove-AppxPackage"
+powershell.exe "Get-AppxPackage *Microsoft.MixedReality.Portal* | Remove-AppxPackage"
+powershell.exe "get-AppxProvisionedPackage -online Microsoft.ScreenSketch | Remove-AppxProvisionedPackage -online"
+powershell.exe "get-AppxProvisionedPackage -online Microsoft.MicrosoftStickyNotes | Remove-AppxProvisionedPackage -online"
+powershell.exe "get-AppxProvisionedPackage -online Microsoft.GetHelp | Remove-AppxProvisionedPackage -online"
+powershell.exe "get-AppxProvisionedPackage -online Microsoft.WindowsFeedbackHub | Remove-AppxProvisionedPackage -online"
+powershell.exe "get-AppxProvisionedPackage -online MicrosoftWindows.Client.WebExperience | Remove-AppxProvisionedPackage -online"
+powershell.exe "get-AppxProvisionedPackage -online Microsoft.YourPhone | Remove-AppxProvisionedPackage -online"
+powershell.exe "get-AppxProvisionedPackage -online Microsoft.XboxGameOverlay | Remove-AppxProvisionedPackage -online"
+cls
+powershell.exe "Get-AppxProvisionedPackage -Online | where Displayname -EQ *Microsoft.DesktopAppInstaller* | Remove-AppxProvisionedPackage -Online"
+powershell.exe "Get-AppxProvisionedPackage -Online | where Displayname -EQ *Microsoft.3DBuilder* | Remove-AppxProvisionedPackage -Online"
+powershell.exe "Get-AppxProvisionedPackage -Online | where Displayname -EQ *Microsoft.Appconnector* | Remove-AppxProvisionedPackage -Online"
+powershell.exe "Get-AppxProvisionedPackage -Online | where Displayname -EQ *Microsoft.BingFinance* | Remove-AppxProvisionedPackage -Online"
+powershell.exe "Get-AppxProvisionedPackage -Online | where Displayname -EQ *Microsoft.BingNews* | Remove-AppxProvisionedPackage -Online"
+powershell.exe "Get-AppxProvisionedPackage -Online | where Displayname -EQ *Microsoft.BingSports* | Remove-AppxProvisionedPackage -Online"
+powershell.exe "Get-AppxProvisionedPackage -Online | where Displayname -EQ *Microsoft.BingTranslator* | Remove-AppxProvisionedPackage -Online"
+powershell.exe "Get-AppxProvisionedPackage -Online | where Displayname -EQ *Microsoft.BingWeather* | Remove-AppxProvisionedPackage -Online"
+powershell.exe "Get-AppxProvisionedPackage -Online | where Displayname -EQ *Microsoft.FreshPaint* | Remove-AppxProvisionedPackage -Online"
+powershell.exe "Get-AppxProvisionedPackage -Online | where Displayname -EQ *Microsoft.DesktopAppInstaller* | Remove-AppxProvisionedPackage -Online"
+powershell.exe "Get-AppxProvisionedPackage -Online | where Displayname -EQ *Microsoft.Getstarted* | Remove-AppxProvisionedPackage -Online"
+powershell.exe "Get-AppxProvisionedPackage -Online | where Displayname -EQ *Microsoft.GetHelp* | Remove-AppxProvisionedPackage -Online"
+powershell.exe "Get-AppxProvisionedPackage -Online | where Displayname -EQ *Microsoft.Messaging* | Remove-AppxProvisionedPackage -Online"
+powershell.exe "Get-AppxProvisionedPackage -Online | where Displayname -EQ *Microsoft.Microsoft3DViewer* | Remove-AppxProvisionedPackage -Online"
+powershell.exe "Get-AppxProvisionedPackage -Online | where Displayname -EQ *Microsoft.MicrosoftOfficeHub* | Remove-AppxProvisionedPackage -Online"
+powershell.exe "Get-AppxProvisionedPackage -Online | where Displayname -EQ *Microsoft.MicrosoftPowerBIForWindows* | Remove-AppxProvisionedPackage -Online"
+powershell.exe "Get-AppxProvisionedPackage -Online | where Displayname -EQ *Microsoft.MicrosoftSolitaireCollection* | Remove-AppxProvisionedPackage -Online"
+powershell.exe "Get-AppxProvisionedPackage -Online | where Displayname -EQ *Microsoft.MicrosoftStickyNotes* | Remove-AppxProvisionedPackage -Online"
+powershell.exe "Get-AppxProvisionedPackage -Online | where Displayname -EQ *Microsoft.MinecraftUWP* | Remove-AppxProvisionedPackage -Online"
+powershell.exe "Get-AppxProvisionedPackage -Online | where Displayname -EQ *Microsoft.NetworkSpeedTest* | Remove-AppxProvisionedPackage -Online"
+powershell.exe "Get-AppxProvisionedPackage -Online | where Displayname -EQ *Microsoft.WindowsPhone* | Remove-AppxProvisionedPackage -Online"
+powershell.exe "Get-AppxProvisionedPackage -Online | where Displayname -EQ *Microsoft.CommsPhone* | Remove-AppxProvisionedPackage -Online"
+powershell.exe "Get-AppxProvisionedPackage -Online | where Displayname -EQ *Microsoft.ConnectivityStore* | Remove-AppxProvisionedPackage -Online"
+powershell.exe "Get-AppxProvisionedPackage -Online | where Displayname -EQ *Microsoft.Office.Sway* | Remove-AppxProvisionedPackage -Online"
+powershell.exe "Get-AppxProvisionedPackage -Online | where Displayname -EQ *Microsoft.BingFoodAndDrink* | Remove-AppxProvisionedPackage -Online"
+powershell.exe "Get-AppxProvisionedPackage -Online | where Displayname -EQ *Microsoft.BingTravel* | Remove-AppxProvisionedPackage -Online"
+powershell.exe "Get-AppxProvisionedPackage -Online | where Displayname -EQ *Microsoft.BingHealthAndFitness* | Remove-AppxProvisionedPackage -Online"
+powershell.exe "Get-AppxProvisionedPackage -Online | where Displayname -EQ *9E2F88E3.Twitter* | Remove-AppxProvisionedPackage -Online"
+powershell.exe "Get-AppxProvisionedPackage -Online | where Displayname -EQ *PandoraMediaInc.29680B314EFC2* | Remove-AppxProvisionedPackage -Online"
+powershell.exe "Get-AppxProvisionedPackage -Online | where Displayname -EQ *Flipboard.Flipboard* | Remove-AppxProvisionedPackage -Online"
+powershell.exe "Get-AppxProvisionedPackage -Online | where Displayname -EQ *ShazamEntertainmentLtd.Shazam* | Remove-AppxProvisionedPackage -Online"
+powershell.exe "Get-AppxProvisionedPackage -Online | where Displayname -EQ *king.com.CandyCrushSaga* | Remove-AppxProvisionedPackage -Online"
+powershell.exe "Get-AppxProvisionedPackage -Online | where Displayname -EQ *king.com.CandyCrushSodaSaga* | Remove-AppxProvisionedPackage -Online"
+powershell.exe "Get-AppxProvisionedPackage -Online | where Displayname -EQ *king.com.* | Remove-AppxProvisionedPackage -Online"
+powershell.exe "Get-AppxProvisionedPackage -Online | where Displayname -EQ *ClearChannelRadioDigital.iHeartRadio* | Remove-AppxProvisionedPackage -Online"
+powershell.exe "Get-AppxProvisionedPackage -Online | where Displayname -EQ *4DF9E0F8.Netflix* | Remove-AppxProvisionedPackage -Online"
+powershell.exe "Get-AppxProvisionedPackage -Online | where Displayname -EQ *6Wunderkinder.Wunderlist* | Remove-AppxProvisionedPackage -Online"
+powershell.exe "Get-AppxProvisionedPackage -Online | where Displayname -EQ *Drawboard.DrawboardPDF* | Remove-AppxProvisionedPackage -Online"
+powershell.exe "Get-AppxProvisionedPackage -Online | where Displayname -EQ *22StokedOnIt.NotebookPro* | Remove-AppxProvisionedPackage -Online"
+powershell.exe "Get-AppxProvisionedPackage -Online | where Displayname -EQ *2FE3CB00.PicsArt-PhotoStudio* | Remove-AppxProvisionedPackage -Online"
+powershell.exe "Get-AppxProvisionedPackage -Online | where Displayname -EQ *41038Axilesoft.ACGMediaPlayer* | Remove-AppxProvisionedPackage -Online"
+powershell.exe "Get-AppxProvisionedPackage -Online | where Displayname -EQ *5CB722CC.SeekersNotesMysteriesofDarkwood* | Remove-AppxProvisionedPackage -Online"
+powershell.exe "Get-AppxProvisionedPackage -Online | where Displayname -EQ *7458BE2C.WorldofTanksBlitz* | Remove-AppxProvisionedPackage -Online"
+powershell.exe "Get-AppxProvisionedPackage -Online | where Displayname -EQ *D52A8D61.FarmVille2CountryEscape | Remove-AppxProvisionedPackage -Online"
+powershell.exe "Get-AppxProvisionedPackage -Online | where Displayname -EQ *TuneIn.TuneInRadio* | Remove-AppxProvisionedPackage -Online"
+powershell.exe "Get-AppxProvisionedPackage -Online | where Displayname -EQ *GAMELOFTSA.Asphalt8Airborne* | Remove-AppxProvisionedPackage -Online"
+powershell.exe "Get-AppxProvisionedPackage -Online | where Displayname -EQ *TheNewYorkTimes.NYTCrossword* | Remove-AppxProvisionedPackage -Online"
+powershell.exe "Get-AppxProvisionedPackage -Online | where Displayname -EQ *DB6EA5DB.CyberLinkMediaSuiteEssentials* | Remove-AppxProvisionedPackage -Online"
+powershell.exe "Get-AppxProvisionedPackage -Online | where Displayname -EQ *Facebook.Facebook* | Remove-AppxProvisionedPackage -Online"
+powershell.exe "Get-AppxProvisionedPackage -Online | where Displayname -EQ *flaregamesGmbH.RoyalRevolt2* | Remove-AppxProvisionedPackage -Online"
+powershell.exe "Get-AppxProvisionedPackage -Online | where Displayname -EQ *Playtika.CaesarsSlotsFreeCasino* | Remove-AppxProvisionedPackage -Online"
+powershell.exe "Get-AppxProvisionedPackage -Online | where Displayname -EQ *A278AB0D.MarchofEmpires* | Remove-AppxProvisionedPackage -Online"
+powershell.exe "Get-AppxProvisionedPackage -Online | where Displayname -EQ *KeeperSecurityInc.Keeper* | Remove-AppxProvisionedPackage -Online"
+powershell.exe "Get-AppxProvisionedPackage -Online | where Displayname -EQ *ThumbmunkeysLtd.PhototasticCollage* | Remove-AppxProvisionedPackage -Online"
+powershell.exe "Get-AppxProvisionedPackage -Online | where Displayname -EQ *INGAG.XING* | Remove-AppxProvisionedPackage -Online"
+powershell.exe "Get-AppxProvisionedPackage -Online | where Displayname -EQ *89006A2E.AutodeskSketchBook* | Remove-AppxProvisionedPackage -Online"
+powershell.exe "Get-AppxProvisionedPackage -Online | where Displayname -EQ *D5EA27B7.Duolingo-LearnLanguagesforFree* | Remove-AppxProvisionedPackage -Online"
+powershell.exe "Get-AppxProvisionedPackage -Online | where Displayname -EQ *46928bounde.EclipseManager* | Remove-AppxProvisionedPackage -Online"
+powershell.exe "Get-AppxProvisionedPackage -Online | where Displayname -EQ *ActiproSoftwareLLC.562882FEEB49* | Remove-AppxProvisionedPackage -Online"
+powershell.exe "Get-AppxProvisionedPackage -Online | where Displayname -EQ *DolbyLaboratories.DolbyAccess* | Remove-AppxProvisionedPackage -Online"
+powershell.exe "Get-AppxProvisionedPackage -Online | where Displayname -EQ *SpotifyAB.SpotifyMusic* | Remove-AppxProvisionedPackage -Online"
+powershell.exe "Get-AppxProvisionedPackage -Online | where Displayname -EQ *A278AB0D.DisneyMagicKingdoms* | Remove-AppxProvisionedPackage -Online"
+powershell.exe "Get-AppxProvisionedPackage -Online | where Displayname -EQ *WinZipComputing.WinZipUniversal* | Remove-AppxProvisionedPackage -Online"
+powershell.exe "Get-AppxProvisionedPackage -Online | where Displayname -EQ *Microsoft.MSPaint* | Remove-AppxProvisionedPackage -Online"
+powershell.exe "Get-AppxProvisionedPackage -Online | where Displayname -EQ *Microsoft.Office.OneNote* | Remove-AppxProvisionedPackage -Online"
+powershell.exe "Get-AppxProvisionedPackage -Online | where Displayname -EQ *Microsoft.OneConnect* | Remove-AppxProvisionedPackage -Online"
+powershell.exe "Get-AppxProvisionedPackage -Online | where Displayname -EQ *Microsoft.People* | Remove-AppxProvisionedPackage -Online"
+cls
+powershell.exe "Get-AppxProvisionedPackage -Online | where Displayname -EQ *Microsoft.Print3D* | Remove-AppxProvisionedPackage -Online"
+powershell.exe "Get-AppxProvisionedPackage -Online | where Displayname -EQ *Microsoft.SkypeApp* | Remove-AppxProvisionedPackage -Online"
+powershell.exe "Get-AppxProvisionedPackage -Online | where Displayname -EQ *Microsoft.Wallet* | Remove-AppxProvisionedPackage -Online"
+powershell.exe "Get-AppxProvisionedPackage -Online | where Displayname -EQ *Microsoft.Windows.Photos* | Remove-AppxProvisionedPackage -Online"
+powershell.exe "Get-AppxProvisionedPackage -Online | where Displayname -EQ *Microsoft.WindowsAlarms* | Remove-AppxProvisionedPackage -Online"
+powershell.exe "Get-AppxProvisionedPackage -Online | where Displayname -EQ *Microsoft.WindowsCamera* | Remove-AppxProvisionedPackage -Online"
+powershell.exe "Get-AppxProvisionedPackage -Online | where Displayname -EQ *Microsoft.windowscommunicationsapps* | Remove-AppxProvisionedPackage -Online"
+powershell.exe "Get-AppxProvisionedPackage -Online | where Displayname -EQ *Microsoft.WindowsFeedbackHub* | Remove-AppxProvisionedPackage -Online"
+powershell.exe "Get-AppxProvisionedPackage -Online | where Displayname -EQ *Microsoft.WindowsMaps* | Remove-AppxProvisionedPackage -Online"
+powershell.exe "Get-AppxProvisionedPackage -Online | where Displayname -EQ *Microsoft.WindowsSoundRecorder* | Remove-AppxProvisionedPackage -Online"
+powershell.exe "Get-AppxProvisionedPackage -Online | where Displayname -EQ *Microsoft.XboxApp* | Remove-AppxProvisionedPackage -Online"
+powershell.exe "Get-AppxProvisionedPackage -Online | where Displayname -EQ *Microsoft.Xbox.TCUI* | Remove-AppxProvisionedPackage -Online"
+powershell.exe "Get-AppxProvisionedPackage -Online | where Displayname -EQ *Microsoft.ZuneMusic* | Remove-AppxProvisionedPackage -Online"
+powershell.exe "Get-AppxProvisionedPackage -Online | where Displayname -EQ *Microsoft.ZuneVideo* | Remove-AppxProvisionedPackage -Online"
+powershell.exe "Get-AppxProvisionedPackage -Online | where Displayname -EQ *828B5831.HiddenCityMysteryofShadows* | Remove-AppxProvisionedPackage -Online"
+powershell.exe "Get-AppxProvisionedPackage -Online | where Displayname -EQ *king.com.BubbleWitch3Saga* | Remove-AppxProvisionedPackage -Online"
+powershell.exe "Get-AppxProvisionedPackage -Online | where Displayname -EQ *Fitbit.FitbitCoach* | Remove-AppxProvisionedPackage -Online"
+powershell.exe "Get-AppxProvisionedPackage -Online | where Displayname -EQ *Facebook.InstagramBeta* | Remove-AppxProvisionedPackage -Online"
+powershell.exe "Get-AppxProvisionedPackage -Online | where Displayname -EQ *Facebook.317180B0BB486* | Remove-AppxProvisionedPackage -Online"
+powershell.exe "Get-AppxProvisionedPackage -Online | where Displayname -EQ *Expedia.ExpediaHotelsFlightsCarsActivities* | Remove-AppxProvisionedPackage -Online"
+powershell.exe "Get-AppxProvisionedPackage -Online | where Displayname -EQ *CAF9E577.Plex* | Remove-AppxProvisionedPackage -Online"
+powershell.exe "Get-AppxProvisionedPackage -Online | where Displayname -EQ *AdobeSystemsIncorporated.PhotoshopElements2018* | Remove-AppxProvisionedPackage -Online"
+powershell.exe "Get-AppxProvisionedPackage -Online | where Displayname -EQ *A278AB0D.DragonManiaLegends* | Remove-AppxProvisionedPackage -Online"
+powershell.exe "Get-AppxProvisionedPackage -Online | where Displayname -EQ *A278AB0D.AsphaltStreetStormRacing* | Remove-AppxProvisionedPackage -Online"
+powershell.exe "Get-AppxProvisionedPackage -Online | where Displayname -EQ *828B5831.TheSecretSociety-HiddenMystery* | Remove-AppxProvisionedPackage -Online"
+powershell.exe "Get-AppxProvisionedPackage -Online | where Displayname -EQ *USATODAY.USATODAY* | Remove-AppxProvisionedPackage -Online"
+powershell.exe "Get-AppxProvisionedPackage -Online | where Displayname -EQ *SiliconBendersLLC.Sketchable* | Remove-AppxProvisionedPackage -Online"
+powershell.exe "Get-AppxProvisionedPackage -Online | where Displayname -EQ *Nordcurrent.CookingFever* | Remove-AppxProvisionedPackage -Online"
+powershell.exe "Get-AppxProvisionedPackage -Online | where Displayname -EQ *NAVER.LINEwin8* | Remove-AppxProvisionedPackage -Online"
+powershell.exe "Get-AppxProvisionedPackage -Online | where Displayname -EQ *microsoft.microsoftskydrive* | Remove-AppxProvisionedPackage -Online"
+powershell.exe "Get-AppxProvisionedPackage -Online | where Displayname -EQ *Microsoft.AgeCastles* | Remove-AppxProvisionedPackage -Online"
+powershell.exe "Get-AppxProvisionedPackage -Online | where Displayname -EQ *Microsoft.ScreenSketch* | Remove-AppxProvisionedPackage -Online"
+powershell.exe "Get-AppxProvisionedPackage -Online | where Displayname -EQ *Microsoft.YourPhone* | Remove-AppxProvisionedPackage -Online"
+powershell.exe "Get-AppxProvisionedPackage -Online | where Displayname -EQ *Microsoft.WebMediaExtensions* | Remove-AppxProvisionedPackage -Online"
+powershell.exe "Get-AppxProvisionedPackage -Online | where Displayname -EQ *Microsoft.MixedReality.Portal* | Remove-AppxProvisionedPackage -Online"
 reg ADD "HKLM\SOFTWARE\Policies\Microsoft\Internet Explorer\Security" /V "DisableSecuritySettingsCheck" /T "reg_DWORD" /D "00000001" /F
 reg ADD "HKCU\Software\Microsoft\Windows\CurrentVersion\Internet Settings\Zones\3" /V "1806" /T "reg_DWORD" /D "00000000" /F
 reg ADD "HKLM\Software\Microsoft\Windows\CurrentVersion\Internet Settings\Zones\3" /V "1806" /T "reg_DWORD" /D "00000000" /F
@@ -1320,7 +1625,7 @@ echo                        %c%║%u%           [%c%2%u%] Firewall Configuration
 echo                        %c%║%u%           [%c%3%u%] Anti-Virus Software                %c%║%u%
 echo                        %c%║%u%           [%c%4%u%] Browser Privacy                    %c%║%u%
 echo                        %c%║%u%           [%c%5%u%] Security Improvements              %c%║%u%
-echo                        %c%║%u%           [%c%6%u%] Program Spying                     %c%║%u%
+echo                        %c%║%u%           [%c%6%u%] Anti-Tracking                      %c%║%u%
 echo %c%                       ╚══════════════════════════════════════════════════╝
 echo %c%                             ║  %u%[%c%7%u%] Theme Presets    [%c%8%u%] Go Back    %c%║%u%
 echo %c%                             ║            %u% [%c%Quit%u%] Leave%c%             ║
@@ -1336,7 +1641,7 @@ if %M%==2 goto Comingsoon
 if %M%==3 goto Comingsoon
 if %M%==4 goto Comingsoon
 if %M%==5 goto Comingsoon
-if %M%==6 goto Comingsoon
+if %M%==6 goto Antitracking
 if %M%==7 goto Presets
 if %M%==8 goto menu
 if %M%==Quit goto Destruct
@@ -1356,6 +1661,89 @@ echo %g%======PRESS ANY KEY TO CONTINUE======
 pause >nul
 goto PrivacyMenu
 
+:Antitracking
+chcp 437>nul
+chcp 65001 >nul
+echo.
+echo.
+cls
+echo %g%_____________________________________
+echo.
+echo            %c%Antitracking%u%        
+echo %g%_____________________________________
+timeout /t 3 >nul
+cls
+reg delete "HKLM\SYSTEM\CurrentControlSet\Control\WMI\Autologger\AutoLogger-Diagtrack-Listener" /f >nul 2>&1
+reg delete "HKLM\SOFTWARE\Microsoft\WindowsSelfHost\UI\Visibility" /v "DiagnosticErrorText" /f >nul 2>&1
+reg delete "HKLM\SOFTWARE\Microsoft\WindowsSelfHost\UI\Strings" /f >nul 2>&1
+reg delete "HKCU\SOFTWARE\Classes\Local Settings\Software\Microsoft\Windows\CurrentVersion\AppContainer\Storage\microsoft.microsoftedge_8wekyb3d8bbwe\MicrosoftEdge" /f >nul 2>&1
+reg delete "HKLM\SOFTWARE\Policies\Microsoft\Windows\TabletPC" /f >nul 2>&1
+reg delete "HKLM\SOFTWARE\Policies\Microsoft\Windows\HandwritingErrorReports" /f >nul 2>&1
+reg delete "HKLM\SOFTWARE\Policies\Microsoft\Windows\AppCompat" /f >nul 2>&1
+reg delete "HKLM\SOFTWARE\Policies\Microsoft\Windows\Personalization" /f >nul 2>&1
+reg delete "HKLM\SOFTWARE\Microsoft\PolicyManager\current\device\Bluetooth" /f >nul 2>&1
+reg delete "HKLM\SOFTWARE\Microsoft\PolicyManager\current\device\System" /f >nul 2>&1
+reg delete "HKLM\SOFTWARE\Policies\Microsoft\Windows\Messaging" /f >nul 2>&1
+reg delete "HKLM\SOFTWARE\Policies\Microsoft\Biometrics" /f >nul 2>&1
+reg delete "HKCU\Software\Microsoft\Windows\CurrentVersion\PushNotifications" /v "ToastEnabled" /f >nul 2>&1
+reg delete "HKCU\Control Panel\International\User Profile" /v "HttpAcceptLanguageOptOut" /f >nul 2>&1
+reg delete "HKCU\Software\Microsoft\Windows\CurrentVersion\AppHost" /v "EnableWebContentEvaluation" /f >nul 2>&1
+reg delete "HKCU\Software\Microsoft\Windows\CurrentVersion\Explorer\Advanced" /v "ShowSyncProviderNotifications" /f >nul 2>&1
+reg delete "HKCU\Software\Microsoft\Windows\CurrentVersion\BackgroundAccessApplications" /v "GlobalUserDisabled" /f >nul 2>&1
+reg delete "HKCU\Software\Microsoft\Windows\CurrentVersion\SettingSync" /v "SyncPolicy" /f >nul 2>&1
+reg delete "HKCU\Software\Microsoft\Windows\CurrentVersion\DeviceAccess" /f >nul 2>&1
+reg delete "HKLM\SYSTEM\ControlSet001\Control\WMI\Autologger\AutoLogger-Diagtrack-Listener" /f >nul 2>&1
+reg delete "HKLM\SOFTWARE\Policies\Microsoft\WMDRM" /f >nul 2>&1
+reg delete "HKLM\SOFTWARE\Policies\Microsoft\Windows\CredUI" /f >nul 2>&1
+reg delete "HKLM\SOFTWARE\Microsoft\PolicyManager\current\device\Browser" /f >nul 2>&1
+reg delete "HKCU\Software\Microsoft\Windows\CurrentVersion\SettingSync\Groups\BrowserSettings" /f >nul 2>&1
+reg delete "HKLM\SOFTWARE\Policies\Microsoft\Windows\Windows Search" /f >nul 2>&1
+reg delete "HKLM\SOFTWARE\Microsoft\Speech_OneCore\Preferences" /v "ModelDownloadAllowed" /f >nul 2>&1
+reg delete "HKLM\SOFTWARE\Policies\Microsoft\Windows\LocationAndSensors" /f >nul 2>&1
+reg delete "HKCU\Software\Microsoft\Windows NT\CurrentVersion\Sensor" /f >nul 2>&1
+reg delete "HKLM\SOFTWARE\Policies\Microsoft\Windows\DataCollection" /v "AllowTelemetry" /f >nul 2>&1
+reg delete "HKLM\SOFTWARE\Policies\Microsoft\Windows\DataCollection" /v "DoNotShowFeedbackNotifications" /f >nul 2>&1
+reg delete HKLM\SOFTWARE\Policies\Microsoft\Windows\DeliveryOptimization"" /f >nul 2>&1
+reg delete "HKCU\Software\Microsoft\Windows\CurrentVersion\DeliveryOptimization" /f >nul 2>&1
+reg delete "HKLM\SOFTWARE\Policies\Microsoft\Speech" /f >nul 2>&1
+reg delete "HKLM\SOFTWARE\Policies\Microsoft\Windows\WindowsUpdate" /f >nul 2>&1
+reg delete "HKLM\SOFTWARE\Microsoft\Windows\CurrentVersion\WindowsStore" /f >nul 2>&1
+reg delete "HKLM\SOFTWARE\Policies\Microsoft\Windows\WindowsUpdate" /f >nul 2>&1
+reg delete "HKLM\SOFTWARE\Microsoft\OneDrive" /f >nul 2>&1
+reg delete "HKLM\SOFTWARE\Policies\Microsoft\Windows Defender" /f >nul 2>&1
+reg delete "HKLM\SOFTWARE\Policies\Microsoft\MRT" /f >nul 2>&1
+reg delete "HKCU\Software\Microsoft\Siuf" /f >nul 2>&1
+reg delete "HKCU\Software\Microsoft\Windows\CurrentVersion\Search" /v "BingSearchEnabled" /f >nul 2>&1
+reg add "HKCU\Software\Microsoft\Windows\CurrentVersion\ContentDeliveryManager" /v "SilentInstalledAppsEnabled" /t REG_DWORD /d "1" /f >nul 2>&1
+reg add "HKCU\Software\Microsoft\Windows\CurrentVersion\ContentDeliveryManager" /v "SoftLandingEnabled" /t REG_DWORD /d "1" /f >nul 2>&1
+reg add "HKLM\SOFTWARE\Microsoft\Windows\CurrentVersion\AdvertisingInfo" /v "Enabled" /t REG_DWORD /d "0" /f >nul 2>&1
+reg add "HKCU\Software\Microsoft\Windows\CurrentVersion\AdvertisingInfo" /v "Enabled" /t REG_DWORD /d "0" /f >nul 2>&1
+reg add "HKCU\Software\Microsoft\Input\TIPC" /v "Enabled" /t REG_DWORD /d "0" /f >nul 2>&1
+reg add "HKLM\SYSTEM\ControlSet001\Services\wuauserv" /v "Start" /t REG_DWORD /d "3" /f >nul 2>&1
+reg add "HKLM\SOFTWARE\Microsoft\Windows\CurrentVersion\WindowsUpdate\Services\7971f918-a847-4430-9279-4a52d1efe18d" /v "RegisteredWithAU" /t REG_DWORD /d "0" /f >nul 2>&1
+reg add "HKCU\Software\Microsoft\Personalization\Settings" /v "AcceptedPrivacyPolicy" /t REG_DWORD /d "1" /f >nul 2>&1
+reg add "HKCU\Software\Microsoft\InputPersonalization" /v "RestrictImplicitTextCollection" /t REG_DWORD /d "0" /f >nul 2>&1
+reg add "HKCU\Software\Microsoft\InputPersonalization" /v "RestrictImplicitInkCollection" /t REG_DWORD /d "0" /f >nul 2>&1
+reg add "HKLM\SOFTWARE\Microsoft\Windows\CurrentVersion\Device Metadata" /v "PreventDeviceMetadataFromNetwork" /t REG_DWORD /d "0" /f >nul 2>&1
+reg add "HKLM\SOFTWARE\Microsoft\Windows\CurrentVersion\Policies\DataCollection" /v "AllowTelemetry" /t REG_DWORD /d "1" /f >nul 2>&1
+reg add "HKLM\SOFTWARE\Microsoft\SQMClient\Windows" /v "CEIPEnable" /t REG_DWORD /d "0" /f >nul 2>&1
+reg add "HKCU\Software\Microsoft\Windows\CurrentVersion\Explorer\Advanced" /v "Start_TrackProgs" /t REG_DWORD /d "0" /f >nul 2>&1
+reg add "HKCU\Software\Microsoft\InputPersonalization\TrainedDataStore" /v "HarvestContacts" /t REG_DWORD /d "1" /f >nul 2>&1
+reg add "HKLM\SYSTEM\ControlSet001\Services\dmwappushservice" /v "Start" /t REG_DWORD /d "3" /f >nul 2>&1
+reg add "HKLM\SYSTEM\ControlSet001\Services\DiagTrack" /v "Start" /t REG_DWORD /d "2" /f >nul 2>&1
+reg add "HKCU\Software\Microsoft\Windows\CurrentVersion\SettingSync\Groups\Credentials" /v "Enabled" /t REG_DWORD /d "1" /f >nul 2>&1
+reg add "HKCU\Software\Microsoft\Windows\CurrentVersion\SettingSync\Groups\Language" /v "Enabled" /t REG_DWORD /d "1" /f >nul 2>&1
+reg add "HKCU\Software\Microsoft\Windows\CurrentVersion\SettingSync\Groups\Accessibility" /v "Enabled" /t REG_DWORD /d "1" /f >nul 2>&1
+reg add "HKCU\Software\Microsoft\Windows\CurrentVersion\SettingSync\Groups\Windows" /v "Enabled" /t REG_DWORD /d "1" /f >nul 2>&1
+reg add "HKCU\Software\Microsoft\Windows\CurrentVersion\SettingSync\Groups\Personalization" /v "Enabled" /t REG_DWORD /d "1" /f >nul 2>&1
+cls
+taskkill /f /im explorer.exe
+start explorer.exe
+echo.
+echo %g%======PRESS ANY KEY TO CONTINUE======
+
+pause >nul
+goto :PrivacyMenu
 
 :AdvancedMenu
 :GameBoosters
@@ -1408,146 +1796,1560 @@ echo %g%_____________________________________
 echo.
 echo.
 echo %g%======PRESS ANY KEY TO CONTINUE======
+pause >nul
+goto AdvancedMenu
 
 :ProgramDebloat
 cls
-Reg.exe add "HKCU\SOFTWARE\Sysinternals\Process Explorer" /v "EulaAccepted" /t REG_DWORD /d "1" /f
-Reg.exe add "HKCU\SOFTWARE\Sysinternals\Process Explorer" /v "Windowplacement" /t REG_BINARY /d "2c0000000200000003000000ffffffffffffffffffffffffffffffff75030000110000009506000069020000" /f
-Reg.exe add "HKCU\SOFTWARE\Sysinternals\Process Explorer" /v "FindWindowplacement" /t REG_BINARY /d "2c00000000000000000000000000000000000000000000000000000096000000960000000000000000000000" /f
-Reg.exe add "HKCU\SOFTWARE\Sysinternals\Process Explorer" /v "SysinfoWindowplacement" /t REG_BINARY /d "2c00000000000000010000000000000000000000ffffffffffffffff28000000280000002b0300002b020000" /f
-Reg.exe add "HKCU\SOFTWARE\Sysinternals\Process Explorer" /v "PropWindowplacement" /t REG_BINARY /d "2c00000000000000000000000000000000000000000000000000000028000000280000000000000000000000" /f
-Reg.exe add "HKCU\SOFTWARE\Sysinternals\Process Explorer" /v "DllPropWindowplacement" /t REG_BINARY /d "2c00000000000000010000000000000000000000ffffffffffffffff2800000028000000e70100009f020000" /f
-Reg.exe add "HKCU\SOFTWARE\Sysinternals\Process Explorer" /v "UnicodeFont" /t REG_BINARY /d "080000000000000000000000000000009001000000000000000000004d00530020005300680065006c006c00200044006c00670000000000000000000000000000000000000000000000000000000000000000000000000000000000" /f
-Reg.exe add "HKCU\SOFTWARE\Sysinternals\Process Explorer" /v "Divider" /t REG_BINARY /d "531f0e151662ea3f" /f
-Reg.exe add "HKCU\SOFTWARE\Sysinternals\Process Explorer" /v "SavedDivider" /t REG_BINARY /d "531f0e151662ea3f" /f
-Reg.exe add "HKCU\SOFTWARE\Sysinternals\Process Explorer" /v "ProcessImageColumnWidth" /t REG_DWORD /d "261" /f
-Reg.exe add "HKCU\SOFTWARE\Sysinternals\Process Explorer" /v "ShowUnnamedHandles" /t REG_DWORD /d "1" /f
-Reg.exe add "HKCU\SOFTWARE\Sysinternals\Process Explorer" /v "ShowDllView" /t REG_DWORD /d "1" /f
-Reg.exe add "HKCU\SOFTWARE\Sysinternals\Process Explorer" /v "HandleSortColumn" /t REG_DWORD /d "0" /f
-Reg.exe add "HKCU\SOFTWARE\Sysinternals\Process Explorer" /v "HandleSortDirection" /t REG_DWORD /d "1" /f
-Reg.exe add "HKCU\SOFTWARE\Sysinternals\Process Explorer" /v "DllSortColumn" /t REG_DWORD /d "0" /f
-Reg.exe add "HKCU\SOFTWARE\Sysinternals\Process Explorer" /v "DllSortDirection" /t REG_DWORD /d "1" /f
-Reg.exe add "HKCU\SOFTWARE\Sysinternals\Process Explorer" /v "ProcessSortColumn" /t REG_DWORD /d "4294967295" /f
-Reg.exe add "HKCU\SOFTWARE\Sysinternals\Process Explorer" /v "ProcessSortDirection" /t REG_DWORD /d "1" /f
-Reg.exe add "HKCU\SOFTWARE\Sysinternals\Process Explorer" /v "HighlightServices" /t REG_DWORD /d "1" /f
-Reg.exe add "HKCU\SOFTWARE\Sysinternals\Process Explorer" /v "HighlightOwnProcesses" /t REG_DWORD /d "1" /f
-Reg.exe add "HKCU\SOFTWARE\Sysinternals\Process Explorer" /v "HighlightRelocatedDlls" /t REG_DWORD /d "0" /f
-Reg.exe add "HKCU\SOFTWARE\Sysinternals\Process Explorer" /v "HighlightJobs" /t REG_DWORD /d "0" /f
-Reg.exe add "HKCU\SOFTWARE\Sysinternals\Process Explorer" /v "HighlightNewProc" /t REG_DWORD /d "1" /f
-Reg.exe add "HKCU\SOFTWARE\Sysinternals\Process Explorer" /v "HighlightDelProc" /t REG_DWORD /d "1" /f
-Reg.exe add "HKCU\SOFTWARE\Sysinternals\Process Explorer" /v "HighlightImmersive" /t REG_DWORD /d "1" /f
-Reg.exe add "HKCU\SOFTWARE\Sysinternals\Process Explorer" /v "HighlightProtected" /t REG_DWORD /d "0" /f
-Reg.exe add "HKCU\SOFTWARE\Sysinternals\Process Explorer" /v "HighlightPacked" /t REG_DWORD /d "1" /f
-Reg.exe add "HKCU\SOFTWARE\Sysinternals\Process Explorer" /v "HighlightNetProcess" /t REG_DWORD /d "0" /f
-Reg.exe add "HKCU\SOFTWARE\Sysinternals\Process Explorer" /v "HighlightSuspend" /t REG_DWORD /d "1" /f
-Reg.exe add "HKCU\SOFTWARE\Sysinternals\Process Explorer" /v "HighlightDuration" /t REG_DWORD /d "1000" /f
-Reg.exe add "HKCU\SOFTWARE\Sysinternals\Process Explorer" /v "ShowCpuFractions" /t REG_DWORD /d "1" /f
-Reg.exe add "HKCU\SOFTWARE\Sysinternals\Process Explorer" /v "ShowLowerpane" /t REG_DWORD /d "1" /f
-Reg.exe add "HKCU\SOFTWARE\Sysinternals\Process Explorer" /v "ShowAllUsers" /t REG_DWORD /d "1" /f
-Reg.exe add "HKCU\SOFTWARE\Sysinternals\Process Explorer" /v "ShowProcessTree" /t REG_DWORD /d "1" /f
-Reg.exe add "HKCU\SOFTWARE\Sysinternals\Process Explorer" /v "SymbolWarningShown" /t REG_DWORD /d "0" /f
-Reg.exe add "HKCU\SOFTWARE\Sysinternals\Process Explorer" /v "HideWhenMinimized" /t REG_DWORD /d "0" /f
-Reg.exe add "HKCU\SOFTWARE\Sysinternals\Process Explorer" /v "AlwaysOntop" /t REG_DWORD /d "0" /f
-Reg.exe add "HKCU\SOFTWARE\Sysinternals\Process Explorer" /v "OneInstance" /t REG_DWORD /d "0" /f
-Reg.exe add "HKCU\SOFTWARE\Sysinternals\Process Explorer" /v "NumColumnSets" /t REG_DWORD /d "0" /f
-Reg.exe add "HKCU\SOFTWARE\Sysinternals\Process Explorer" /v "ConfirmKill" /t REG_DWORD /d "1" /f
-Reg.exe add "HKCU\SOFTWARE\Sysinternals\Process Explorer" /v "RefreshRate" /t REG_DWORD /d "5000" /f
-Reg.exe add "HKCU\SOFTWARE\Sysinternals\Process Explorer" /v "PrcessColumnCount" /t REG_DWORD /d "18" /f
-Reg.exe add "HKCU\SOFTWARE\Sysinternals\Process Explorer" /v "DllColumnCount" /t REG_DWORD /d "5" /f
-Reg.exe add "HKCU\SOFTWARE\Sysinternals\Process Explorer" /v "HandleColumnCount" /t REG_DWORD /d "2" /f
-Reg.exe add "HKCU\SOFTWARE\Sysinternals\Process Explorer" /v "DefaultProcPropPage" /t REG_DWORD /d "0" /f
-Reg.exe add "HKCU\SOFTWARE\Sysinternals\Process Explorer" /v "DefaultSysInfoPage" /t REG_DWORD /d "4" /f
-Reg.exe add "HKCU\SOFTWARE\Sysinternals\Process Explorer" /v "DefaultDllPropPage" /t REG_DWORD /d "1" /f
-Reg.exe add "HKCU\SOFTWARE\Sysinternals\Process Explorer" /v "DbgHelpPath" /t REG_SZ /d "C:\Windows\SYSTEM32\dbghelp.dll" /f
-Reg.exe add "HKCU\SOFTWARE\Sysinternals\Process Explorer" /v "SymbolPath" /t REG_SZ /d "" /f
-Reg.exe add "HKCU\SOFTWARE\Sysinternals\Process Explorer" /v "ColorPacked" /t REG_DWORD /d "16711808" /f
-Reg.exe add "HKCU\SOFTWARE\Sysinternals\Process Explorer" /v "ColorImmersive" /t REG_DWORD /d "15395328" /f
-Reg.exe add "HKCU\SOFTWARE\Sysinternals\Process Explorer" /v "ColorOwn" /t REG_DWORD /d "16765136" /f
-Reg.exe add "HKCU\SOFTWARE\Sysinternals\Process Explorer" /v "ColorServices" /t REG_DWORD /d "13684991" /f
-Reg.exe add "HKCU\SOFTWARE\Sysinternals\Process Explorer" /v "ColorRelocatedDlls" /t REG_DWORD /d "10551295" /f
-Reg.exe add "HKCU\SOFTWARE\Sysinternals\Process Explorer" /v "ColorGraphBk" /t REG_DWORD /d "15790320" /f
-Reg.exe add "HKCU\SOFTWARE\Sysinternals\Process Explorer" /v "ColorJobs" /t REG_DWORD /d "27856" /f
-Reg.exe add "HKCU\SOFTWARE\Sysinternals\Process Explorer" /v "ColorDelProc" /t REG_DWORD /d "4605695" /f
-Reg.exe add "HKCU\SOFTWARE\Sysinternals\Process Explorer" /v "ColorNewProc" /t REG_DWORD /d "4652870" /f
-Reg.exe add "HKCU\SOFTWARE\Sysinternals\Process Explorer" /v "ColorNet" /t REG_DWORD /d "10551295" /f
-Reg.exe add "HKCU\SOFTWARE\Sysinternals\Process Explorer" /v "ColorProtected" /t REG_DWORD /d "8388863" /f
-Reg.exe add "HKCU\SOFTWARE\Sysinternals\Process Explorer" /v "ShowHeatmaps" /t REG_DWORD /d "1" /f
-Reg.exe add "HKCU\SOFTWARE\Sysinternals\Process Explorer" /v "ColorSuspend" /t REG_DWORD /d "8421504" /f
-Reg.exe add "HKCU\SOFTWARE\Sysinternals\Process Explorer" /v "StatusBarColumns" /t REG_DWORD /d "13589" /f
-Reg.exe add "HKCU\SOFTWARE\Sysinternals\Process Explorer" /v "ShowAllCpus" /t REG_DWORD /d "0" /f
-Reg.exe add "HKCU\SOFTWARE\Sysinternals\Process Explorer" /v "ShowAllGpus" /t REG_DWORD /d "0" /f
-Reg.exe add "HKCU\SOFTWARE\Sysinternals\Process Explorer" /v "Opacity" /t REG_DWORD /d "100" /f
-Reg.exe add "HKCU\SOFTWARE\Sysinternals\Process Explorer" /v "GpuNodeUsageMask" /t REG_DWORD /d "1" /f
-Reg.exe add "HKCU\SOFTWARE\Sysinternals\Process Explorer" /v "GpuNodeUsageMask1" /t REG_DWORD /d "0" /f
-Reg.exe add "HKCU\SOFTWARE\Sysinternals\Process Explorer" /v "VerifySignatures" /t REG_DWORD /d "0" /f
-Reg.exe add "HKCU\SOFTWARE\Sysinternals\Process Explorer" /v "VirusTotalCheck" /t REG_DWORD /d "1" /f
-Reg.exe add "HKCU\SOFTWARE\Sysinternals\Process Explorer" /v "VirusTotalSubmitUnknown" /t REG_DWORD /d "0" /f
-Reg.exe add "HKCU\SOFTWARE\Sysinternals\Process Explorer" /v "ToolbarBands" /t REG_BINARY /d "0601000000000000000000004b00000001000000000000004b00000002000000000000004b00000003000000000000004b0000000400000000000000400000000500000000000000500000000600000000000000930400000700000000000000" /f
-Reg.exe add "HKCU\SOFTWARE\Sysinternals\Process Explorer" /v "UseGoogle" /t REG_DWORD /d "0" /f
-Reg.exe add "HKCU\SOFTWARE\Sysinternals\Process Explorer" /v "ShowNewProcesses" /t REG_DWORD /d "0" /f
-Reg.exe add "HKCU\SOFTWARE\Sysinternals\Process Explorer" /v "TrayCPUHistory" /t REG_DWORD /d "1" /f
-Reg.exe add "HKCU\SOFTWARE\Sysinternals\Process Explorer" /v "ShowIoTray" /t REG_DWORD /d "0" /f
-Reg.exe add "HKCU\SOFTWARE\Sysinternals\Process Explorer" /v "ShowNetTray" /t REG_DWORD /d "0" /f
-Reg.exe add "HKCU\SOFTWARE\Sysinternals\Process Explorer" /v "ShowDiskTray" /t REG_DWORD /d "0" /f
-Reg.exe add "HKCU\SOFTWARE\Sysinternals\Process Explorer" /v "ShowPhysTray" /t REG_DWORD /d "0" /f
-Reg.exe add "HKCU\SOFTWARE\Sysinternals\Process Explorer" /v "ShowCommitTray" /t REG_DWORD /d "0" /f
-Reg.exe add "HKCU\SOFTWARE\Sysinternals\Process Explorer" /v "ShowGpuTray" /t REG_DWORD /d "0" /f
-Reg.exe add "HKCU\SOFTWARE\Sysinternals\Process Explorer" /v "FormatIoBytes" /t REG_DWORD /d "1" /f
-Reg.exe add "HKCU\SOFTWARE\Sysinternals\Process Explorer" /v "StackWindowPlacement" /t REG_BINARY /d "0000000000000000000000000000000000000000000000000000000000000000000000000000000000000000" /f
-Reg.exe add "HKCU\SOFTWARE\Sysinternals\Process Explorer" /v "ETWstandardUserWarning" /t REG_DWORD /d "0" /f
-Reg.exe add "HKCU\SOFTWARE\Sysinternals\Process Explorer\DllColumnMap" /v "0" /t REG_DWORD /d "26" /f
-Reg.exe add "HKCU\SOFTWARE\Sysinternals\Process Explorer\DllColumnMap" /v "1" /t REG_DWORD /d "42" /f
-Reg.exe add "HKCU\SOFTWARE\Sysinternals\Process Explorer\DllColumnMap" /v "2" /t REG_DWORD /d "1033" /f
-Reg.exe add "HKCU\SOFTWARE\Sysinternals\Process Explorer\DllColumnMap" /v "3" /t REG_DWORD /d "1111" /f
-Reg.exe add "HKCU\SOFTWARE\Sysinternals\Process Explorer\DllColumnMap" /v "4" /t REG_DWORD /d "1670" /f
-Reg.exe add "HKCU\SOFTWARE\Sysinternals\Process Explorer\DllColumns" /v "0" /t REG_DWORD /d "110" /f
-Reg.exe add "HKCU\SOFTWARE\Sysinternals\Process Explorer\DllColumns" /v "1" /t REG_DWORD /d "180" /f
-Reg.exe add "HKCU\SOFTWARE\Sysinternals\Process Explorer\DllColumns" /v "2" /t REG_DWORD /d "140" /f
-Reg.exe add "HKCU\SOFTWARE\Sysinternals\Process Explorer\DllColumns" /v "3" /t REG_DWORD /d "300" /f
-Reg.exe add "HKCU\SOFTWARE\Sysinternals\Process Explorer\DllColumns" /v "4" /t REG_DWORD /d "100" /f
-Reg.exe add "HKCU\SOFTWARE\Sysinternals\Process Explorer\HandleColumnMap" /v "0" /t REG_DWORD /d "21" /f
-Reg.exe add "HKCU\SOFTWARE\Sysinternals\Process Explorer\HandleColumnMap" /v "1" /t REG_DWORD /d "22" /f
-Reg.exe add "HKCU\SOFTWARE\Sysinternals\Process Explorer\HandleColumns" /v "0" /t REG_DWORD /d "100" /f
-Reg.exe add "HKCU\SOFTWARE\Sysinternals\Process Explorer\HandleColumns" /v "1" /t REG_DWORD /d "450" /f
-Reg.exe add "HKCU\SOFTWARE\Sysinternals\Process Explorer\ProcessColumnMap" /v "0" /t REG_DWORD /d "3" /f
+color 03
 cls
-Reg.exe add "HKCU\SOFTWARE\Sysinternals\Process Explorer\ProcessColumnMap" /v "1" /t REG_DWORD /d "1055" /f
-Reg.exe add "HKCU\SOFTWARE\Sysinternals\Process Explorer\ProcessColumnMap" /v "2" /t REG_DWORD /d "1650" /f
-Reg.exe add "HKCU\SOFTWARE\Sysinternals\Process Explorer\ProcessColumnMap" /v "3" /t REG_DWORD /d "1200" /f
-Reg.exe add "HKCU\SOFTWARE\Sysinternals\Process Explorer\ProcessColumnMap" /v "4" /t REG_DWORD /d "1092" /f
-Reg.exe add "HKCU\SOFTWARE\Sysinternals\Process Explorer\ProcessColumnMap" /v "5" /t REG_DWORD /d "1333" /f
-Reg.exe add "HKCU\SOFTWARE\Sysinternals\Process Explorer\ProcessColumnMap" /v "6" /t REG_DWORD /d "1622" /f
-Reg.exe add "HKCU\SOFTWARE\Sysinternals\Process Explorer\ProcessColumnMap" /v "7" /t REG_DWORD /d "1636" /f
-Reg.exe add "HKCU\SOFTWARE\Sysinternals\Process Explorer\ProcessColumnMap" /v "8" /t REG_DWORD /d "1179" /f
-Reg.exe add "HKCU\SOFTWARE\Sysinternals\Process Explorer\ProcessColumnMap" /v "9" /t REG_DWORD /d "1340" /f
-Reg.exe add "HKCU\SOFTWARE\Sysinternals\Process Explorer\ProcessColumnMap" /v "10" /t REG_DWORD /d "5" /f
-Reg.exe add "HKCU\SOFTWARE\Sysinternals\Process Explorer\ProcessColumnMap" /v "11" /t REG_DWORD /d "1339" /f
-Reg.exe add "HKCU\SOFTWARE\Sysinternals\Process Explorer\ProcessColumnMap" /v "12" /t REG_DWORD /d "1060" /f
-Reg.exe add "HKCU\SOFTWARE\Sysinternals\Process Explorer\ProcessColumnMap" /v "13" /t REG_DWORD /d "1063" /f
-Reg.exe add "HKCU\SOFTWARE\Sysinternals\Process Explorer\ProcessColumnMap" /v "14" /t REG_DWORD /d "4" /f
-Reg.exe add "HKCU\SOFTWARE\Sysinternals\Process Explorer\ProcessColumnMap" /v "15" /t REG_DWORD /d "1065" /f
-Reg.exe add "HKCU\SOFTWARE\Sysinternals\Process Explorer\ProcessColumnMap" /v "16" /t REG_DWORD /d "18" /f
-Reg.exe add "HKCU\SOFTWARE\Sysinternals\Process Explorer\ProcessColumnMap" /v "17" /t REG_DWORD /d "1670" /f
-Reg.exe add "HKCU\SOFTWARE\Sysinternals\Process Explorer\ProcessColumnMap" /v "18" /t REG_DWORD /d "1653" /f
-Reg.exe add "HKCU\SOFTWARE\Sysinternals\Process Explorer\ProcessColumnMap" /v "19" /t REG_DWORD /d "1653" /f
-Reg.exe add "HKCU\SOFTWARE\Sysinternals\Process Explorer\ProcessColumns" /v "0" /t REG_DWORD /d "261" /f
-Reg.exe add "HKCU\SOFTWARE\Sysinternals\Process Explorer\ProcessColumns" /v "1" /t REG_DWORD /d "35" /f
-Reg.exe add "HKCU\SOFTWARE\Sysinternals\Process Explorer\ProcessColumns" /v "2" /t REG_DWORD /d "37" /f
-Reg.exe add "HKCU\SOFTWARE\Sysinternals\Process Explorer\ProcessColumns" /v "3" /t REG_DWORD /d "82" /f
-Reg.exe add "HKCU\SOFTWARE\Sysinternals\Process Explorer\ProcessColumns" /v "4" /t REG_DWORD /d "81" /f
-Reg.exe add "HKCU\SOFTWARE\Sysinternals\Process Explorer\ProcessColumns" /v "5" /t REG_DWORD /d "65" /f
-Reg.exe add "HKCU\SOFTWARE\Sysinternals\Process Explorer\ProcessColumns" /v "6" /t REG_DWORD /d "93" /f
-Reg.exe add "HKCU\SOFTWARE\Sysinternals\Process Explorer\ProcessColumns" /v "7" /t REG_DWORD /d "76" /f
-Reg.exe add "HKCU\SOFTWARE\Sysinternals\Process Explorer\ProcessColumns" /v "8" /t REG_DWORD /d "55" /f
-Reg.exe add "HKCU\SOFTWARE\Sysinternals\Process Explorer\ProcessColumns" /v "9" /t REG_DWORD /d "60" /f
-Reg.exe add "HKCU\SOFTWARE\Sysinternals\Process Explorer\ProcessColumns" /v "10" /t REG_DWORD /d "39" /f
-Reg.exe add "HKCU\SOFTWARE\Sysinternals\Process Explorer\ProcessColumns" /v "11" /t REG_DWORD /d "80" /f
-Reg.exe add "HKCU\SOFTWARE\Sysinternals\Process Explorer\ProcessColumns" /v "12" /t REG_DWORD /d "70" /f
-Reg.exe add "HKCU\SOFTWARE\Sysinternals\Process Explorer\ProcessColumns" /v "13" /t REG_DWORD /d "70" /f
-Reg.exe add "HKCU\SOFTWARE\Sysinternals\Process Explorer\ProcessColumns" /v "14" /t REG_DWORD /d "31" /f
-Reg.exe add "HKCU\SOFTWARE\Sysinternals\Process Explorer\ProcessColumns" /v "15" /t REG_DWORD /d "52" /f
-Reg.exe add "HKCU\SOFTWARE\Sysinternals\Process Explorer\ProcessColumns" /v "16" /t REG_DWORD /d "52" /f
-Reg.exe add "HKCU\SOFTWARE\Sysinternals\Process Explorer\ProcessColumns" /v "17" /t REG_DWORD /d "44" /f
+echo --------------------------------------------------------------------------------------------------------------------
+echo     Program Debloat
+echo --------------------------------------------------------------------------------------------------------------------
+echo 0. Go Back
+echo 1. Windows Debloat
+echo 2. Discord Debloat
+echo 3. OBS Debloat
+echo 4. Spotify Debloat    
+echo 5. Firefox Debloat                                                                                                                                                                                                                                                        
+echo ---------------------------------------------------------------------------------------------------------------------
+set choice=
+set /p choice=Type A Number:
+if not '%choice%'=='' set choice=%choice:~0,4%
+if '%choice%'=='0' goto AdvancedMenu
+if '%choice%'=='1' goto debloatwindows
+if '%choice%'=='2' goto debloatdiscord
+if '%choice%'=='3' goto debloatobs
+if '%choice%'=='4' goto debloatspotify
+if '%choice%'=='5' goto debloatfirefox
+cls
+echo %g%============INVALID INPUT============
+echo.
+echo.
+echo %g%======PRESS ANY KEY TO CONTINUE======
+pause >nul
+goto ProgramDebloat
+
+:debloatfirefox
+cls
+del "C:\Program Files\Mozilla Firefox\crashreporter.exe" /f /q >nul 2>&1
+del "C:\Program Files\Mozilla Firefox\crashreporter.ini" /f /q >nul 2>&1
+del "C:\Program Files\Mozilla Firefox\maintenanceservice.exe" /f /q >nul 2>&1
+del "C:\Program Files\Mozilla Firefox\maintenanceservice_installer.exe" /f /q >nul 2>&1
+del "C:\Program Files\Mozilla Firefox\minidump-analyzer.exe" /f /q >nul 2>&1
+del "C:\Program Files\Mozilla Firefox\pingsender.exe" /f /q >nul 2>&1
+del "C:\Program Files\Mozilla Firefox\updater.exe" /f /q >nul 2>&1
+
+Reg.exe delete "HKLM\Software\Microsoft\Windows NT\CurrentVersion\Schedule\TaskCache\Plain\{88088F95-5F8F-4603-8303-B2881ED6D9FD}" /f >nul 2>&1
+Reg.exe delete "HKLM\Software\Microsoft\Windows NT\CurrentVersion\Schedule\TaskCache\Plain\{8F3A56F1-410F-41E7-B9CE-4F12A1417CF1}" /f >nul 2>&1
+Reg.exe delete "HKLM\Software\Microsoft\Windows NT\CurrentVersion\Schedule\TaskCache\Tasks\{88088F95-5F8F-4603-8303-B2881ED6D9FD}" /f >nul 2>&1
+Reg.exe delete "HKLM\Software\Microsoft\Windows NT\CurrentVersion\Schedule\TaskCache\Tasks\{8F3A56F1-410F-41E7-B9CE-4F12A1417CF1}" /f >nul 2>&1
+Reg.exe delete "HKLM\Software\Microsoft\Windows NT\CurrentVersion\Schedule\TaskCache\Tree\Mozilla\Firefox Background Update 308046B0AF4A39CB" /f >nul 2>&1
+Reg.exe delete "HKLM\Software\Microsoft\Windows NT\CurrentVersion\Schedule\TaskCache\Tree\Mozilla\Firefox Default Browser Agent 308046B0AF4A39CB" /f >nul 2>&1
+
+wmic product where name="Mozilla Maintenance Service" call uninstall /nointeractive >nul 2>&1
+
+cd /d "C:\Program Files\Mozilla Firefox">nul 2>&1
+del /f crash*.* >nul 2>&1
+del /f maintenance*.* >nul 2>&1
+del /f install.log >nul 2>&1
+del /f minidump*.* >nul 2>&1
+cls
+echo.
+echo.
+echo %g%======PRESS ANY KEY TO CONTINUE======
+pause >nul
+goto ProgramDebloat
+
+:debloatspotify
+cls
+cd /d "%APPDATA%\Spotify" >NUL 2>&1
+copy "%APPDATA%\Spotify\locales\en-US.pak" "%APPDATA%\Spotify" >NUL 2>&1
+rmdir "%APPDATA%\Spotify\locales" /s /q >NUL 2>&1
+mkdir locales >NUL 2>&1
+move en-US.pak locales >NUL 2>&1
+del /f chrome_1*.*, chrome_2*.*, crash*.*, SpotifyMigrator.exe, SpotifyStartupTask.exe, d3d*.*, debug.log, libegl.dll, libgle*.*, snapshot*.*, vk*.*, vulkan*.* >NUL 2>&1
+del /f/s/q "%appdata%\Spotify\SpotifyMigrator.exe" >NUL 2>&1
+del /f/s/q "%appdata%\Spotify\SpotifyStartupTask.exe" >NUL 2>&1
+del /f/s/q "%appdata%\Spotify\Apps\Buddy-list.spa" >NUL 2>&1
+del /f/s/q "%appdata%\Spotify\Apps\Concert.spa" >NUL 2>&1
+del /f/s/q "%appdata%\Spotify\Apps\Concerts.spa" >NUL 2>&1
+del /f/s/q "%appdata%\Spotify\Apps\Error.spa" >NUL 2>&1
+del /f/s/q "%appdata%\Spotify\Apps\Findfriends.spa" >NUL 2>&1
+del /f/s/q "%appdata%\Spotify\Apps\Legacy-lyrics.spa" >NUL 2>&1
+del /f/s/q "%appdata%\Spotify\Apps\Lyrics.spa" >NUL 2>&1
+del /f/s/q "%appdata%\Spotify\Apps\Show.spa" >NUL 2>&1
+del /f/s/q "%appdata%\Spotify\Apps\Buddy-list.spa" >NUL 2>&1
+del /f/s/q "%appdata%\Spotify\locales\am.pak" >NUL 2>&1
+del /f/s/q "%appdata%\Spotify\locales\ar.mo" >NUL 2>&1
+del /f/s/q "%appdata%\Spotify\locales\ar.pak" >NUL 2>&1
+del /f/s/q "%appdata%\Spotify\locales\bg.pak" >NUL 2>&1
+del /f/s/q "%appdata%\Spotify\locales\bn.pak" >NUL 2>&1
+del /f/s/q "%appdata%\Spotify\locales\ca.pak" >NUL 2>&1
+del /f/s/q "%appdata%\Spotify\locales\cs.mo" >NUL 2>&1
+del /f/s/q "%appdata%\Spotify\locales\cs.pak" >NUL 2>&1
+del /f/s/q "%appdata%\Spotify\locales\da.pak" >NUL 2>&1
+del /f/s/q "%appdata%\Spotify\locales\de.mo" >NUL 2>&1
+del /f/s/q "%appdata%\Spotify\locales\de.pak" >NUL 2>&1
+del /f/s/q "%appdata%\Spotify\locales\el.mo" >NUL 2>&1
+del /f/s/q "%appdata%\Spotify\locales\el.pak" >NUL 2>&1
+del /f/s/q "%appdata%\Spotify\locales\en-GB.pak" >NUL 2>&1
+del /f/s/q "%appdata%\Spotify\locales\es.mo" >NUL 2>&1
+del /f/s/q "%appdata%\Spotify\locales\es.pak" >NUL 2>&1
+del /f/s/q "%appdata%\Spotify\locales\es-419.mo" >NUL 2>&1
+del /f/s/q "%appdata%\Spotify\locales\es-419.pak" >NUL 2>&1
+del /f/s/q "%appdata%\Spotify\locales\et.pak" >NUL 2>&1
+del /f/s/q "%appdata%\Spotify\locales\fa.pak" >NUL 2>&1
+del /f/s/q "%appdata%\Spotify\locales\fi.mo" >NUL 2>&1
+del /f/s/q "%appdata%\Spotify\locales\fi.pak" >NUL 2>&1
+del /f/s/q "%appdata%\Spotify\locales\fil.pak" >NUL 2>&1
+del /f/s/q "%appdata%\Spotify\locales\fr.mo" >NUL 2>&1
+del /f/s/q "%appdata%\Spotify\locales\fr.pak" >NUL 2>&1
+del /f/s/q "%appdata%\Spotify\locales\fr-CA.mo" >NUL 2>&1
+del /f/s/q "%appdata%\Spotify\locales\gu.pak" >NUL 2>&1
+del /f/s/q "%appdata%\Spotify\locales\he.mo" >NUL 2>&1
+del /f/s/q "%appdata%\Spotify\locales\he.pak" >NUL 2>&1
+del /f/s/q "%appdata%\Spotify\locales\hi.pak" >NUL 2>&1
+del /f/s/q "%appdata%\Spotify\locales\hr.pak" >NUL 2>&1
+del /f/s/q "%appdata%\Spotify\locales\hu.mo" >NUL 2>&1
+del /f/s/q "%appdata%\Spotify\locales\hu.pak" >NUL 2>&1
+del /f/s/q "%appdata%\Spotify\locales\id.mo" >NUL 2>&1
+del /f/s/q "%appdata%\Spotify\locales\id.pak" >NUL 2>&1
+del /f/s/q "%appdata%\Spotify\locales\it.mo" >NUL 2>&1
+del /f/s/q "%appdata%\Spotify\locales\it.pak" >NUL 2>&1
+del /f/s/q "%appdata%\Spotify\locales\ja.mo" >NUL 2>&1
+del /f/s/q "%appdata%\Spotify\locales\ja.pak" >NUL 2>&1
+del /f/s/q "%appdata%\Spotify\locales\kn.pak" >NUL 2>&1
+del /f/s/q "%appdata%\Spotify\locales\ko.mo" >NUL 2>&1
+del /f/s/q "%appdata%\Spotify\locales\ko.pak" >NUL 2>&1
+del /f/s/q "%appdata%\Spotify\locales\lt.pak" >NUL 2>&1
+del /f/s/q "%appdata%\Spotify\locales\lv.pak" >NUL 2>&1
+del /f/s/q "%appdata%\Spotify\locales\ml.pak" >NUL 2>&1
+del /f/s/q "%appdata%\Spotify\locales\mr.pak" >NUL 2>&1
+del /f/s/q "%appdata%\Spotify\locales\ms.mo" >NUL 2>&1
+del /f/s/q "%appdata%\Spotify\locales\ms.pak" >NUL 2>&1
+del /f/s/q "%appdata%\Spotify\locales\nb.pak" >NUL 2>&1
+del /f/s/q "%appdata%\Spotify\locales\nl.mo" >NUL 2>&1
+del /f/s/q "%appdata%\Spotify\locales\nl.pak" >NUL 2>&1
+del /f/s/q "%appdata%\Spotify\locales\pl.mo" >NUL 2>&1
+del /f/s/q "%appdata%\Spotify\locales\pl.pak" >NUL 2>&1
+del /f/s/q "%appdata%\Spotify\locales\pt-PT.pak" >NUL 2>&1
+del /f/s/q "%appdata%\Spotify\locales\pt-BR.pak" >NUL 2>&1
+del /f/s/q "%appdata%\Spotify\locales\pt-BR.mo" >NUL 2>&1
+del /f/s/q "%appdata%\Spotify\locales\ro.pak" >NUL 2>&1
+del /f/s/q "%appdata%\Spotify\locales\ru.mo" >NUL 2>&1
+del /f/s/q "%appdata%\Spotify\locales\ru.pak" >NUL 2>&1
+del /f/s/q "%appdata%\Spotify\locales\sk.pak" >NUL 2>&1
+del /f/s/q "%appdata%\Spotify\locales\sl.pak" >NUL 2>&1
+del /f/s/q "%appdata%\Spotify\locales\sr.pak" >NUL 2>&1
+del /f/s/q "%appdata%\Spotify\locales\sv.mo" >NUL 2>&1
+del /f/s/q "%appdata%\Spotify\locales\sv.pak" >NUL 2>&1
+del /f/s/q "%appdata%\Spotify\locales\sw.pak" >NUL 2>&1
+del /f/s/q "%appdata%\Spotify\locales\ta.pak" >NUL 2>&1
+del /f/s/q "%appdata%\Spotify\locales\te.pak" >NUL 2>&1
+del /f/s/q "%appdata%\Spotify\locales\th.mo" >NUL 2>&1
+del /f/s/q "%appdata%\Spotify\locales\th.pak" >NUL 2>&1
+del /f/s/q "%appdata%\Spotify\locales\tr.mo" >NUL 2>&1
+del /f/s/q "%appdata%\Spotify\locales\tr.pak" >NUL 2>&1
+del /f/s/q "%appdata%\Spotify\locales\uk.pak" >NUL 2>&1
+del /f/s/q "%appdata%\Spotify\locales\vi.mo" >NUL 2>&1
+del /f/s/q "%appdata%\Spotify\locales\vi.pak" >NUL 2>&1
+del /f/s/q "%appdata%\Spotify\locales\zh-CN.pak" >NUL 2>&1
+del /f/s/q "%appdata%\Spotify\locales\zh-Hant.mo" >NUL 2>&1
+del /f/s/q "%appdata%\Spotify\locales\zh-TW.pak" >NUL 2>&1
+REG DELETE "HKCU\Software\Microsoft\Windows\CurrentVersion\Run" /v "Spotify" /f >NUL 2>&1
+cls
+echo.
+echo.
+echo %g%======PRESS ANY KEY TO CONTINUE======
+pause >nul
+goto ProgramDebloat
+
+:debloatobs
+cls
+cd C:\Program Files\obs-studio\data\obs-studio\locale
+del /s /q af-ZA.ini
+del /s /q ar-SA.ini
+del /s /q az-AZ.ini
+del /s /q bg-BG.ini
+del /s /q bn-BD.ini
+del /s /q ca-ES.ini
+del /s /q cs-CZ.ini
+del /s /q da-dk.ini
+del /s /q de-DE.ini
+del /s /q el-GR.ini
+del /s /q et-EE.ini
+del /s /q eu-ES.ini
+del /s /q fa-IR.ini
+del /s /q fi-FI.ini
+del /s /q fil-PH.ini
+del /s /q fr-FR.ini
+del /s /q gd-GB.ini
+del /s /q gl-ES.ini
+del /s /q he-IL.ini
+del /s /q hi-IN.ini
+del /s /q hr-HR.ini
+del /s /q hu-HU.ini
+del /s /q it-IT.ini
+del /s /q ja-JP.ini
+del /s /q ka-GE.ini
+del /s /q ko-KR.ini
+del /s /q ku-TR.ini
+del /s /q It-LT.ini
+del /s /q mn-MN.ini
+del /s /q ms-MY.ini
+del /s /q nb-NO.ini
+del /s /q pa-IN.ini
+del /s /q pl-PL.ini
+del /s /q pt-BR.ini
+del /s /q pt-PT.ini
+del /s /q ro-RO.ini
+del /s /q ru-RU.ini
+del /s /q sk-SK.ini
+del /s /q sl-SI.ini
+del /s /q sq-AL.ini
+del /s /q sr-CS.ini
+del /s /q da-dk.ini
+del /s /q lt-LT.ini
+del /s /q nl-NL.ini
+del /s /q nn-NO.ini
+del /s /q sr-SP.ini
+del /s /q sv-SE.ini
+del /s /q ta-IN.ini
+del /s /q th-TH.ini
+del /s /q tl-PH.ini
+del /s /q tr-TR.ini
+del /s /q uk-UA.ini
+del /s /q ur-PK.ini
+del /s /q vi-vn.ini
+del /s /q zh-cn.ini
+del /s /q zh-tw.ini
+
+cd C:\Program Files\obs-studio\data\obs-plugins\coreaudio-encoder\locale
+del /s /q af-ZA.ini
+del /s /q ar-SA.ini
+del /s /q az-AZ.ini
+del /s /q bg-BG.ini
+del /s /q bn-BD.ini
+del /s /q ca-ES.ini
+del /s /q cs-CZ.ini
+del /s /q da-dk.ini
+del /s /q de-DE.ini
+del /s /q el-GR.ini
+del /s /q et-EE.ini
+del /s /q eu-ES.ini
+del /s /q fa-IR.ini
+del /s /q fi-FI.ini
+del /s /q fil-PH.ini
+del /s /q fr-FR.ini
+del /s /q gd-GB.ini
+del /s /q gl-ES.ini
+del /s /q he-IL.ini
+del /s /q hi-IN.ini
+del /s /q hr-HR.ini
+del /s /q hu-HU.ini
+del /s /q it-IT.ini
+del /s /q ja-JP.ini
+del /s /q ka-GE.ini
+del /s /q ko-KR.ini
+del /s /q ku-TR.ini
+del /s /q It-LT.ini
+del /s /q mn-MN.ini
+del /s /q ms-MY.ini
+del /s /q nb-NO.ini
+del /s /q pa-IN.ini
+del /s /q pl-PL.ini
+del /s /q pt-BR.ini
+del /s /q pt-PT.ini
+del /s /q ro-RO.ini
+del /s /q ru-RU.ini
+del /s /q sk-SK.ini
+del /s /q sl-SI.ini
+del /s /q sq-AL.ini
+del /s /q sr-CS.ini
+del /s /q da-dk.ini
+del /s /q lt-LT.ini
+del /s /q nl-NL.ini
+del /s /q nn-NO.ini
+del /s /q sr-SP.ini
+del /s /q sv-SE.ini
+del /s /q ta-IN.ini
+del /s /q th-TH.ini
+del /s /q tl-PH.ini
+del /s /q tr-TR.ini
+del /s /q uk-UA.ini
+del /s /q ur-PK.ini
+del /s /q vi-vn.ini
+del /s /q zh-cn.ini
+del /s /q zh-tw.ini
+
+cd C:\Program Files\obs-studio\data\obs-plugins\enc-amf\locale
+del /s /q af-ZA.ini
+del /s /q ar-SA.ini
+del /s /q az-AZ.ini
+del /s /q bg-BG.ini
+del /s /q bn-BD.ini
+del /s /q ca-ES.ini
+del /s /q cs-CZ.ini
+del /s /q da-dk.ini
+del /s /q de-DE.ini
+del /s /q el-GR.ini
+del /s /q et-EE.ini
+del /s /q eu-ES.ini
+del /s /q fa-IR.ini
+del /s /q fi-FI.ini
+del /s /q fil-PH.ini
+del /s /q fr-FR.ini
+del /s /q gd-GB.ini
+del /s /q gl-ES.ini
+del /s /q he-IL.ini
+del /s /q hi-IN.ini
+del /s /q hr-HR.ini
+del /s /q hu-HU.ini
+del /s /q it-IT.ini
+del /s /q ja-JP.ini
+del /s /q ka-GE.ini
+del /s /q ko-KR.ini
+del /s /q ku-TR.ini
+del /s /q It-LT.ini
+del /s /q mn-MN.ini
+del /s /q ms-MY.ini
+del /s /q nb-NO.ini
+del /s /q pa-IN.ini
+del /s /q pl-PL.ini
+del /s /q pt-BR.ini
+del /s /q pt-PT.ini
+del /s /q ro-RO.ini
+del /s /q ru-RU.ini
+del /s /q sk-SK.ini
+del /s /q sl-SI.ini
+del /s /q sq-AL.ini
+del /s /q sr-CS.ini
+del /s /q da-dk.ini
+del /s /q lt-LT.ini
+del /s /q nl-NL.ini
+del /s /q nn-NO.ini
+del /s /q sr-SP.ini
+del /s /q sv-SE.ini
+del /s /q ta-IN.ini
+del /s /q th-TH.ini
+del /s /q tl-PH.ini
+del /s /q tr-TR.ini
+del /s /q uk-UA.ini
+del /s /q ur-PK.ini
+del /s /q vi-vn.ini
+del /s /q zh-cn.ini
+del /s /q zh-tw.ini
+
+cd C:\Program Files\obs-studio\data\obs-plugins\frontend-tools\locale
+del /s /q af-ZA.ini
+del /s /q ar-SA.ini
+del /s /q az-AZ.ini
+del /s /q bg-BG.ini
+del /s /q bn-BD.ini
+del /s /q ca-ES.ini
+del /s /q cs-CZ.ini
+del /s /q da-dk.ini
+del /s /q de-DE.ini
+del /s /q el-GR.ini
+del /s /q et-EE.ini
+del /s /q eu-ES.ini
+del /s /q fa-IR.ini
+del /s /q fi-FI.ini
+del /s /q fil-PH.ini
+del /s /q fr-FR.ini
+del /s /q gd-GB.ini
+del /s /q gl-ES.ini
+del /s /q he-IL.ini
+del /s /q hi-IN.ini
+del /s /q hr-HR.ini
+del /s /q hu-HU.ini
+del /s /q it-IT.ini
+del /s /q ja-JP.ini
+del /s /q ka-GE.ini
+del /s /q ko-KR.ini
+del /s /q ku-TR.ini
+del /s /q It-LT.ini
+del /s /q mn-MN.ini
+del /s /q ms-MY.ini
+del /s /q nb-NO.ini
+del /s /q pa-IN.ini
+del /s /q pl-PL.ini
+del /s /q pt-BR.ini
+del /s /q pt-PT.ini
+del /s /q ro-RO.ini
+del /s /q ru-RU.ini
+del /s /q sk-SK.ini
+del /s /q sl-SI.ini
+del /s /q sq-AL.ini
+del /s /q sr-CS.ini
+del /s /q da-dk.ini
+del /s /q lt-LT.ini
+del /s /q nl-NL.ini
+del /s /q nn-NO.ini
+del /s /q sr-SP.ini
+del /s /q sv-SE.ini
+del /s /q ta-IN.ini
+del /s /q th-TH.ini
+del /s /q tl-PH.ini
+del /s /q tr-TR.ini
+del /s /q uk-UA.ini
+del /s /q ur-PK.ini
+del /s /q vi-vn.ini
+del /s /q zh-cn.ini
+del /s /q zh-tw.ini
+
+cd C:\Program Files\obs-studio\data\obs-plugins\image-source\locale
+del /s /q af-ZA.ini
+del /s /q ar-SA.ini
+del /s /q az-AZ.ini
+del /s /q bg-BG.ini
+del /s /q bn-BD.ini
+del /s /q ca-ES.ini
+del /s /q cs-CZ.ini
+del /s /q da-dk.ini
+del /s /q de-DE.ini
+del /s /q el-GR.ini
+del /s /q et-EE.ini
+del /s /q eu-ES.ini
+del /s /q fa-IR.ini
+del /s /q fi-FI.ini
+del /s /q fil-PH.ini
+del /s /q fr-FR.ini
+del /s /q gd-GB.ini
+del /s /q gl-ES.ini
+del /s /q he-IL.ini
+del /s /q hi-IN.ini
+del /s /q hr-HR.ini
+del /s /q hu-HU.ini
+del /s /q it-IT.ini
+del /s /q ja-JP.ini
+del /s /q ka-GE.ini
+del /s /q ko-KR.ini
+del /s /q ku-TR.ini
+del /s /q It-LT.ini
+del /s /q mn-MN.ini
+del /s /q ms-MY.ini
+del /s /q nb-NO.ini
+del /s /q pa-IN.ini
+del /s /q pl-PL.ini
+del /s /q pt-BR.ini
+del /s /q pt-PT.ini
+del /s /q ro-RO.ini
+del /s /q ru-RU.ini
+del /s /q sk-SK.ini
+del /s /q sl-SI.ini
+del /s /q sq-AL.ini
+del /s /q sr-CS.ini
+del /s /q da-dk.ini
+del /s /q lt-LT.ini
+del /s /q nl-NL.ini
+del /s /q nn-NO.ini
+del /s /q sr-SP.ini
+del /s /q sv-SE.ini
+del /s /q ta-IN.ini
+del /s /q th-TH.ini
+del /s /q tl-PH.ini
+del /s /q tr-TR.ini
+del /s /q uk-UA.ini
+del /s /q ur-PK.ini
+del /s /q vi-vn.ini
+del /s /q zh-cn.ini
+del /s /q zh-tw.ini
+
+cd C:\Program Files\obs-studio\data\obs-plugins\obs-ffmpeg\locale
+del /s /q af-ZA.ini
+del /s /q ar-SA.ini
+del /s /q az-AZ.ini
+del /s /q bg-BG.ini
+del /s /q bn-BD.ini
+del /s /q ca-ES.ini
+del /s /q cs-CZ.ini
+del /s /q da-dk.ini
+del /s /q de-DE.ini
+del /s /q el-GR.ini
+del /s /q et-EE.ini
+del /s /q eu-ES.ini
+del /s /q fa-IR.ini
+del /s /q fi-FI.ini
+del /s /q fil-PH.ini
+del /s /q fr-FR.ini
+del /s /q gd-GB.ini
+del /s /q gl-ES.ini
+del /s /q he-IL.ini
+del /s /q hi-IN.ini
+del /s /q hr-HR.ini
+del /s /q hu-HU.ini
+del /s /q it-IT.ini
+del /s /q ja-JP.ini
+del /s /q ka-GE.ini
+del /s /q ko-KR.ini
+del /s /q ku-TR.ini
+del /s /q It-LT.ini
+del /s /q mn-MN.ini
+del /s /q ms-MY.ini
+del /s /q nb-NO.ini
+del /s /q pa-IN.ini
+del /s /q pl-PL.ini
+del /s /q pt-BR.ini
+del /s /q pt-PT.ini
+del /s /q ro-RO.ini
+del /s /q ru-RU.ini
+del /s /q sk-SK.ini
+del /s /q sl-SI.ini
+del /s /q sq-AL.ini
+del /s /q sr-CS.ini
+del /s /q da-dk.ini
+del /s /q lt-LT.ini
+del /s /q nl-NL.ini
+del /s /q nn-NO.ini
+del /s /q sr-SP.ini
+del /s /q sv-SE.ini
+del /s /q ta-IN.ini
+del /s /q th-TH.ini
+del /s /q tl-PH.ini
+del /s /q tr-TR.ini
+del /s /q uk-UA.ini
+del /s /q ur-PK.ini
+del /s /q vi-vn.ini
+del /s /q zh-cn.ini
+del /s /q zh-tw.ini
+
+
+cd C:\Program Files\obs-studio\data\obs-plugins\obs-filters
+del /s /q af-ZA.ini
+del /s /q ar-SA.ini
+del /s /q az-AZ.ini
+del /s /q bg-BG.ini
+del /s /q bn-BD.ini
+del /s /q ca-ES.ini
+del /s /q cs-CZ.ini
+del /s /q da-dk.ini
+del /s /q de-DE.ini
+del /s /q el-GR.ini
+del /s /q et-EE.ini
+del /s /q eu-ES.ini
+del /s /q fa-IR.ini
+del /s /q fi-FI.ini
+del /s /q fil-PH.ini
+del /s /q fr-FR.ini
+del /s /q gd-GB.ini
+del /s /q gl-ES.ini
+del /s /q he-IL.ini
+del /s /q hi-IN.ini
+del /s /q hr-HR.ini
+del /s /q hu-HU.ini
+del /s /q it-IT.ini
+del /s /q ja-JP.ini
+del /s /q ka-GE.ini
+del /s /q ko-KR.ini
+del /s /q ku-TR.ini
+del /s /q It-LT.ini
+del /s /q mn-MN.ini
+del /s /q ms-MY.ini
+del /s /q nb-NO.ini
+del /s /q pa-IN.ini
+del /s /q pl-PL.ini
+del /s /q pt-BR.ini
+del /s /q pt-PT.ini
+del /s /q ro-RO.ini
+del /s /q ru-RU.ini
+del /s /q sk-SK.ini
+del /s /q sl-SI.ini
+del /s /q sq-AL.ini
+del /s /q sr-CS.ini
+del /s /q da-dk.ini
+del /s /q lt-LT.ini
+del /s /q nl-NL.ini
+del /s /q nn-NO.ini
+del /s /q sr-SP.ini
+del /s /q sv-SE.ini
+del /s /q ta-IN.ini
+del /s /q th-TH.ini
+del /s /q tl-PH.ini
+del /s /q tr-TR.ini
+del /s /q uk-UA.ini
+del /s /q ur-PK.ini
+del /s /q vi-vn.ini
+del /s /q zh-cn.ini
+del /s /q zh-tw.ini
+
+
+cd C:\Program Files\obs-studio\data\obs-plugins\obs-outputs\locale
+del /s /q af-ZA.ini
+del /s /q ar-SA.ini
+del /s /q az-AZ.ini
+del /s /q bg-BG.ini
+del /s /q bn-BD.ini
+del /s /q ca-ES.ini
+del /s /q cs-CZ.ini
+del /s /q da-dk.ini
+del /s /q de-DE.ini
+del /s /q el-GR.ini
+del /s /q et-EE.ini
+del /s /q eu-ES.ini
+del /s /q fa-IR.ini
+del /s /q fi-FI.ini
+del /s /q fil-PH.ini
+del /s /q fr-FR.ini
+del /s /q gd-GB.ini
+del /s /q gl-ES.ini
+del /s /q he-IL.ini
+del /s /q hi-IN.ini
+del /s /q hr-HR.ini
+del /s /q hu-HU.ini
+del /s /q it-IT.ini
+del /s /q ja-JP.ini
+del /s /q ka-GE.ini
+del /s /q ko-KR.ini
+del /s /q ku-TR.ini
+del /s /q It-LT.ini
+del /s /q mn-MN.ini
+del /s /q ms-MY.ini
+del /s /q nb-NO.ini
+del /s /q pa-IN.ini
+del /s /q pl-PL.ini
+del /s /q pt-BR.ini
+del /s /q pt-PT.ini
+del /s /q ro-RO.ini
+del /s /q ru-RU.ini
+del /s /q sk-SK.ini
+del /s /q sl-SI.ini
+del /s /q sq-AL.ini
+del /s /q sr-CS.ini
+del /s /q da-dk.ini
+del /s /q lt-LT.ini
+del /s /q nl-NL.ini
+del /s /q nn-NO.ini
+del /s /q sr-SP.ini
+del /s /q sv-SE.ini
+del /s /q ta-IN.ini
+del /s /q th-TH.ini
+del /s /q tl-PH.ini
+del /s /q tr-TR.ini
+del /s /q uk-UA.ini
+del /s /q ur-PK.ini
+del /s /q vi-vn.ini
+del /s /q zh-cn.ini
+del /s /q zh-tw.ini
+
+
+cd C:\Program Files\obs-studio\data\obs-plugins\obs-qsv11\locale
+del /s /q af-ZA.ini
+del /s /q ar-SA.ini
+del /s /q az-AZ.ini
+del /s /q bg-BG.ini
+del /s /q bn-BD.ini
+del /s /q ca-ES.ini
+del /s /q cs-CZ.ini
+del /s /q da-dk.ini
+del /s /q de-DE.ini
+del /s /q el-GR.ini
+del /s /q et-EE.ini
+del /s /q eu-ES.ini
+del /s /q fa-IR.ini
+del /s /q fi-FI.ini
+del /s /q fil-PH.ini
+del /s /q fr-FR.ini
+del /s /q gd-GB.ini
+del /s /q gl-ES.ini
+del /s /q he-IL.ini
+del /s /q hi-IN.ini
+del /s /q hr-HR.ini
+del /s /q hu-HU.ini
+del /s /q it-IT.ini
+del /s /q ja-JP.ini
+del /s /q ka-GE.ini
+del /s /q ko-KR.ini
+del /s /q ku-TR.ini
+del /s /q It-LT.ini
+del /s /q mn-MN.ini
+del /s /q ms-MY.ini
+del /s /q nb-NO.ini
+del /s /q pa-IN.ini
+del /s /q pl-PL.ini
+del /s /q pt-BR.ini
+del /s /q pt-PT.ini
+del /s /q ro-RO.ini
+del /s /q ru-RU.ini
+del /s /q sk-SK.ini
+del /s /q sl-SI.ini
+del /s /q sq-AL.ini
+del /s /q sr-CS.ini
+del /s /q da-dk.ini
+del /s /q lt-LT.ini
+del /s /q nl-NL.ini
+del /s /q nn-NO.ini
+del /s /q sr-SP.ini
+del /s /q sv-SE.ini
+del /s /q ta-IN.ini
+del /s /q th-TH.ini
+del /s /q tl-PH.ini
+del /s /q tr-TR.ini
+del /s /q uk-UA.ini
+del /s /q ur-PK.ini
+del /s /q vi-vn.ini
+del /s /q zh-cn.ini
+del /s /q zh-tw.ini
+
+
+cd C:\Program Files\obs-studio\data\obs-plugins\obs-text\locale
+del /s /q af-ZA.ini
+del /s /q ar-SA.ini
+del /s /q az-AZ.ini
+del /s /q bg-BG.ini
+del /s /q bn-BD.ini
+del /s /q ca-ES.ini
+del /s /q cs-CZ.ini
+del /s /q da-dk.ini
+del /s /q de-DE.ini
+del /s /q el-GR.ini
+del /s /q et-EE.ini
+del /s /q eu-ES.ini
+del /s /q fa-IR.ini
+del /s /q fi-FI.ini
+del /s /q fil-PH.ini
+del /s /q fr-FR.ini
+del /s /q gd-GB.ini
+del /s /q gl-ES.ini
+del /s /q he-IL.ini
+del /s /q hi-IN.ini
+del /s /q hr-HR.ini
+del /s /q hu-HU.ini
+del /s /q it-IT.ini
+del /s /q ja-JP.ini
+del /s /q ka-GE.ini
+del /s /q ko-KR.ini
+del /s /q ku-TR.ini
+del /s /q It-LT.ini
+del /s /q mn-MN.ini
+del /s /q ms-MY.ini
+del /s /q nb-NO.ini
+del /s /q pa-IN.ini
+del /s /q pl-PL.ini
+del /s /q pt-BR.ini
+del /s /q pt-PT.ini
+del /s /q ro-RO.ini
+del /s /q ru-RU.ini
+del /s /q sk-SK.ini
+del /s /q sl-SI.ini
+del /s /q sq-AL.ini
+del /s /q sr-CS.ini
+del /s /q da-dk.ini
+del /s /q lt-LT.ini
+del /s /q nl-NL.ini
+del /s /q nn-NO.ini
+del /s /q sr-SP.ini
+del /s /q sv-SE.ini
+del /s /q ta-IN.ini
+del /s /q th-TH.ini
+del /s /q tl-PH.ini
+del /s /q tr-TR.ini
+del /s /q uk-UA.ini
+del /s /q ur-PK.ini
+del /s /q vi-vn.ini
+del /s /q zh-cn.ini
+del /s /q zh-tw.ini
+
+
+cd C:\Program Files\obs-studio\data\obs-plugins\rtmp-services\locale
+del /s /q af-ZA.ini
+del /s /q ar-SA.ini
+del /s /q az-AZ.ini
+del /s /q bg-BG.ini
+del /s /q bn-BD.ini
+del /s /q ca-ES.ini
+del /s /q cs-CZ.ini
+del /s /q da-dk.ini
+del /s /q de-DE.ini
+del /s /q el-GR.ini
+del /s /q et-EE.ini
+del /s /q eu-ES.ini
+del /s /q fa-IR.ini
+del /s /q fi-FI.ini
+del /s /q fil-PH.ini
+del /s /q fr-FR.ini
+del /s /q gd-GB.ini
+del /s /q gl-ES.ini
+del /s /q he-IL.ini
+del /s /q hi-IN.ini
+del /s /q hr-HR.ini
+del /s /q hu-HU.ini
+del /s /q it-IT.ini
+del /s /q ja-JP.ini
+del /s /q ka-GE.ini
+del /s /q ko-KR.ini
+del /s /q ku-TR.ini
+del /s /q It-LT.ini
+del /s /q mn-MN.ini
+del /s /q ms-MY.ini
+del /s /q nb-NO.ini
+del /s /q pa-IN.ini
+del /s /q pl-PL.ini
+del /s /q pt-BR.ini
+del /s /q pt-PT.ini
+del /s /q ro-RO.ini
+del /s /q ru-RU.ini
+del /s /q sk-SK.ini
+del /s /q sl-SI.ini
+del /s /q sq-AL.ini
+del /s /q sr-CS.ini
+del /s /q da-dk.ini
+del /s /q lt-LT.ini
+del /s /q nl-NL.ini
+del /s /q nn-NO.ini
+del /s /q sr-SP.ini
+del /s /q sv-SE.ini
+del /s /q ta-IN.ini
+del /s /q th-TH.ini
+del /s /q tl-PH.ini
+del /s /q tr-TR.ini
+del /s /q uk-UA.ini
+del /s /q ur-PK.ini
+del /s /q vi-vn.ini
+del /s /q zh-cn.ini
+del /s /q zh-tw.ini
+
+
+cd C:\Program Files\obs-studio\data\obs-plugins\text-freetype2\locale
+del /s /q af-ZA.ini
+del /s /q ar-SA.ini
+del /s /q az-AZ.ini
+del /s /q bg-BG.ini
+del /s /q bn-BD.ini
+del /s /q ca-ES.ini
+del /s /q cs-CZ.ini
+del /s /q da-dk.ini
+del /s /q de-DE.ini
+del /s /q el-GR.ini
+del /s /q et-EE.ini
+del /s /q eu-ES.ini
+del /s /q fa-IR.ini
+del /s /q fi-FI.ini
+del /s /q fil-PH.ini
+del /s /q fr-FR.ini
+del /s /q gd-GB.ini
+del /s /q gl-ES.ini
+del /s /q he-IL.ini
+del /s /q hi-IN.ini
+del /s /q hr-HR.ini
+del /s /q hu-HU.ini
+del /s /q it-IT.ini
+del /s /q ja-JP.ini
+del /s /q ka-GE.ini
+del /s /q ko-KR.ini
+del /s /q ku-TR.ini
+del /s /q It-LT.ini
+del /s /q mn-MN.ini
+del /s /q ms-MY.ini
+del /s /q nb-NO.ini
+del /s /q pa-IN.ini
+del /s /q pl-PL.ini
+del /s /q pt-BR.ini
+del /s /q pt-PT.ini
+del /s /q ro-RO.ini
+del /s /q ru-RU.ini
+del /s /q sk-SK.ini
+del /s /q sl-SI.ini
+del /s /q sq-AL.ini
+del /s /q sr-CS.ini
+del /s /q da-dk.ini
+del /s /q lt-LT.ini
+del /s /q nl-NL.ini
+del /s /q nn-NO.ini
+del /s /q sr-SP.ini
+del /s /q sv-SE.ini
+del /s /q ta-IN.ini
+del /s /q th-TH.ini
+del /s /q tl-PH.ini
+del /s /q tr-TR.ini
+del /s /q uk-UA.ini
+del /s /q ur-PK.ini
+del /s /q vi-vn.ini
+del /s /q zh-cn.ini
+del /s /q zh-tw.ini
+
+
+cd C:\Program Files\obs-studio\data\obs-plugins\vlc-video\locale
+del /s /q af-ZA.ini
+del /s /q ar-SA.ini
+del /s /q az-AZ.ini
+del /s /q bg-BG.ini
+del /s /q bn-BD.ini
+del /s /q ca-ES.ini
+del /s /q cs-CZ.ini
+del /s /q da-dk.ini
+del /s /q de-DE.ini
+del /s /q el-GR.ini
+del /s /q et-EE.ini
+del /s /q eu-ES.ini
+del /s /q fa-IR.ini
+del /s /q fi-FI.ini
+del /s /q fil-PH.ini
+del /s /q fr-FR.ini
+del /s /q gd-GB.ini
+del /s /q gl-ES.ini
+del /s /q he-IL.ini
+del /s /q hi-IN.ini
+del /s /q hr-HR.ini
+del /s /q hu-HU.ini
+del /s /q it-IT.ini
+del /s /q ja-JP.ini
+del /s /q ka-GE.ini
+del /s /q ko-KR.ini
+del /s /q ku-TR.ini
+del /s /q It-LT.ini
+del /s /q mn-MN.ini
+del /s /q ms-MY.ini
+del /s /q nb-NO.ini
+del /s /q pa-IN.ini
+del /s /q pl-PL.ini
+del /s /q pt-BR.ini
+del /s /q pt-PT.ini
+del /s /q ro-RO.ini
+del /s /q ru-RU.ini
+del /s /q sk-SK.ini
+del /s /q sl-SI.ini
+del /s /q sq-AL.ini
+del /s /q sr-CS.ini
+del /s /q da-dk.ini
+del /s /q lt-LT.ini
+del /s /q nl-NL.ini
+del /s /q nn-NO.ini
+del /s /q sr-SP.ini
+del /s /q sv-SE.ini
+del /s /q ta-IN.ini
+del /s /q th-TH.ini
+del /s /q tl-PH.ini
+del /s /q tr-TR.ini
+del /s /q uk-UA.ini
+del /s /q ur-PK.ini
+del /s /q vi-vn.ini
+del /s /q zh-cn.ini
+del /s /q zh-tw.ini
+
+
+cd C:\Program Files\obs-studio\data\obs-plugins\win-capture\locale
+del /s /q af-ZA.ini
+del /s /q ar-SA.ini
+del /s /q az-AZ.ini
+del /s /q bg-BG.ini
+del /s /q bn-BD.ini
+del /s /q ca-ES.ini
+del /s /q cs-CZ.ini
+del /s /q da-dk.ini
+del /s /q de-DE.ini
+del /s /q el-GR.ini
+del /s /q et-EE.ini
+del /s /q eu-ES.ini
+del /s /q fa-IR.ini
+del /s /q fi-FI.ini
+del /s /q fil-PH.ini
+del /s /q fr-FR.ini
+del /s /q gd-GB.ini
+del /s /q gl-ES.ini
+del /s /q he-IL.ini
+del /s /q hi-IN.ini
+del /s /q hr-HR.ini
+del /s /q hu-HU.ini
+del /s /q it-IT.ini
+del /s /q ja-JP.ini
+del /s /q ka-GE.ini
+del /s /q ko-KR.ini
+del /s /q ku-TR.ini
+del /s /q It-LT.ini
+del /s /q mn-MN.ini
+del /s /q ms-MY.ini
+del /s /q nb-NO.ini
+del /s /q pa-IN.ini
+del /s /q pl-PL.ini
+del /s /q pt-BR.ini
+del /s /q pt-PT.ini
+del /s /q ro-RO.ini
+del /s /q ru-RU.ini
+del /s /q sk-SK.ini
+del /s /q sl-SI.ini
+del /s /q sq-AL.ini
+del /s /q sr-CS.ini
+del /s /q da-dk.ini
+del /s /q lt-LT.ini
+del /s /q nl-NL.ini
+del /s /q nn-NO.ini
+del /s /q sr-SP.ini
+del /s /q sv-SE.ini
+del /s /q ta-IN.ini
+del /s /q th-TH.ini
+del /s /q tl-PH.ini
+del /s /q tr-TR.ini
+del /s /q uk-UA.ini
+del /s /q ur-PK.ini
+del /s /q vi-vn.ini
+del /s /q zh-cn.ini
+del /s /q zh-tw.ini
+
+
+cd C:\Program Files\obs-studio\data\obs-plugins\win-decklink\locale
+del /s /q af-ZA.ini
+del /s /q ar-SA.ini
+del /s /q az-AZ.ini
+del /s /q bg-BG.ini
+del /s /q bn-BD.ini
+del /s /q ca-ES.ini
+del /s /q cs-CZ.ini
+del /s /q da-dk.ini
+del /s /q de-DE.ini
+del /s /q el-GR.ini
+del /s /q et-EE.ini
+del /s /q eu-ES.ini
+del /s /q fa-IR.ini
+del /s /q fi-FI.ini
+del /s /q fil-PH.ini
+del /s /q fr-FR.ini
+del /s /q gd-GB.ini
+del /s /q gl-ES.ini
+del /s /q he-IL.ini
+del /s /q hi-IN.ini
+del /s /q hr-HR.ini
+del /s /q hu-HU.ini
+del /s /q it-IT.ini
+del /s /q ja-JP.ini
+del /s /q ka-GE.ini
+del /s /q ko-KR.ini
+del /s /q ku-TR.ini
+del /s /q It-LT.ini
+del /s /q mn-MN.ini
+del /s /q ms-MY.ini
+del /s /q nb-NO.ini
+del /s /q pa-IN.ini
+del /s /q pl-PL.ini
+del /s /q pt-BR.ini
+del /s /q pt-PT.ini
+del /s /q ro-RO.ini
+del /s /q ru-RU.ini
+del /s /q sk-SK.ini
+del /s /q sl-SI.ini
+del /s /q sq-AL.ini
+del /s /q sr-CS.ini
+del /s /q da-dk.ini
+del /s /q lt-LT.ini
+del /s /q nl-NL.ini
+del /s /q nn-NO.ini
+del /s /q sr-SP.ini
+del /s /q sv-SE.ini
+del /s /q ta-IN.ini
+del /s /q th-TH.ini
+del /s /q tl-PH.ini
+del /s /q tr-TR.ini
+del /s /q uk-UA.ini
+del /s /q ur-PK.ini
+del /s /q vi-vn.ini
+del /s /q zh-cn.ini
+del /s /q zh-tw.ini
+
+
+cd C:\Program Files\obs-studio\data\obs-plugins\win-dshow\locale
+del /s /q af-ZA.ini
+del /s /q ar-SA.ini
+del /s /q az-AZ.ini
+del /s /q bg-BG.ini
+del /s /q bn-BD.ini
+del /s /q ca-ES.ini
+del /s /q cs-CZ.ini
+del /s /q da-dk.ini
+del /s /q de-DE.ini
+del /s /q el-GR.ini
+del /s /q et-EE.ini
+del /s /q eu-ES.ini
+del /s /q fa-IR.ini
+del /s /q fi-FI.ini
+del /s /q fil-PH.ini
+del /s /q fr-FR.ini
+del /s /q gd-GB.ini
+del /s /q gl-ES.ini
+del /s /q he-IL.ini
+del /s /q hi-IN.ini
+del /s /q hr-HR.ini
+del /s /q hu-HU.ini
+del /s /q it-IT.ini
+del /s /q ja-JP.ini
+del /s /q ka-GE.ini
+del /s /q ko-KR.ini
+del /s /q ku-TR.ini
+del /s /q It-LT.ini
+del /s /q mn-MN.ini
+del /s /q ms-MY.ini
+del /s /q nb-NO.ini
+del /s /q pa-IN.ini
+del /s /q pl-PL.ini
+del /s /q pt-BR.ini
+del /s /q pt-PT.ini
+del /s /q ro-RO.ini
+del /s /q ru-RU.ini
+del /s /q sk-SK.ini
+del /s /q sl-SI.ini
+del /s /q sq-AL.ini
+del /s /q sr-CS.ini
+del /s /q da-dk.ini
+del /s /q lt-LT.ini
+del /s /q nl-NL.ini
+del /s /q nn-NO.ini
+del /s /q sr-SP.ini
+del /s /q sv-SE.ini
+del /s /q ta-IN.ini
+del /s /q th-TH.ini
+del /s /q tl-PH.ini
+del /s /q tr-TR.ini
+del /s /q uk-UA.ini
+del /s /q ur-PK.ini
+del /s /q vi-vn.ini
+del /s /q zh-cn.ini
+del /s /q zh-tw.ini
+
+
+cd C:\Program Files\obs-studio\data\obs-plugins\win-wasapi\locale
+del /s /q af-ZA.ini
+del /s /q ar-SA.ini
+del /s /q az-AZ.ini
+del /s /q bg-BG.ini
+del /s /q bn-BD.ini
+del /s /q ca-ES.ini
+del /s /q cs-CZ.ini
+del /s /q da-dk.ini
+del /s /q de-DE.ini
+del /s /q el-GR.ini
+del /s /q et-EE.ini
+del /s /q eu-ES.ini
+del /s /q fa-IR.ini
+del /s /q fi-FI.ini
+del /s /q fil-PH.ini
+del /s /q fr-FR.ini
+del /s /q gd-GB.ini
+del /s /q gl-ES.ini
+del /s /q he-IL.ini
+del /s /q hi-IN.ini
+del /s /q hr-HR.ini
+del /s /q hu-HU.ini
+del /s /q it-IT.ini
+del /s /q ja-JP.ini
+del /s /q ka-GE.ini
+del /s /q ko-KR.ini
+del /s /q ku-TR.ini
+del /s /q It-LT.ini
+del /s /q mn-MN.ini
+del /s /q ms-MY.ini
+del /s /q nb-NO.ini
+del /s /q pa-IN.ini
+del /s /q pl-PL.ini
+del /s /q pt-BR.ini
+del /s /q pt-PT.ini
+del /s /q ro-RO.ini
+del /s /q ru-RU.ini
+del /s /q sk-SK.ini
+del /s /q sl-SI.ini
+del /s /q sq-AL.ini
+del /s /q sr-CS.ini
+del /s /q da-dk.ini
+del /s /q lt-LT.ini
+del /s /q nl-NL.ini
+del /s /q nn-NO.ini
+del /s /q sr-SP.ini
+del /s /q sv-SE.ini
+del /s /q ta-IN.ini
+del /s /q th-TH.ini
+del /s /q tl-PH.ini
+del /s /q tr-TR.ini
+del /s /q uk-UA.ini
+del /s /q ur-PK.ini
+del /s /q vi-vn.ini
+del /s /q zh-cn.ini
+del /s /q zh-tw.ini
+
+cd C:\Program Files\obs-studio\data\obs-plugins\obs-browser\locale
+del /s /q af-ZA.ini
+del /s /q ar-SA.ini
+del /s /q az-AZ.ini
+del /s /q bg-BG.ini
+del /s /q bn-BD.ini
+del /s /q ca-ES.ini
+del /s /q cs-CZ.ini
+del /s /q da-dk.ini
+del /s /q de-DE.ini
+del /s /q el-GR.ini
+del /s /q et-EE.ini
+del /s /q eu-ES.ini
+del /s /q fa-IR.ini
+del /s /q fi-FI.ini
+del /s /q fil-PH.ini
+del /s /q fr-FR.ini
+del /s /q gd-GB.ini
+del /s /q gl-ES.ini
+del /s /q he-IL.ini
+del /s /q hi-IN.ini
+del /s /q hr-HR.ini
+del /s /q hu-HU.ini
+del /s /q it-IT.ini
+del /s /q ja-JP.ini
+del /s /q ka-GE.ini
+del /s /q ko-KR.ini
+del /s /q ku-TR.ini
+del /s /q It-LT.ini
+del /s /q mn-MN.ini
+del /s /q ms-MY.ini
+del /s /q nb-NO.ini
+del /s /q pa-IN.ini
+del /s /q pl-PL.ini
+del /s /q pt-BR.ini
+del /s /q pt-PT.ini
+del /s /q ro-RO.ini
+del /s /q ru-RU.ini
+del /s /q sk-SK.ini
+del /s /q sl-SI.ini
+del /s /q sq-AL.ini
+del /s /q sr-CS.ini
+del /s /q da-dk.ini
+del /s /q lt-LT.ini
+del /s /q nl-NL.ini
+del /s /q nn-NO.ini
+del /s /q sr-SP.ini
+del /s /q sv-SE.ini
+del /s /q ta-IN.ini
+del /s /q th-TH.ini
+del /s /q tl-PH.ini
+del /s /q tr-TR.ini
+del /s /q uk-UA.ini
+del /s /q ur-PK.ini
+del /s /q vi-vn.ini
+del /s /q zh-cn.ini
+del /s /q zh-tw.ini
+
+
+cd C:\Program Files\obs-studio\data\obs-plugins\obs-transitions\locale
+del /s /q af-ZA.ini
+del /s /q ar-SA.ini
+del /s /q az-AZ.ini
+del /s /q bg-BG.ini
+del /s /q bn-BD.ini
+del /s /q ca-ES.ini
+del /s /q cs-CZ.ini
+del /s /q da-dk.ini
+del /s /q de-DE.ini
+del /s /q el-GR.ini
+del /s /q et-EE.ini
+del /s /q eu-ES.ini
+del /s /q fa-IR.ini
+del /s /q fi-FI.ini
+del /s /q fil-PH.ini
+del /s /q fr-FR.ini
+del /s /q gd-GB.ini
+del /s /q gl-ES.ini
+del /s /q he-IL.ini
+del /s /q hi-IN.ini
+del /s /q hr-HR.ini
+del /s /q hu-HU.ini
+del /s /q it-IT.ini
+del /s /q ja-JP.ini
+del /s /q ka-GE.ini
+del /s /q ko-KR.ini
+del /s /q ku-TR.ini
+del /s /q It-LT.ini
+del /s /q mn-MN.ini
+del /s /q ms-MY.ini
+del /s /q nb-NO.ini
+del /s /q pa-IN.ini
+del /s /q pl-PL.ini
+del /s /q pt-BR.ini
+del /s /q pt-PT.ini
+del /s /q ro-RO.ini
+del /s /q ru-RU.ini
+del /s /q sk-SK.ini
+del /s /q sl-SI.ini
+del /s /q sq-AL.ini
+del /s /q sr-CS.ini
+del /s /q da-dk.ini
+del /s /q lt-LT.ini
+del /s /q nl-NL.ini
+del /s /q nn-NO.ini
+del /s /q sr-SP.ini
+del /s /q sv-SE.ini
+del /s /q ta-IN.ini
+del /s /q th-TH.ini
+del /s /q tl-PH.ini
+del /s /q tr-TR.ini
+del /s /q uk-UA.ini
+del /s /q ur-PK.ini
+del /s /q vi-vn.ini
+del /s /q zh-cn.ini
+del /s /q zh-tw.ini
+
+cd C:\Program Files\obs-studio\data\obs-plugins\obs-vst\locale
+del /s /q af-ZA.ini
+del /s /q ar-SA.ini
+del /s /q az-AZ.ini
+del /s /q bg-BG.ini
+del /s /q bn-BD.ini
+del /s /q ca-ES.ini
+del /s /q cs-CZ.ini
+del /s /q da-dk.ini
+del /s /q de-DE.ini
+del /s /q el-GR.ini
+del /s /q et-EE.ini
+del /s /q eu-ES.ini
+del /s /q fa-IR.ini
+del /s /q fi-FI.ini
+del /s /q fil-PH.ini
+del /s /q fr-FR.ini
+del /s /q gd-GB.ini
+del /s /q gl-ES.ini
+del /s /q he-IL.ini
+del /s /q hi-IN.ini
+del /s /q hr-HR.ini
+del /s /q hu-HU.ini
+del /s /q it-IT.ini
+del /s /q ja-JP.ini
+del /s /q ka-GE.ini
+del /s /q ko-KR.ini
+del /s /q ku-TR.ini
+del /s /q It-LT.ini
+del /s /q mn-MN.ini
+del /s /q ms-MY.ini
+del /s /q nb-NO.ini
+del /s /q pa-IN.ini
+del /s /q pl-PL.ini
+del /s /q pt-BR.ini
+del /s /q pt-PT.ini
+del /s /q ro-RO.ini
+del /s /q ru-RU.ini
+del /s /q sk-SK.ini
+del /s /q sl-SI.ini
+del /s /q sq-AL.ini
+del /s /q sr-CS.ini
+del /s /q da-dk.ini
+del /s /q lt-LT.ini
+del /s /q nl-NL.ini
+del /s /q nn-NO.ini
+del /s /q sr-SP.ini
+del /s /q sv-SE.ini
+del /s /q ta-IN.ini
+del /s /q th-TH.ini
+del /s /q tl-PH.ini
+del /s /q tr-TR.ini
+del /s /q uk-UA.ini
+del /s /q ur-PK.ini
+del /s /q vi-vn.ini
+del /s /q zh-cn.ini
+del /s /q zh-tw.ini
+
+cd C:\Program Files\obs-studio\data\obs-plugins\obs-x264\locale
+del /s /q af-ZA.ini
+del /s /q ar-SA.ini
+del /s /q az-AZ.ini
+del /s /q bg-BG.ini
+del /s /q bn-BD.ini
+del /s /q ca-ES.ini
+del /s /q cs-CZ.ini
+del /s /q da-dk.ini
+del /s /q de-DE.ini
+del /s /q el-GR.ini
+del /s /q et-EE.ini
+del /s /q eu-ES.ini
+del /s /q fa-IR.ini
+del /s /q fi-FI.ini
+del /s /q fil-PH.ini
+del /s /q fr-FR.ini
+del /s /q gd-GB.ini
+del /s /q gl-ES.ini
+del /s /q he-IL.ini
+del /s /q hi-IN.ini
+del /s /q hr-HR.ini
+del /s /q hu-HU.ini
+del /s /q it-IT.ini
+del /s /q ja-JP.ini
+del /s /q ka-GE.ini
+del /s /q ko-KR.ini
+del /s /q ku-TR.ini
+del /s /q It-LT.ini
+del /s /q mn-MN.ini
+del /s /q ms-MY.ini
+del /s /q nb-NO.ini
+del /s /q pa-IN.ini
+del /s /q pl-PL.ini
+del /s /q pt-BR.ini
+del /s /q pt-PT.ini
+del /s /q ro-RO.ini
+del /s /q ru-RU.ini
+del /s /q sk-SK.ini
+del /s /q sl-SI.ini
+del /s /q sq-AL.ini
+del /s /q sr-CS.ini
+del /s /q da-dk.ini
+del /s /q lt-LT.ini
+del /s /q nl-NL.ini
+del /s /q nn-NO.ini
+del /s /q sr-SP.ini
+del /s /q sv-SE.ini
+del /s /q ta-IN.ini
+del /s /q th-TH.ini
+del /s /q tl-PH.ini
+del /s /q tr-TR.ini
+del /s /q uk-UA.ini
+del /s /q ur-PK.ini
+del /s /q vi-vn.ini
+del /s /q zh-cn.ini
+del /s /q zh-tw.ini
+
+cd "C:\Program Files\obs-studio\obs-plugins\64bit\locales"
+del /s /q am.pak
+del /s /q ar.pak
+del /s /q bg.pak
+del /s /q bn.pak
+del /s /q ca.pak
+del /s /q cs.pak
+del /s /q da.pak
+del /s /q de.pak
+del /s /q el.pak
+del /s /q en-GB.pak
+del /s /q es.pak
+del /s /q es-419.pak
+del /s /q et.pak
+del /s /q fa.pak
+del /s /q fi.pak
+del /s /q fil.pak
+del /s /q fr.pak
+del /s /q gu.pak
+del /s /q he.pak
+del /s /q hi.pak
+del /s /q hr.pak
+del /s /q hu.pak
+del /s /q id.pak
+del /s /q it.pak
+del /s /q ja.pak
+del /s /q kn.pak
+del /s /q ko.pak
+del /s /q it.pak
+del /s /q lv.pak
+del /s /q ml.pak
+del /s /q mr.pak
+del /s /q ms.pak
+del /s /q ms.pak
+del /s /q nb.pak
+del /s /q nl.pak
+del /s /q pl.pak
+del /s /q pt-BR.pak
+del /s /q pt-PT.pak
+del /s /q ro.pak
+del /s /q ru.pak
+del /s /q sk.pak
+del /s /q zh-TW.pak
+del /s /q sl.pak
+del /s /q sv.pak
+del /s /q sw.pak
+del /s /q ta.pak
+del /s /q te.pak
+del /s /q th.pak
+del /s /q tr.pak
+del /s /q uk.pak
+del /s /q vi.pak
+del /s /q zh-CN.pak
+del /s /q lt.pak
+del /s /q sr.pak
+goto Themes1
+
+:Themes1
+cd C:\Program Files\obs-studio\data\obs-studio\themes
+RMDIR /Q/S Acri
+RMDIR /Q/S Rachni
+del /s /q System.qss
+del /s /q Acri.qss
+del /s /q Rachni.qss
+goto Others1
+
+:Others1
+cd C:\Users\%username%\AppData\Roaming\obs-studio
+RMDIR /Q/S crashes
+RMDIR /Q/S logs
+RMDIR /Q/S updates
+RMDIR /Q/S profiler_data
+cls
+RegDeleteKey "HKCR\CLSID\{860BB310-5D01-11d0-BD3B-00A0C911CE86}"
+RegDeleteKey "HKCR\CLSID\{A3FCE0F5-3493-419F-958A-ABA1250EC20B}"
+RegDeleteKey "HKCR\WOW6432Node\CLSID\{860BB310-5D01-11d0-BD3B-00A0C911CE86}"
+RegDeleteKey "HKCR\WOW6432Node\CLSID\{A3FCE0F5-3493-419F-958A-ABA1250EC20B}"
+cls
+echo %g%======PRESS ANY KEY TO CONTINUE======
+pause >nul
+goto ProgramDebloat
+
+:debloatdiscord
+cls
+TASKKILL /T /F /IM  discord.exe
+DEL "%HOMEPATH%\Desktop\Discord.ink" /F /Q
+DEL "%HOMEPATH%\Desktop\Discord.ink - Shortcut" /F /Q
+DEL "%HOMEPATH%\Desktop\Update.exe" /F /Q
+DEL "%HOMEPATH%\Desktop\Update.exe - Shortcut" /F /Q
+DEL "%HOMEPATH%\Desktop\Discord.exe" /F /Q
+DEL "%HOMEPATH%\Desktop\Discord.exe - Shortcut" /F /Q
+DEL "%HOMEPATH%\appdata\Local\discord\Update.exe" /F /Q
+DEL "%HOMEPATH%\appdata\Local\discord\app-0.0.309\Squirrel.exe" /F /Q
+DEL "%HOMEPATH%\appdata\Local\discord\app-0.0.308\Squirrel.exe" /F /Q
+DEL "%HOMEPATH%\appdata\Local\discord\app-0.0.307\Squirrel.exe" /F /Q
+DEL "%HOMEPATH%\appdata\Local\discord\app-0.0.306\Squirrel.exe" /F /Q
+DEL "%HOMEPATH%\appdata\Local\discord\SquirrelSetup.log" /F /Q
+DEL "%HOMEPATH%\appdata\Local\discord\app-0.0.309\SquirrelSetup.log" /F /Q
+DEL "%HOMEPATH%\appdata\Local\discord\app-0.0.308\SquirrelSetup.log" /F /Q
+DEL "%HOMEPATH%\appdata\Local\discord\app-0.0.307\SquirrelSetup.log" /F /Q
+DEL "%HOMEPATH%\appdata\Local\discord\app-0.0.306\SquirrelSetup.log" /F /Q
+rd /s /q "%HOMEPATH%\appdata\Local\discord\Packages"
+DEL "%HOMEPATH%\appdata\Roaming\discord\0.0.309\modules\discord_modules\397863cd8f\2\discord_game_sdk_x64.dll" /F /Q
+DEL "%HOMEPATH%\appdata\Roaming\discord\0.0.308\modules\discord_modules\397863cd8f\2\discord_game_sdk_x64.dll" /F /Q
+DEL "%HOMEPATH%\appdata\Roaming\discord\0.0.307\modules\discord_modules\397863cd8f\2\discord_game_sdk_x64.dll" /F /Q
+DEL "%HOMEPATH%\appdata\Roaming\discord\0.0.306\modules\discord_modules\397863cd8f\2\discord_game_sdk_x64.dll" /F /Q
+DEL "%HOMEPATH%\appdata\Roaming\discord\0.0.309\modules\discord_modules\397863cd8f\2\discord_game_sdk_x86.dll" /F /Q
+DEL "%HOMEPATH%\appdata\Roaming\discord\0.0.308\modules\discord_modules\397863cd8f\2\discord_game_sdk_x86.dll" /F /Q
+DEL "%HOMEPATH%\appdata\Roaming\discord\0.0.307\modules\discord_modules\397863cd8f\2\discord_game_sdk_x86.dll" /F /Q
+DEL "%HOMEPATH%\appdata\Roaming\discord\0.0.306\modules\discord_modules\397863cd8f\2\discord_game_sdk_x86.dll" /F /Q
+rd /s /q "%HOMEPATH%\appdata\Roaming\discord\0.0.309\modules\discord_cloudsync"
+rd /s /q "%HOMEPATH%\appdata\Roaming\discord\0.0.308\modules\discord_cloudsync"
+rd /s /q "%HOMEPATH%\appdata\Roaming\discord\0.0.307\modules\discord_cloudsync"
+rd /s /q "%HOMEPATH%\appdata\Roaming\discord\0.0.306\modules\discord_cloudsync"
+rd /s /q "%HOMEPATH%\appdata\Roaming\discord\0.0.309\modules\discord_dispatch"
+rd /s /q "%HOMEPATH%\appdata\Roaming\discord\0.0.308\modules\discord_dispatch"
+rd /s /q "%HOMEPATH%\appdata\Roaming\discord\0.0.307\modules\discord_dispatch"
+rd /s /q "%HOMEPATH%\appdata\Roaming\discord\0.0.306\modules\discord_dispatch"
+rd /s /q "%HOMEPATH%\appdata\Roaming\discord\0.0.309\modules\discord_erlpack"
+rd /s /q "%HOMEPATH%\appdata\Roaming\discord\0.0.308\modules\discord_erlpack"
+rd /s /q "%HOMEPATH%\appdata\Roaming\discord\0.0.307\modules\discord_erlpack"
+rd /s /q "%HOMEPATH%\appdata\Roaming\discord\0.0.306\modules\discord_erlpack"
+rd /s /q "%HOMEPATH%\appdata\Roaming\discord\0.0.309\modules\discord_game_utils"
+rd /s /q "%HOMEPATH%\appdata\Roaming\discord\0.0.308\modules\discord_game_utils"
+rd /s /q "%HOMEPATH%\appdata\Roaming\discord\0.0.307\modules\discord_game_utils"
+rd /s /q "%HOMEPATH%\appdata\Roaming\discord\0.0.306\modules\discord_game_utils"
+rd /s /q "%HOMEPATH%\appdata\Roaming\discord\0.0.309\modules\discord_media"
+rd /s /q "%HOMEPATH%\appdata\Roaming\discord\0.0.308\modules\discord_media"
+rd /s /q "%HOMEPATH%\appdata\Roaming\discord\0.0.307\modules\discord_media"
+rd /s /q "%HOMEPATH%\appdata\Roaming\discord\0.0.306\modules\discord_media"
+rd /s /q "%HOMEPATH%\appdata\Roaming\discord\0.0.309\modules\discord_spellcheck"
+rd /s /q "%HOMEPATH%\appdata\Roaming\discord\0.0.308\modules\discord_spellcheck"
+rd /s /q "%HOMEPATH%\appdata\Roaming\discord\0.0.307\modules\discord_spellcheck"
+rd /s /q "%HOMEPATH%\appdata\Roaming\discord\0.0.306\modules\discord_spellcheck"
+rd /s /q "%HOMEPATH%\appdata\Roaming\discord\0.0.309\modules\discord_krisp"
+rd /s /q "%HOMEPATH%\appdata\Roaming\discord\0.0.308\modules\discord_krisp"
+rd /s /q "%HOMEPATH%\appdata\Roaming\discord\0.0.307\modules\discord_krisp"
+rd /s /q "%HOMEPATH%\appdata\Roaming\discord\0.0.306\modules\discord_krisp"
+rd /s /q "%HOMEPATH%\appdata\Roaming\discord\0.0.309\modules\discord_rpc"
+rd /s /q "%HOMEPATH%\appdata\Roaming\discord\0.0.308\modules\discord_rpc"
+rd /s /q "%HOMEPATH%\appdata\Roaming\discord\0.0.307\modules\discord_rpc"
+rd /s /q "%HOMEPATH%\appdata\Roaming\discord\0.0.306\modules\discord_rpc"
+rd /s /q "%HOMEPATH%\appdata\Roaming\discord\0.0.309\modules\discord_overlay2"
+rd /s /q "%HOMEPATH%\appdata\Roaming\discord\0.0.308\modules\discord_overlay2"
+rd /s /q "%HOMEPATH%\appdata\Roaming\discord\0.0.307\modules\discord_overlay2"
+rd /s /q "%HOMEPATH%\appdata\Roaming\discord\0.0.306\modules\discord_overlay2"
+cls
+echo %g%======PRESS ANY KEY TO CONTINUE======
+pause >nul
+goto ProgramDebloat
+
+:debloatwindows
+cls
 PowerShell -Command "Get-AppxPackage *Microsoft.BingNews* | Remove-AppxPackage"
 PowerShell -Command "Get-AppxPackage *Microsoft.BingWeather* | Remove-AppxPackage"
 PowerShell -Command "Get-AppxPackage *Microsoft.GetHelp* | Remove-AppxPackage"
@@ -1613,10 +3415,10 @@ PowerShell -ExecutionPolicy Unrestricted -Command "Get-AppxPackage 'Microsoft.Xb
 PowerShell -ExecutionPolicy Unrestricted -Command "Get-AppxPackage 'Microsoft.XboxGameOverlay' | Remove-AppxPackage"
 PowerShell -ExecutionPolicy Unrestricted -Command "Get-AppxPackage 'Microsoft.XboxIdentityProvider' | Remove-AppxPackage"
 PowerShell -ExecutionPolicy Unrestricted -Command "Get-AppxPackage 'Microsoft.XboxSpeechToTextOverlay' | Remove-AppxPackage"
-PowerShell -ExecutionPolicy Unrestricted -Command "$package = Get-AppxPackage -AllUsers 'Microsoft.Windows.Holographic.FirstRun'; if (!$package) {; Write-Host 'Not installed'; exit 0; }; $directories = @($package.InstallLocation, "^""$env:LOCALAPPDATA\Packages\$($package.PackageFamilyName)"^""); foreach($dir in $directories) {; if ( !$dir -Or !(Test-Path "^""$dir"^"") ) { continue }; cmd /c ('takeown /f "^""' + $dir + '"^"" /r /d y 1> nul'); if($LASTEXITCODE) { throw 'Failed to take ownership' }; cmd /c ('icacls "^""' + $dir + '"^"" /grant administrators:F /t 1> nul'); if($LASTEXITCODE) { throw 'Failed to take ownership' }; $files = Get-ChildItem -File -Path $dir -Recurse -Force; foreach($file in $files) {; if($file.Name.EndsWith('.OLD')) { continue }; $newName =  $file.FullName + '.OLD'; Write-Host "^""Rename '$($file.FullName)' to '$newName'"^""; Move-Item -LiteralPath "^""$($file.FullName)"^"" -Destination "^""$newName"^"" -Force; }; }"
-PowerShell -ExecutionPolicy Unrestricted -Command "$package = Get-AppxPackage -AllUsers 'Microsoft.Windows.ParentalControls'; if (!$package) {; Write-Host 'Not installed'; exit 0; }; $directories = @($package.InstallLocation, "^""$env:LOCALAPPDATA\Packages\$($package.PackageFamilyName)"^""); foreach($dir in $directories) {; if ( !$dir -Or !(Test-Path "^""$dir"^"") ) { continue }; cmd /c ('takeown /f "^""' + $dir + '"^"" /r /d y 1> nul'); if($LASTEXITCODE) { throw 'Failed to take ownership' }; cmd /c ('icacls "^""' + $dir + '"^"" /grant administrators:F /t 1> nul'); if($LASTEXITCODE) { throw 'Failed to take ownership' }; $files = Get-ChildItem -File -Path $dir -Recurse -Force; foreach($file in $files) {; if($file.Name.EndsWith('.OLD')) { continue }; $newName =  $file.FullName + '.OLD'; Write-Host "^""Rename '$($file.FullName)' to '$newName'"^""; Move-Item -LiteralPath "^""$($file.FullName)"^"" -Destination "^""$newName"^"" -Force; }; }"
-PowerShell -ExecutionPolicy Unrestricted -Command "$package = Get-AppxPackage -AllUsers 'Microsoft.WindowsFeedback'; if (!$package) {; Write-Host 'Not installed'; exit 0; }; $directories = @($package.InstallLocation, "^""$env:LOCALAPPDATA\Packages\$($package.PackageFamilyName)"^""); foreach($dir in $directories) {; if ( !$dir -Or !(Test-Path "^""$dir"^"") ) { continue }; cmd /c ('takeown /f "^""' + $dir + '"^"" /r /d y 1> nul'); if($LASTEXITCODE) { throw 'Failed to take ownership' }; cmd /c ('icacls "^""' + $dir + '"^"" /grant administrators:F /t 1> nul'); if($LASTEXITCODE) { throw 'Failed to take ownership' }; $files = Get-ChildItem -File -Path $dir -Recurse -Force; foreach($file in $files) {; if($file.Name.EndsWith('.OLD')) { continue }; $newName =  $file.FullName + '.OLD'; Write-Host "^""Rename '$($file.FullName)' to '$newName'"^""; Move-Item -LiteralPath "^""$($file.FullName)"^"" -Destination "^""$newName"^"" -Force; }; }"
-PowerShell -ExecutionPolicy Unrestricted -Command "$package = Get-AppxPackage -AllUsers 'Windows.CBSPreview'; if (!$package) {; Write-Host 'Not installed'; exit 0; }; $directories = @($package.InstallLocation, "^""$env:LOCALAPPDATA\Packages\$($package.PackageFamilyName)"^""); foreach($dir in $directories) {; if ( !$dir -Or !(Test-Path "^""$dir"^"") ) { continue }; cmd /c ('takeown /f "^""' + $dir + '"^"" /r /d y 1> nul'); if($LASTEXITCODE) { throw 'Failed to take ownership' }; cmd /c ('icacls "^""' + $dir + '"^"" /grant administrators:F /t 1> nul'); if($LASTEXITCODE) { throw 'Failed to take ownership' }; $files = Get-ChildItem -File -Path $dir -Recurse -Force; foreach($file in $files) {; if($file.Name.EndsWith('.OLD')) { continue }; $newName =  $file.FullName + '.OLD'; Write-Host "^""Rename '$($file.FullName)' to '$newName'"^""; Move-Item -LiteralPath "^""$($file.FullName)"^"" -Destination "^""$newName"^"" -Force; }; }"
+PowerShell -ExecutionPolicy Unrestricted -Command "Get-AppxPackage 'Microsoft.Windows.Holographic.FirstRun' | Remove-AppxPackage"
+PowerShell -ExecutionPolicy Unrestricted -Command "Get-AppxPackage 'Microsoft.Windows.ParentalControls' | Remove-AppxPackage"
+PowerShell -ExecutionPolicy Unrestricted -Command "Get-AppxPackage 'Microsoft.WindowsFeedback' | Remove-AppxPackage"
+PowerShell -ExecutionPolicy Unrestricted -Command "Get-AppxPackage 'Windows.CBSPreview' | Remove-AppxPackage"
 echo Applied Debloat Tweaks.
 timeout /t 3 >nul
 pause >nul
@@ -1723,58 +3525,58 @@ schtasks /Change /TN "Microsoft\Windows\Shell\FamilySafetyUpload" /Disable
 schtasks /Change /TN "Microsoft\Office\OfficeTelemetryAgentLogOn" /Disable
 schtasks /Change /TN "Microsoft\Office\OfficeTelemetryAgentFallBack" /Disable
 schtasks /Change /TN "Microsoft\Office\Office 15 Subscription Heartbeat" /Disable
-powerrun "schtasks.exe" /change /disable /TN "\Microsoft\Windows\Diagnosis\Scheduled" >nul 2>&1
-powerrun "schtasks.exe" /change /disable /TN "\Microsoft\Windows\DiskDiagnostic\Microsoft-Windows-DiskDiagnosticDataCollector" >nul 2>&1
-powerrun "schtasks.exe" /change /disable /TN "\Microsoft\Windows\DiskFootprint\Diagnostics" >nul 2>&1
-powerrun "schtasks.exe" /change /disable /TN "\Microsoft\Windows\InstallService\ScanForUpdates" >nul 2>&1
-powerrun "schtasks.exe" /change /disable /TN "\Microsoft\Windows\InstallService\ScanForUpdatesAsUser" >nul 2>&1
-powerrun "schtasks.exe" /change /disable /TN "\Microsoft\Windows\Registry\RegIdleBackup" >nul 2>&1
-powerrun "schtasks.exe" /change /disable /TN "\Microsoft\Windows\StateRepository\MaintenanceTasks" >nul 2>&1
-powerrun "schtasks.exe" /change /disable /TN "\Microsoft\Windows\SystemRestore\SR" >nul 2>&1
-powerrun "schtasks.exe" /change /disable /TN "\Microsoft\Windows\WDI\ResolutionHost" >nul 2>&1
-powerrun "schtasks.exe" /change /disable /TN "\Microsoft\Windows\Windows Error Reporting\QueueReporting" >nul 2>&1
-powerrun "schtasks.exe" /change /disable /TN "\Microsoft\Windows\ApplicationData\appuriverifierdaily" >nul 2>&11
-powerrun "schtasks.exe" /change /disable /TN "\Microsoft\Windows\Application Experience\StartupAppTask" >nul 2>&1
-powerrun "schtasks.exe" /change /disable /TN "\Microsoft\Windows\Application Experience\Microsoft Compatibility Appraiser" >nul 2>&1
-powerrun "schtasks.exe" /change /disable /TN "\Microsoft\Windows\Application Experience\MareBackup" >nul 2>&1
-powerrun "schtasks.exe" /change /disable /TN "\Microsoft\Windows\Application Experience\ProgramDataUpdater" >nul 2>&1
-powerrun "schtasks.exe" /change /disable /TN "\Microsoft\Windows\Autochk\Proxy" >nul 2>&1
-powerrun "schtasks.exe" /change /disable /TN "\Microsoft\Windows\Customer Experience Improvement Program\Consolidator" >nul 2>&1
-powerrun "schtasks.exe" /change /disable /TN "\Microsoft\Windows\Customer Experience Improvement Program\KernelCeipTask" >nul 2>&1
-powerrun "schtasks.exe" /change /disable /TN "\Microsoft\Windows\Customer Experience Improvement Program\UsbCeip" >nul 2>&1
-powerrun "schtasks.exe" /change /disable /TN "\Microsoft\Windows\Device Information\Device User" >nul 2>&1
-powerrun "schtasks.exe" /change /disable /TN "\Microsoft\Windows\Device Information\Device" >nul 2>&1
-powerrun "schtasks.exe" /change /disable /TN "\Microsoft\Windows\Feedback\Siuf\DmClient" >nul 2>&1
-powerrun "schtasks.exe" /change /disable /TN "\Microsoft\Windows\Feedback\Siuf\DmClientOnScenarioDownload" >nul 2>&1
-powerrun "schtasks.exe" /change /disable /TN "\Microsoft\Windows\Flighting\FeatureConfig\ReconcileFeatures" >nul 2>&1
-powerrun "schtasks.exe" /change /disable /TN "\Microsoft\Windows\Flighting\FeatureConfig\UsageDataFlushing" >nul 2>&1
-powerrun "schtasks.exe" /change /disable /TN "\Microsoft\Windows\Flighting\FeatureConfig\UsageDataReporting" >nul 2>&1
-powerrun "schtasks.exe" /change /disable /TN "\Microsoft\Windows\Input\InputSettingsRestoreDataAvailable" >nul 2>&1
-powerrun "schtasks.exe" /change /disable /TN "\Microsoft\Windows\Input\LocalUserSyncDataAvailable" >nul 2>&1
-powerrun "schtasks.exe" /change /disable /TN "\Microsoft\Windows\Input\MouseSyncDataAvailable" >nul 2>&1
-powerrun "schtasks.exe" /change /disable /TN "\Microsoft\Windows\Input\PenSyncDataAvailable" >nul 2>&1
-powerrun "schtasks.exe" /change /disable /TN "\Microsoft\Windows\Input\syncpensettings" >nul 2>&1
-powerrun "schtasks.exe" /change /disable /TN "\Microsoft\Windows\Input\TouchpadSyncDataAvailable" >nul 2>&1
-powerrun "schtasks.exe" /change /disable /TN "\Microsoft\Windows\Location\Notifications" >nul 2>&1
-powerrun "schtasks.exe" /change /disable /TN "\Microsoft\Windows\Location\WindowsActionDialog" >nul 2>&1
-powerrun "schtasks.exe" /change /disable /TN "\Microsoft\Windows\ApplicationData\DsSvcCleanup" >nul 2>&1
-powerrun "schtasks.exe" /change /disable /TN "\Microsoft\Windows\CloudExperienceHost\CreateObjectTask" >nul 2>&1
-powerrun "schtasks.exe" /change /disable /TN "\Microsoft\Windows\Maintenance\WinSAT" >nul 2>&1
-powerrun "schtasks.exe" /change /disable /TN "\Microsoft\Windows\PI\Sqm-Tasks" >nul 2>&1
-powerrun "schtasks.exe" /change /disable /TN "\Microsoft\Windows\Power Efficiency Diagnostics\AnalyzeSystem" >nul 2>&1
-powerrun "schtasks.exe" /change /disable /TN "\Microsoft\Windows\Shell\IndexerAutomaticMaintenance" >nul 2>&1
-powerrun "schtasks.exe" /change /disable /TN "\Microsoft\Windows\Maps\MapsToastTask" >nul 2>&1
-powerrun "schtasks.exe" /change /disable /TN "\Microsoft\Windows\Maps\MapsUpdateTask" >nul 2>&1
-powerrun "schtasks.exe" /change /disable /TN "\Microsoft\Windows\MemoryDiagnostic\ProcessMemoryDiagnosticEvents" >nul 2>&1
-powerrun "schtasks.exe" /change /disable /TN "\Microsoft\Windows\MemoryDiagnostic\RunFullMemoryDiagnostic" >nul 2>&1
-powerrun "schtasks.exe" /delete /f /tn "\Microsoft\Windows\TaskScheduler" >nul 2>&1
-powerrun "schtasks.exe" /delete /f /tn "\Microsoft\Windows\WaaSMedic" >nul 2>&1
-powerrun "schtasks.exe" /delete /f /tn "\Microsoft\Windows\WindowsUpdate" >nul 2>&1
-powerrun "schtasks.exe" /delete /f /tn "\Microsoft\Windows\WindowsUpdate\Scheduled Start" >nul 2>&1
-powerrun "schtasks.exe" /delete /f /tn "\Microsoft\Windows\UpdateOrchestrator\Schedule Scan" >nul 2>&1
-powerrun "schtasks.exe" /delete /f /tn "\Microsoft\Windows\UpdateOrchestrator\Schedule Scan Static Task" >nul 2>&1
-powerrun "schtasks.exe" /delete /f /tn "\Microsoft\Windows\UpdateOrchestrator\Schedule Wake To Work" >nul 2>&1
-powerrun "schtasks.exe" /delete /f /tn "\Microsoft\Windows\UpdateOrchestrator\Start Oobe Expedite Work" >nul 2>&1
+schtasks /change /disable /TN "\Microsoft\Windows\Diagnosis\Scheduled" >nul 2>&1
+schtasks /change /disable /TN "\Microsoft\Windows\DiskDiagnostic\Microsoft-Windows-DiskDiagnosticDataCollector" >nul 2>&1
+schtasks /change /disable /TN "\Microsoft\Windows\DiskFootprint\Diagnostics" >nul 2>&1
+schtasks /change /disable /TN "\Microsoft\Windows\InstallService\ScanForUpdates" >nul 2>&1
+schtasks /change /disable /TN "\Microsoft\Windows\InstallService\ScanForUpdatesAsUser" >nul 2>&1
+schtasks /change /disable /TN "\Microsoft\Windows\Registry\RegIdleBackup" >nul 2>&1
+schtasks /change /disable /TN "\Microsoft\Windows\StateRepository\MaintenanceTasks" >nul 2>&1
+schtasks /change /disable /TN "\Microsoft\Windows\SystemRestore\SR" >nul 2>&1
+schtasks /change /disable /TN "\Microsoft\Windows\WDI\ResolutionHost" >nul 2>&1
+schtasks /change /disable /TN "\Microsoft\Windows\Windows Error Reporting\QueueReporting" >nul 2>&1
+schtasks /change /disable /TN "\Microsoft\Windows\ApplicationData\appuriverifierdaily" >nul 2>&11
+schtasks /change /disable /TN "\Microsoft\Windows\Application Experience\StartupAppTask" >nul 2>&1
+schtasks /change /disable /TN "\Microsoft\Windows\Application Experience\Microsoft Compatibility Appraiser" >nul 2>&1
+schtasks /change /disable /TN "\Microsoft\Windows\Application Experience\MareBackup" >nul 2>&1
+schtasks /change /disable /TN "\Microsoft\Windows\Application Experience\ProgramDataUpdater" >nul 2>&1
+schtasks /change /disable /TN "\Microsoft\Windows\Autochk\Proxy" >nul 2>&1
+schtasks /change /disable /TN "\Microsoft\Windows\Customer Experience Improvement Program\Consolidator" >nul 2>&1
+schtasks /change /disable /TN "\Microsoft\Windows\Customer Experience Improvement Program\KernelCeipTask" >nul 2>&1
+schtasks /change /disable /TN "\Microsoft\Windows\Customer Experience Improvement Program\UsbCeip" >nul 2>&1
+schtasks /change /disable /TN "\Microsoft\Windows\Device Information\Device User" >nul 2>&1
+schtasks /change /disable /TN "\Microsoft\Windows\Device Information\Device" >nul 2>&1
+schtasks /change /disable /TN "\Microsoft\Windows\Feedback\Siuf\DmClient" >nul 2>&1
+schtasks /change /disable /TN "\Microsoft\Windows\Feedback\Siuf\DmClientOnScenarioDownload" >nul 2>&1
+schtasks /change /disable /TN "\Microsoft\Windows\Flighting\FeatureConfig\ReconcileFeatures" >nul 2>&1
+schtasks /change /disable /TN "\Microsoft\Windows\Flighting\FeatureConfig\UsageDataFlushing" >nul 2>&1
+schtasks /change /disable /TN "\Microsoft\Windows\Flighting\FeatureConfig\UsageDataReporting" >nul 2>&1
+schtasks /change /disable /TN "\Microsoft\Windows\Input\InputSettingsRestoreDataAvailable" >nul 2>&1
+schtasks /change /disable /TN "\Microsoft\Windows\Input\LocalUserSyncDataAvailable" >nul 2>&1
+schtasks /change /disable /TN "\Microsoft\Windows\Input\MouseSyncDataAvailable" >nul 2>&1
+schtasks /change /disable /TN "\Microsoft\Windows\Input\PenSyncDataAvailable" >nul 2>&1
+schtasks /change /disable /TN "\Microsoft\Windows\Input\syncpensettings" >nul 2>&1
+schtasks /change /disable /TN "\Microsoft\Windows\Input\TouchpadSyncDataAvailable" >nul 2>&1
+schtasks /change /disable /TN "\Microsoft\Windows\Location\Notifications" >nul 2>&1
+schtasks /change /disable /TN "\Microsoft\Windows\Location\WindowsActionDialog" >nul 2>&1
+schtasks /change /disable /TN "\Microsoft\Windows\ApplicationData\DsSvcCleanup" >nul 2>&1
+schtasks /change /disable /TN "\Microsoft\Windows\CloudExperienceHost\CreateObjectTask" >nul 2>&1
+schtasks /change /disable /TN "\Microsoft\Windows\Maintenance\WinSAT" >nul 2>&1
+schtasks /change /disable /TN "\Microsoft\Windows\PI\Sqm-Tasks" >nul 2>&1
+schtasks /change /disable /TN "\Microsoft\Windows\Power Efficiency Diagnostics\AnalyzeSystem" >nul 2>&1
+schtasks /change /disable /TN "\Microsoft\Windows\Shell\IndexerAutomaticMaintenance" >nul 2>&1
+schtasks /change /disable /TN "\Microsoft\Windows\Maps\MapsToastTask" >nul 2>&1
+schtasks /change /disable /TN "\Microsoft\Windows\Maps\MapsUpdateTask" >nul 2>&1
+schtasks /change /disable /TN "\Microsoft\Windows\MemoryDiagnostic\ProcessMemoryDiagnosticEvents" >nul 2>&1
+schtasks /change /disable /TN "\Microsoft\Windows\MemoryDiagnostic\RunFullMemoryDiagnostic" >nul 2>&1
+schtasks /delete /f /tn "\Microsoft\Windows\TaskScheduler" >nul 2>&1
+schtasks /delete /f /tn "\Microsoft\Windows\WaaSMedic" >nul 2>&1
+schtasks /delete /f /tn "\Microsoft\Windows\WindowsUpdate" >nul 2>&1
+schtasks /delete /f /tn "\Microsoft\Windows\WindowsUpdate\Scheduled Start" >nul 2>&1
+schtasks /delete /f /tn "\Microsoft\Windows\UpdateOrchestrator\Schedule Scan" >nul 2>&1
+schtasks /delete /f /tn "\Microsoft\Windows\UpdateOrchestrator\Schedule Scan Static Task" >nul 2>&1
+schtasks /delete /f /tn "\Microsoft\Windows\UpdateOrchestrator\Schedule Wake To Work" >nul 2>&1
+schtasks /delete /f /tn "\Microsoft\Windows\UpdateOrchestrator\Start Oobe Expedite Work" >nul 2>&1
 schtasks /Change /TN "Microsoft\Windows\ErrorDetails\EnableErrorDetailsUpdate" /Disable >nul 2>&1
 schtasks /Change /TN "Microsoft\Windows\Windows Error Reporting\QueueReporting" /Disable >nul 2>&1
 schtasks /Change /TN "\Microsoft\Windows\Application Experience\AitAgent" /DISABLE >nul
@@ -2278,7 +4080,7 @@ echo Installing Chocolatey Please Wait.
 timeout 1 > nul
 powershell -NoProfile -InputFormat None -ExecutionPolicy Bypass -Command "iex ((New-Object System.Net.WebClient).DownloadString('https://chocolatey.org/install.ps1'))"
 SET "PATH=%PATH%;%ALLUSERSPROFILE%\chocolatey\bin"
-"%ALLUSERSPROFILE%\chocolatey\bin\RefreshEnv.cmd
+"%ALLUSERSPROFILE%\chocolatey\bin\RefreshEnv.cmd"
 if %errorlevel% equ 0 goto ChocoFailed
 if %errorlevel% neq 0 goto ChocoNice
 goto 89
@@ -2291,7 +4093,7 @@ set msgboxBody=Failed to install Chocolatey. Any software you try to install in 
 set tmpmsgbox=%temp%\~tmpmsgbox.vbs
 if exist "%tmpmsgbox%" DEL /F /Q "%tmpmsgbox%"
 echo msgbox "%msgboxBody%",0,"%msgboxTitle%">"%tmpmsgbox%"
-WSCRIPT "%tmpmsgbox%" && goto start
+WSCRIPT "%tmpmsgbox%" && goto continue
 
 :ChocoNice
 cls
@@ -2302,7 +4104,7 @@ set tmpmsgbox=%temp%\~tmpmsgbox.vbs
 if exist "%tmpmsgbox%" DEL /F /Q "%tmpmsgbox%"
 echo msgbox "%msgboxBody%",0,"%msgboxTitle%">"%tmpmsgbox%"
 WSCRIPT "%tmpmsgbox%" && goto 89
-
+goto 89
 :89
 cls
 title Batlez Tweaks - Toolbox
@@ -2364,7 +4166,7 @@ if '%choice%'=='17' choco install paint.net -y
 if '%choice%'=='18' choco install rufus -y
 if '%choice%'=='19' choco install winrar -y
 if '%choice%'=='20' choco install imageglass -y
-if '%choice%'=='21' choco install microsoft-windows-te          rminal terminal-icons.powershell -y
+if '%choice%'=='21' choco install microsoft-windows-terminal terminal-icons.powershell -y
 if '%choice%'=='22' choco install googlechrome -y
 if '%choice%'=='23' choco install github github-desktop -y
 if '%choice%'=='24' choco install vscode -y
@@ -2398,7 +4200,11 @@ if '%choice%'== '46' choco install virtualbox -y
 if '%choice%'== '47' choco install winaero-tweaker -y
 if '%choice%'== '48' choco install iobit-uninstaller iobit-malware-fighter io-unlocker -y
 if '%choice%'== '49' choco install procexp -y
-if '%choice%'== '50' choco install windirstat -y
+if '%choice%'== '50' (
+    choco install windirstat -y
+    pause /5
+    "C:\ProgramData\chocolatey\lib\windirstat\tools\windirstat1_1_2_setup.exe"
+)
 if '%choice%'== '51' choco install everything -y
 if '%choice%'== '52' choco install visualstudio2022professional -y
 if '%choice%'== '53' choco install adobeshockwaveplayer -y
@@ -2417,7 +4223,8 @@ if '%choice%'== '61' choco install onedrive onedrivebully -y
 if '%choice%'== '62' choco install processhacker.install -y 
 if '%choice%'=='0' goto start
 ECHO.
-goto Toolbox
+timeout /t 5 >nul
+goto continue
 
 :Destruct
 title Thanks for using Batlez Tweaks!
