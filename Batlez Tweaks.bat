@@ -1,7 +1,15 @@
 @echo off
-set version=1.8
-title Batlez Tweaks - %version% 
-if not "%1"=="am_admin" (powershell start -verb runas '%0' am_admin & exit /b)
+set version=1.8.1
+title Batlez Tweaks - %version%
+
+net session >nul 2>&1
+if %errorlevel% neq 0 (
+    echo This script requires admin privileges.
+    echo Restarting with elevated permissions.
+	timeout /t 2 >nul
+    powershell -Command "Start-Process -FilePath '%~f0' -Verb RunAs"
+    exit /b
+)
 
 :variables
 set g=[92m
@@ -22,10 +30,11 @@ set g2=[102m
 set r2=[101m
 set t=[40m
 set gold=[93m
+set brown=[33m
+set orange=[38;5;214m
+set lime=[38;5;154m
 
-:: Webhook
 SET webhook=
-
 
 :loading
 chcp 65001 >nul
@@ -68,10 +77,10 @@ timeout /t 2 >nul & cls & goto Presets
 
 :Presets
 cls
-chcp 437>nul
-echo %w%Choose one Colour from below!%u%
+chcp 437 >nul
+echo %w%Type one of the colours you want to use from below!%u%
 echo.
-echo %b%Blue%u%, %d%Cyan%u%, %g%Green%u%, %y%Yellow%u%, %r%Red%u% or %gold%Gold%u%.
+echo %b%Blue%u%, %d%Cyan%u%, %g%Green%u%, %y%Yellow%u%, %r%Red%u%, %gold%Gold%u%, %m%Pink%u%, %p%Purple%u%, %lime%Lime%u%, %brown%Brown%u%, %orange%Orange%u%, or %w%White%u%
 echo.
 echo.
 set /p preset= 
@@ -82,6 +91,12 @@ if /i "%preset%"=="Cyan" goto Cyan
 if /i "%preset%"=="Yellow" goto Yellow
 if /i "%preset%"=="Green" goto Green
 if /i "%preset%"=="Red" goto Red
+if /i "%preset%"=="Pink" goto Pink
+if /i "%preset%"=="Purple" goto Purple
+if /i "%preset%"=="Lime" goto Lime
+if /i "%preset%"=="Brown" goto Brown
+if /i "%preset%"=="Orange" goto Orange
+if /i "%preset%"=="White" goto White
 echo Please enter a valid option.
 timeout /t 2 /nobreak >nul
 goto Presets
@@ -120,6 +135,42 @@ goto menu
 set c=%gold%
 set u=%u%
 set d=%r%
+goto menu
+
+:Pink
+set c=%m%
+set u=%u%
+set d=%m%
+goto menu
+
+:Purple
+set c=%p%
+set u=%u%
+set d=%p%
+goto menu
+
+:Lime
+set c=%lime%
+set u=%u%
+set d=%lime%
+goto menu
+
+:Brown
+set c=%brown%
+set u=%u%
+set d=%brown%
+goto menu
+
+:Orange
+set c=%orange%
+set u=%u%
+set d=%orange%
+goto menu
+
+:White
+set c=%w%
+set u=%u%
+set d=%w%
 goto menu
 
 :menu
@@ -364,7 +415,7 @@ echo.
 echo.
 echo.
 echo.
-set /p input="%c%Would you like to create a Restore and registry Point? %w%(Y/N)%u% %c%»%u% "
+set /p input="%c%Would you like to create a Restore and Registry Point? %w%(Y/N)%u% %c%»%u% "
 if "%input%"=="Y" goto restorepoint1
 if "%input%"=="N" goto menu
 echo %c%Please enter a valid number!%u% & goto Backup
@@ -385,18 +436,44 @@ echo %c%Backup succesfully created!%u%
 cls
 
 :restorepoint2
-reg add "HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Windows NT\CurrentVersion\SystemRestore" /v "SystemRestorePointCreationFrequency" /t reg_DWORD /d "0" /f
-echo %c%Creating a restore point...%u%
-timeout 4 >nul /nobreak
-powershell.exe -ExecutionPolicy Bypass -NoExit -Command "Checkpoint-Computer -Description "PreTweaksBackup" -RestorePointType "MODIFY_SETTINGS""
+echo Enabling and starting required services...
+sc config VSS start= demand
+net start VSS
+sc config swprv start= demand
+net start swprv
+sc config Schedule start= auto
+net start Schedule
+powershell -Command "Enable-ComputerRestore -Drive 'C:\'" >nul 2>&1
+
+reg add "HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Windows NT\CurrentVersion\SystemRestore" /v "SystemRestorePointCreationFrequency" /t REG_DWORD /d "0" /f
+
+echo Creating a restore point...
+powershell.exe -ExecutionPolicy Bypass -Command "Checkpoint-Computer -Description 'PreTweaksBackup' -RestorePointType MODIFY_SETTINGS"
+
 set SR_STATUS=%ERRORLEVEL%
-IF %SR_STATUS%==0 & echo %c%System Restore point made succesfully!%u%
+if %SR_STATUS%==0 (
+    echo System Restore point created successfully!
+) else (
+    echo Failed to create a restore point. Please ensure System Protection is enabled on the C: drive.
+)
+set /p deleteOld=Do you want to remove old restore points? (Yes/No): 
+
+if /i "%deleteOld%"=="Yes" (
+    echo Removing old system restore points...
+    vssadmin delete shadows /for=C: /oldest >nul 2>&1
+    if %errorlevel%==0 (
+        echo Old restore points have been removed successfully!
+    ) else (
+        echo Failed to remove old restore points. Please ensure you have sufficient privileges.
+    )
+) else if /i "%deleteOld%"=="No" (
+    echo Old restore points will not be removed.
+) else (
+    echo Invalid input. Skipping old restore point deletion.
+)
 timeout 4 >nul /nobreak
 cls
-IF NOT %SR_STATUS%==0 & echo %c%Failed to create a restore point, please make sure you have enabled protection in System!%u% 
-timeout 4 >nul /nobreak
 goto menu
-
 
 :TweaksMenu
 cls
@@ -4031,37 +4108,36 @@ goto :GameBoosters
 
 :Toolbox
 cls
-color 03
-echo ____________________________________________________________________________________________
+echo _______________________________________________________________________________________________________________________
 echo.
-color 03
-echo                                          Hello %username%
+echo                                             %c%   Hello %username% %u%
 echo.
+echo                                      You are currently on version %c%%version% %u%
 echo.
-echo                               You are currently on version %version%
+echo                                    - Thank you for using Batlez Toolbox! -
+echo _______________________________________________________________________________________________________________________
 echo.
-echo                             - Thank you for using Batlez Toolbox! -
-echo ____________________________________________________________________________________________
-echo.                                                        
-echo           ===========================================================================
-echo           " For Batlez Toolbox - please note that this is currently in development! "
-echo           ===========================================================================
-echo           ===========================================================================
-echo           "  Currently working on every Windows build Please be aware of any bugs   "
-echo           ===========================================================================
+echo                    ===========================================================================
+echo                    " For Batlez Toolbox - please note that this is currently in development! "
+echo                    ===========================================================================
+echo                    ===========================================================================
+echo                    "  Currently working on every Windows build. Please be aware of any bugs  "
+echo                    ===========================================================================
 echo.
-echo                               Press any key to start Batlez Toolbox!
+echo                                     %r%Press any key to start Batlez Toolbox! %u%
 pause >nul
+
 :continue
 cls
-color 03
-cls
-echo ---------------------------------------------------------------------------------------------------------------------
-echo       Tweaks and Software
-echo ---------------------------------------------------------------------------------------------------------------------
-echo 0. Go Back
-echo 1. Software Installs (Chocolately)                                                                                                                                                                                                                                                               
-echo --------------------------------------------------------------------------------------------------------------------
+echo _______________________________________________________________________________________________________________________
+echo.
+echo       %c%Tweaks and Software%u%
+echo _______________________________________________________________________________________________________________________
+echo %c%0%u% Go Back
+echo %c%1%u% Software Installs (Chocolately)                                                                                                                                                                                                                                                               
+echo.
+echo.
+echo.
 set choice=
 set /p choice=Type A Number:
 if not '%choice%'=='' set choice=%choice:~0,100%
@@ -4070,46 +4146,49 @@ if '%choice%'=='1' goto continue1
 
 :continue1
 cls
-if exist "C:\ProgramData\chocolatey" goto 89
-if not exist "C:\ProgramData\chocolatey" goto InstallChoco
+if exist "C:\ProgramData\chocolatey" (
+    echo Chocolatey is already installed.
+    goto ChocoNice
+) else (
+    echo Chocolatey not found. Starting installation...
+    goto InstallChoco
+)
 
 :InstallChoco
 cls
 mode con cols=100 lines=30
-echo Installing Chocolatey Please Wait.
-timeout 1 > nul
+echo Installing Chocolatey. Please wait...
+timeout 1 >nul
 powershell -NoProfile -InputFormat None -ExecutionPolicy Bypass -Command "iex ((New-Object System.Net.WebClient).DownloadString('https://chocolatey.org/install.ps1'))"
 SET "PATH=%PATH%;%ALLUSERSPROFILE%\chocolatey\bin"
 "%ALLUSERSPROFILE%\chocolatey\bin\RefreshEnv.cmd"
-if %errorlevel% equ 0 goto ChocoFailed
-if %errorlevel% neq 0 goto ChocoNice
-goto 89
+
+if %errorlevel% neq 0 (
+    goto ChocoFailed
+) else (
+    goto ChocoNice
+)
 
 :ChocoFailed
-:: Dialog Box to show Chocolatey Failed to install.
 cls
-set msgboxTitle=Chocolatey Installation
-set msgboxBody=Failed to install Chocolatey. Any software you try to install in the Toolbox will NOT work.
-set tmpmsgbox=%temp%\~tmpmsgbox.vbs
-if exist "%tmpmsgbox%" DEL /F /Q "%tmpmsgbox%"
-echo msgbox "%msgboxBody%",0,"%msgboxTitle%">"%tmpmsgbox%"
-WSCRIPT "%tmpmsgbox%" && goto continue
+call :show_msgbox "Chocolatey Installation" "Failed to install Chocolatey. Any software you try to install in the Toolbox will NOT work."
+goto continue
 
 :ChocoNice
 cls
-:: Dialog Box to show Chocolatey installed successfully.
-set msgboxTitle=Chocolatey Installation
-set msgboxBody=Successfully installed Chocolatey. All softwares you try to install in the optimizer should work.
+call :show_msgbox "Chocolatey Installation" "Successfully installed Chocolatey. All software installations should work."
+goto 89
+
+:show_msgbox
 set tmpmsgbox=%temp%\~tmpmsgbox.vbs
 if exist "%tmpmsgbox%" DEL /F /Q "%tmpmsgbox%"
-echo msgbox "%msgboxBody%",0,"%msgboxTitle%">"%tmpmsgbox%"
-WSCRIPT "%tmpmsgbox%" && goto 89
-goto 89
+echo msgbox "%~2",0,"%~1" >"%tmpmsgbox%"
+WSCRIPT "%tmpmsgbox%"
+exit /b
+
 :89
 cls
 title Batlez Tweaks - Toolbox
-echo -----------------------------------------------------------------------------------------------------------------------
-echo Users Request
 echo 1. Avast                         17. Paint.net
 echo 2. AnyDesk                       18. Rufus
 echo 3. Audacity                      19. Winrar Themes
@@ -4141,7 +4220,7 @@ echo 55. Opera Browser                56. Mario Bros
 echo 57. Popcorn Time                 58. Qbitorrent
 echo 59. TeamViewer                   60. AnyDesk
 echo 61. OneDrive                     62. Process Hacker    
-echo ---------------------------------------------------------------------------------------------------------------------
+echo _______________________________________________________________________________________________________________________
 echo 0. Back to menu
 set choice=
 set /p choice=Type A Number:
@@ -4221,10 +4300,10 @@ if '%choice%'== '59' choco install teamviewer -y
 if '%choice%'== '60' choco install anydesk -y
 if '%choice%'== '61' choco install onedrive onedrivebully -y
 if '%choice%'== '62' choco install processhacker.install -y 
-if '%choice%'=='0' goto start
+if '%choice%'=='0' goto Toolbox
 ECHO.
-timeout /t 5 >nul
-goto continue
+timeout /t 2 >nul
+goto 89
 
 :Destruct
 title Thanks for using Batlez Tweaks!
