@@ -1,4 +1,4 @@
-![image](https://github.com/Batlez/Batlez-Tweaks/blob/main/images/Logo.jpg)
+![image](https://github.com/Batlez/Batlez-Tweaks/blob/main/images/Logo.png)
 ## ⚠️ About
 > [!NOTE]  
 > **If you experience issues, please verify your installation or try reinstalling.**
