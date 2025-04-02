@@ -1,46 +1,17 @@
 ![image](https://github.com/Batlez/Batlez-Tweaks/blob/main/images/Logo.png)
-## ⚠️ About
+[![Product Name Screen Shot][product-screenshot]](https://github.com/Batlez/Batlez)
 > [!NOTE]  
 > **If you experience issues, please verify your installation or try reinstalling.**
+> **I cannot be held responsible for any potential system issues.**
 
-Batlez Tweaks is a free, open-source tool that enhances your PC's performance for gaming, everyday tasks, and more. It delivers smoother gameplay, faster system responsiveness, and improved privacy and security settings.
-With Batlez Tweaks, you can:
-
-- Optimize your gaming experience: Enjoy higher frame rates, reduced lag, and better network performance.
-* Boost overall system speed: Optimize your computing experience for speed, efficiency, and clarity.
-+ Protect your privacy and security: Gain greater control over your data and system settings.
-
-To contact me, please add me on discord **croakq**
-
-## 🛑 Getting Started 
-[![Product Name Screen Shot][product-screenshot]](https://github.com/Batlez/Batlez)
-> [!WARNING]  
-> **Batlez Tweaks has been tested on Windows 10 and 11, including all stable releases. While every effort is made to ensure safety, use this application at your own risk. I cannot be held responsible for any potential system issues. Batlez Tweaks requires an internet connection to function correctly.**
+![GitHub all releases](https://img.shields.io/github/downloads/Batlez/Batlez/total?style=for-the-badge) [![PayPal](https://img.shields.io/badge/PayPal-00457C?style=for-the-badge&logo=paypal&logoColor=white)](https://paypal.me/CS2bro123)
 
 ## 🔨 Installation
- 1. [Download](https://github.com/Batlez/Batlez/releases/latest/) the application.
- 2. Right-click on the 'Batlez Tweaks.bat' file and select 'Run as administrator'.
- 3. The application will prompt you to select which tweaks you want to apply to your system. Simply follow the on-screen instructions to       select the tweaks that you want to apply.
- 4. Once you have selected the tweaks, the application will start applying them to your system. This may take some time, so please be           patient.
- 5. Once the tweaks have been applied, you will notice an increase in[ overall performance on your system](https://raw.githubusercontent.com/Batlez/Batlez/main/images/minecraft.png) (GeForce GTX 1060)
-
-## ✨ Features 
-
-**Below are some of the features that are included!**
-
-<li> Debloater </li>
-<li> Services Optimization </li>
-<li> Custom Regedit </li>
-<li> Cache + Log Cleaning </li>
-<li> Network Tweaks </li>
-<li> Power Plan Tweaks </li>
-<li> System Bug-fixes </li>
-<li> And Much Much More! </li>
-
-
-## 🔍 Contributing
-
-Contributions make the open-source community a fantastic place to learn, inspire, and create. Any contributions you make are **greatly appreciated**.
+ 1. [Download the latest release](https://github.com/Batlez/Batlez/releases/latest/)
+ 2. Right-click on Batlez Tweaks.bat and select Run as administrator
+ 3. Follow the on-screen instructions to select the tweaks you want
+ 4. Wait while the script applies your selections (this may take a few moments)
+ 5. Enjoy the [improved system performance](https://raw.githubusercontent.com/Batlez/Batlez/main/images/minecraft.png) (GeForce GTX 1060)
 
 ## 📖 License
 
