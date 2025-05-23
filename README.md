@@ -1,10 +1,20 @@
 ![image](https://github.com/Batlez/Batlez-Tweaks/blob/main/images/Logo.png)
-[![Product Name Screen Shot][product-screenshot]](https://github.com/Batlez/Batlez)
+<p align="center">
+  <img src="https://github.com/Batlez/Batlez-Tweaks/blob/main/images/BatlezTweaks.png?raw=true" alt="Product Name Screen Shot" />
+</p>
+
 > [!NOTE]  
 > **If you experience issues, please verify your installation or try reinstalling.**
 > **I cannot be held responsible for any potential system issues.**
 
-![GitHub all releases](https://img.shields.io/github/downloads/Batlez/Batlez/total?style=for-the-badge) [![PayPal](https://img.shields.io/badge/PayPal-00457C?style=for-the-badge&logo=paypal&logoColor=white)](https://paypal.me/CS2bro123)
+<p align="center">
+  <a href="https://github.com/Batlez/Batlez-Tweaks/releases/latest">
+    <img src="https://img.shields.io/github/downloads/Batlez/Batlez-Tweaks/total?style=for-the-badge" alt="GitHub all releases" />
+  </a>
+  <a href="https://paypal.me/CS2bro123">
+    <img src="https://img.shields.io/badge/PayPal-00457C?style=for-the-badge&logo=paypal&logoColor=white" alt="PayPal" />
+  </a>
+</p>
 
 ## 🔨 Installation
  1. [Download the latest release](https://github.com/Batlez/Batlez/releases/latest/)
