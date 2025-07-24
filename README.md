@@ -25,6 +25,6 @@
 
 ## 📖 License
 
-It is distributed under the Unlicense license. See `LICENSE` for more information.
+It is distributed under the MIT license. See `LICENSE` for more information.
 
 [product-screenshot]: https://raw.githubusercontent.com/Batlez/Batlez/main/images/BatlezTweaks.PNG
