@@ -1,3 +1,0 @@
-*.js linguist-language=Batchfile
-*.md linguist-language=Batchfile
-*.batchfile linguist-detectable=true
