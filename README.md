@@ -16,6 +16,14 @@
   </a>
 </p>
 
+## 🔧 Launch Command
+
+#### Newest Release
+
+```powershell
+irm https://raw.githubusercontent.com/Batlez/Batlez-Tweaks/main/launch.ps1 | iex
+```
+
 ## 🔨 Installation
  1. [Download the latest release](https://github.com/Batlez/Batlez/releases/latest/)
  2. Right-click on Batlez Tweaks.bat and select Run as administrator
