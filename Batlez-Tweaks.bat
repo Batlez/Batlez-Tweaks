@@ -1,5 +1,5 @@
 @echo off
-set version=2.5.1
+set version=2.6
 title Batlez Tweaks - %version%
 
 net session >nul 2>&1
@@ -10,9 +10,13 @@ goto continuewooooooooo
 echo [WARNING]: Not running with Administrator privileges.
 echo Some tweaks will fail or only partially apply.
 echo.
-choice /C CP /M "Press C to Cancel or P to Proceed without admin"
-if errorlevel 2 goto HELLYEAAAAAAAA
-if errorlevel 1 goto Destruct
+choice /C ECP /M "Press E to Elevate (Run as Admin), C to Cancel, or P to Proceed without admin"
+if errorlevel 3 goto HELLYEAAAAAAAA
+if errorlevel 2 goto Destruct
+if errorlevel 1 (
+    powershell -NoProfile -Command "Start-Process cmd -ArgumentList '/k \"\"%~f0\"\"' -Verb RunAs" >nul 2>&1
+    exit /b
+)
 goto continuewooooooooo
 
 :HELLYEAAAAAAAA
@@ -31,7 +35,7 @@ setlocal enabledelayedexpansion
 set "_OS_BUILD="
 for /f "tokens=3" %%b in ('reg query "HKLM\SOFTWARE\Microsoft\Windows NT\CurrentVersion" /v CurrentBuildNumber 2^>nul ^| findstr /i "CurrentBuildNumber"') do set "_OS_BUILD=%%b"
 if not defined _OS_BUILD (
-    for /f "tokens=2 delims==" %%b in ('wmic os get BuildNumber /value 2^>nul ^| findstr "="') do set "_OS_BUILD=%%b"
+    for /f "usebackq delims=" %%b in (`powershell -NoProfile -Command "(Get-CimInstance Win32_OperatingSystem).BuildNumber" 2^>nul`) do set "_OS_BUILD=%%b"
 )
 
 if not defined _OS_BUILD (
@@ -221,6 +225,13 @@ set "peach=[38;5;216m"
 set "tan=[38;5;180m"
 set "brown=[38;5;130m"
 
+set "pumpkin=[38;5;208m"
+set "bloodorange=[38;5;202m"
+set "shadowblack=[38;5;241m"
+set "witchpurple=[38;5;135m"
+set "c2=[97m"
+set "theme_name=Standard"
+
 
 :loading
 cls
@@ -273,7 +284,7 @@ timeout /t 3 >nul /nobreak & cls & goto RestorePointQuestion
 
 :RestorePointQuestion
 call :SetupConsole
-echo %orange%Before we continue, would you like to make a Restore Point?%u% (Y/N)
+echo %orange%Before continuing, would you like to make a Restore Point?%u% (Y/N)
 echo.
 echo.
 choice /C YN /M "Make a Restore Point"
@@ -284,8 +295,10 @@ if errorlevel 1 goto restorepoint10
 cls
 echo %red%Backing up the registry...%u%
 
-set "BACKUP_DIR=C:\TweaksBackup_%DATE:~-4,4%%DATE:~-10,2%%DATE:~-7,2%_%TIME:~0,2%%TIME:~3,2%%TIME:~6,2%"
-set "BACKUP_DIR=%BACKUP_DIR: =0%"
+chcp 437 >nul
+for /f %%a in ('powershell -NoProfile -Command "Get-Date -Format yyyyMMdd_HHmmss"') do set "TS=%%a"
+chcp 65001 >nul
+set "BACKUP_DIR=C:\TweaksBackup_!TS!"
 
 if not exist "%BACKUP_DIR%" (
     mkdir "%BACKUP_DIR%" 2>nul
@@ -296,31 +309,29 @@ if not exist "%BACKUP_DIR%" (
     )
 )
 
-cd /d "%BACKUP_DIR%"
-
 echo Backing up registry hives...
 echo - SOFTWARE hive...
-REG SAVE HKLM\SOFTWARE SOFTWARE 2>nul
+REG SAVE HKLM\SOFTWARE "%BACKUP_DIR%\SOFTWARE" /y 2>nul
 if errorlevel 1 echo %orange%Warning: Failed to backup SOFTWARE hive%u%
 
 echo - SYSTEM hive...
-REG SAVE HKLM\SYSTEM SYSTEM 2>nul
+REG SAVE HKLM\SYSTEM "%BACKUP_DIR%\SYSTEM" /y 2>nul
 if errorlevel 1 echo %orange%Warning: Failed to backup SYSTEM hive%u%
 
 echo - DEFAULT hive...
-REG SAVE HKU\.DEFAULT DEFAULT 2>nul
+REG SAVE HKU\.DEFAULT "%BACKUP_DIR%\DEFAULT" /y 2>nul
 if errorlevel 1 echo %orange%Warning: Failed to backup DEFAULT hive%u%
 
 echo - SECURITY hive...
-REG SAVE HKLM\SECURITY SECURITY 2>nul
+REG SAVE HKLM\SECURITY "%BACKUP_DIR%\SECURITY" /y 2>nul
 if errorlevel 1 echo %orange%Warning: Failed to backup SECURITY hive%u%
 
 echo - SAM hive...
-REG SAVE HKLM\SAM SAM 2>nul
+REG SAVE HKLM\SAM "%BACKUP_DIR%\SAM" /y 2>nul
 if errorlevel 1 echo %orange%Warning: Failed to backup SAM hive%u%
 
 echo - NTUSER (Current User) hive...
-REG SAVE HKCU NTUSER 2>nul
+REG SAVE HKCU "%BACKUP_DIR%\NTUSER" /y 2>nul
 if errorlevel 1 echo %orange%Warning: Failed to backup NTUSER hive%u%
 
 echo.
@@ -330,7 +341,7 @@ echo %grey%To restore a hive if needed, run as admin:%u%
 echo %grey%  REG RESTORE HKLM\SOFTWARE "%BACKUP_DIR%\SOFTWARE"%u%
 echo %grey%  REG RESTORE HKLM\SYSTEM   "%BACKUP_DIR%\SYSTEM"%u%
 echo %grey%  REG RESTORE HKCU          "%BACKUP_DIR%\NTUSER"%u%
-timeout /t 6 >nul
+timeout /t 2 >nul
 
 :restorepoint20
 echo.
@@ -344,32 +355,27 @@ echo - Configuring Software Shadow Copy Provider...
 sc config swprv start= demand >nul 2>&1
 net start swprv >nul 2>&1
 
-echo - Configuring Task Scheduler...
-sc config Schedule start= auto >nul 2>&1
-net start Schedule >nul 2>&1
-
 echo - Enabling System Restore...
 reg add "HKLM\SOFTWARE\Policies\Microsoft\Windows NT\SystemRestore" /v DisableSR /t REG_DWORD /d 0 /f >nul 2>&1
-chcp 437 >nul
-powershell.exe -Command "Enable-ComputerRestore -Drive 'C:\'" >nul 2>&1
-chcp 65001 >nul
 reg.exe add "HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Windows NT\CurrentVersion\SystemRestore" /v "SystemRestorePointCreationFrequency" /t REG_DWORD /d "0" /f >nul 2>&1
+chcp 437 >nul
+powershell.exe -NoProfile -Command "Enable-ComputerRestore -Drive 'C:\'" >nul 2>&1
+chcp 65001 >nul
 
 echo.
 echo Creating restore point...
 chcp 437 >nul
-powershell.exe -ExecutionPolicy Bypass -Command "Checkpoint-Computer -Description 'PreTweaksBackup' -RestorePointType MODIFY_SETTINGS" >nul 2>&1
+powershell.exe -NoProfile -ExecutionPolicy Bypass -Command "try { Checkpoint-Computer -Description 'PreTweaksBackup' -RestorePointType MODIFY_SETTINGS -ErrorAction Stop; exit 0 } catch { exit 1 }" >nul 2>&1
 chcp 65001 >nul
 
-set SR_STATUS=%ERRORLEVEL%
-if %SR_STATUS%==0 (
+if !errorlevel!==0 (
     echo %cyan%System Restore point created successfully!%u%
 ) else (
     echo %orange%Failed to create restore point. System Protection may not be enabled on C: drive.%u%
 )
 
 echo.
-choice /C YN /M "Do you want to remove old Restore Points"
+choice /C YN /M "Do you want to remove old Restore Points (Recommended: N)"
 if errorlevel 2 (
     echo Old restore points preserved.
 ) else (
@@ -378,7 +384,7 @@ if errorlevel 2 (
     if !errorlevel!==0 (
         echo %cyan%Old restore points removed successfully!%u%
     ) else (
-        echo %orange%Failed to remove old restore points. May require elevated privileges.%u%
+        echo %orange%Failed to remove old restore points.%u%
     )
 )
 
@@ -389,24 +395,24 @@ net stop swprv >nul 2>&1
 
 echo.
 echo %cyan%Backup and restore point creation completed!%u%
-echo Next: Choosing your color preferences...
-timeout /t 4 >nul
+echo Next: Choosing your colour preferences...
+timeout /t 2 >nul
 call :SetupConsole
 goto Presets
 
 :Presets
-net stop VSS    >nul 2>&1
-net stop swprv  >nul 2>&1
 cls
 chcp 437  >nul
 chcp 65001 >nul
 
-echo %white%Type one of the colours you want to use from below!%u%
+echo %white%Type one of the colours or themes you want to use from below!%u%
 echo.
 echo.
 echo %aqua%Aqua%u%, %teal%Teal%u%, %cyan%Cyan%u%, %blue%Blue%u%, %indigo%Indigo%u%, %lime%Lime%u%, %green%Green%u%, %mint%Mint%u%, %olive%Olive%u%, %yellow%Yellow%u%, %gold%Gold%u%, %orange%Orange%u%, %peach%Peach%u%, %tan%Tan%u%
 echo.
 echo %crimson%Crimson%u%, %red%Red%u%, %hotpink%Hot Pink%u%, %pink%Pink%u%, %purple%Purple%u%, %violet%Violet%u%, %orchid%Orchid%u%, %silver%Silver%u%, %grey%Grey%u%, %charcoal%Charcoal%u%, %brown%Brown%u% or %white%White%u%
+echo.
+echo %pumpkin%🎃 Special Themes:%u% %pumpkin%Halloween%u% (Orange ^& Black), %witchpurple%Witch%u% (Purple ^& Orange)
 echo.
 echo.
 set "preset="
@@ -423,42 +429,46 @@ for /f "tokens=* delims= " %%A in ("%preset%") do set "preset=%%A"
 :trimPresetTrail
 if "%preset:~-1%"==" " set "preset=%preset:~0,-1%" & goto trimPresetTrail
 
-if /i "%preset%"=="Aqua"      set "c=%aqua%"      & goto menu
-if /i "%preset%"=="Teal"      set "c=%teal%"      & goto menu
-if /i "%preset%"=="Cyan"      set "c=%cyan%"      & goto menu
-if /i "%preset%"=="Blue"      set "c=%blue%"      & goto menu
-if /i "%preset%"=="Indigo"    set "c=%indigo%"    & goto menu
+if /i "%preset%"=="Halloween" set "c=%pumpkin%"     & set "c2=%shadowblack%" & set "theme_name=Halloween" & goto menu
+if /i "%preset%"=="Witch"     set "c=%witchpurple%" & set "c2=%pumpkin%"     & set "theme_name=Witch"     & goto menu
+if /i "%preset%"=="Black"     set "c=%charcoal%"    & set "c2=%white%"       & set "theme_name=Standard"  & goto menu
 
-if /i "%preset%"=="Lime"      set "c=%lime%"      & goto menu
-if /i "%preset%"=="Green"     set "c=%green%"     & goto menu
-if /i "%preset%"=="Mint"      set "c=%mint%"      & goto menu
-if /i "%preset%"=="Olive"     set "c=%olive%"     & goto menu
+if /i "%preset%"=="Aqua"      set "c=%aqua%"      & set "c2=%white%" & set "theme_name=Standard" & goto menu
+if /i "%preset%"=="Teal"      set "c=%teal%"      & set "c2=%white%" & set "theme_name=Standard" & goto menu
+if /i "%preset%"=="Cyan"      set "c=%cyan%"      & set "c2=%white%" & set "theme_name=Standard" & goto menu
+if /i "%preset%"=="Blue"      set "c=%blue%"      & set "c2=%white%" & set "theme_name=Standard" & goto menu
+if /i "%preset%"=="Indigo"    set "c=%indigo%"    & set "c2=%white%" & set "theme_name=Standard" & goto menu
 
-if /i "%preset%"=="Yellow"    set "c=%yellow%"    & goto menu
-if /i "%preset%"=="Gold"      set "c=%gold%"      & goto menu
-if /i "%preset%"=="Orange"    set "c=%orange%"    & goto menu
-if /i "%preset%"=="Peach"     set "c=%peach%"     & goto menu
-if /i "%preset%"=="Tan"       set "c=%tan%"       & goto menu
-if /i "%preset%"=="Brown"     set "c=%brown%"     & goto menu
+if /i "%preset%"=="Lime"      set "c=%lime%"      & set "c2=%white%" & set "theme_name=Standard" & goto menu
+if /i "%preset%"=="Green"     set "c=%green%"     & set "c2=%white%" & set "theme_name=Standard" & goto menu
+if /i "%preset%"=="Mint"      set "c=%mint%"      & set "c2=%white%" & set "theme_name=Standard" & goto menu
+if /i "%preset%"=="Olive"     set "c=%olive%"     & set "c2=%white%" & set "theme_name=Standard" & goto menu
 
-if /i "%preset%"=="Crimson"   set "c=%crimson%"   & goto menu
-if /i "%preset%"=="Red"       set "c=%red%"       & goto menu
-if /i "%preset%"=="Hot Pink"  set "c=%hotpink%"   & goto menu
-if /i "%preset%"=="Pink"      set "c=%pink%"      & goto menu
+if /i "%preset%"=="Yellow"    set "c=%yellow%"    & set "c2=%white%" & set "theme_name=Standard" & goto menu
+if /i "%preset%"=="Gold"      set "c=%gold%"      & set "c2=%white%" & set "theme_name=Standard" & goto menu
+if /i "%preset%"=="Orange"    set "c=%pumpkin%"   & set "c2=%white%" & set "theme_name=Standard" & goto menu
+if /i "%preset%"=="Peach"     set "c=%peach%"     & set "c2=%white%" & set "theme_name=Standard" & goto menu
+if /i "%preset%"=="Tan"       set "c=%tan%"       & set "c2=%white%" & set "theme_name=Standard" & goto menu
+if /i "%preset%"=="Brown"     set "c=%brown%"     & set "c2=%white%" & set "theme_name=Standard" & goto menu
 
-if /i "%preset%"=="Purple"    set "c=%purple%"    & goto menu
-if /i "%preset%"=="Violet"    set "c=%violet%"    & goto menu
-if /i "%preset%"=="Orchid"    set "c=%orchid%"    & goto menu
+if /i "%preset%"=="Crimson"   set "c=%crimson%"   & set "c2=%white%" & set "theme_name=Standard" & goto menu
+if /i "%preset%"=="Red"       set "c=%red%"       & set "c2=%white%" & set "theme_name=Standard" & goto menu
+if /i "%preset%"=="Hot Pink"  set "c=%hotpink%"   & set "c2=%white%" & set "theme_name=Standard" & goto menu
+if /i "%preset%"=="Pink"      set "c=%pink%"      & set "c2=%white%" & set "theme_name=Standard" & goto menu
 
-if /i "%preset%"=="Silver"    set "c=%silver%"    & goto menu
-if /i "%preset%"=="Grey"      set "c=%grey%"      & goto menu
-if /i "%preset%"=="Charcoal"  set "c=%charcoal%"  & goto menu
-if /i "%preset%"=="White"     set "c=%white%"     & goto menu
+if /i "%preset%"=="Purple"    set "c=%purple%"    & set "c2=%white%" & set "theme_name=Standard" & goto menu
+if /i "%preset%"=="Violet"    set "c=%violet%"    & set "c2=%white%" & set "theme_name=Standard" & goto menu
+if /i "%preset%"=="Orchid"    set "c=%orchid%"    & set "c2=%white%" & set "theme_name=Standard" & goto menu
 
+if /i "%preset%"=="Silver"    set "c=%silver%"    & set "c2=%white%" & set "theme_name=Standard" & goto menu
+if /i "%preset%"=="Grey"      set "c=%grey%"      & set "c2=%white%" & set "theme_name=Standard" & goto menu
+if /i "%preset%"=="Charcoal"  set "c=%charcoal%"  & set "c2=%white%" & set "theme_name=Standard" & goto menu
+if /i "%preset%"=="White"     set "c=%white%"     & set "c2=%grey%"  & set "theme_name=Standard" & goto menu
 
-echo %red%Invalid option. Please try again.%u%
+echo %red%Invalid colour or theme. Please try again.%u%
 timeout /t 1 >nul
 goto Presets
+
 
 
 :SetupConsole
@@ -472,36 +482,41 @@ if not defined CPUName (
     chcp 437 >nul
     for /f "delims=" %%A in ('powershell -NoProfile -Command "(Get-CimInstance Win32_Processor).Name" 2^>nul') do set "CPUName=%%A"
     chcp 65001 >nul
-    if not defined CPUName for /f "tokens=2 delims==" %%A in ('wmic cpu get name /value 2^>nul ^| find /I "Name"') do set "CPUName=%%A"
+    if not defined CPUName for /f "tokens=2*" %%A in ('reg query "HKLM\HARDWARE\DESCRIPTION\System\CentralProcessor\0" /v "ProcessorNameString" 2^>nul ^| findstr "ProcessorNameString"') do set "CPUName=%%B"
 )
 
 if not defined GPUName (
     chcp 437 >nul
-    for /f "delims=" %%G in ('powershell -NoProfile -Command "(Get-CimInstance Win32_VideoController | Select-Object -First 1).Name" 2^>nul') do set "GPUName=%%G"
+    for /f "delims=" %%G in ('powershell -NoProfile -Command "$g = Get-CimInstance Win32_VideoController; $d = $g | Where-Object { $_.Name -like '*RTX*' -or $_.Name -like '*GTX*' -or $_.Name -like '*GeForce*' -or $_.Name -like '*Radeon*' -or $_.Name -like '*Arc*' } | Select-Object -First 1; if ($d) { $d.Name } else { ($g | Select-Object -First 1).Name }" 2^>nul') do set "GPUName=%%G"
     chcp 65001 >nul
-    if not defined GPUName for /f "skip=1 delims=" %%G in ('wmic path win32_VideoController get Name 2^>nul') do if not defined GPUName (
-        if not "%%G"=="" set "GPUName=%%G"
+    if not defined GPUName (
+        for /f "tokens=*" %%a in ('reg query "HKLM\SYSTEM\CurrentControlSet\Control\Class\{4d36e968-e325-11ce-bfc1-08002be10318}" 2^>nul ^| findstr /r "\\00[0-9][0-9]$"') do (
+            if not defined GPUName (
+                for /f "tokens=2*" %%x in ('reg query "%%a" /v DriverDesc 2^>nul ^| findstr "DriverDesc"') do set "GPUName=%%y"
+            )
+        )
     )
 )
 
 :GotGPU
 echo.
-echo        %c%██████╗ █████╗  ████████╗██╗     ███████╗███████╗ %u%%white%████████╗ ██╗       ██╗███████╗ █████╗ ██╗  ██╗ ██████╗
-echo        %c%██╔══██╗██╔══██╗╚══██╔══╝██║     ██╔════╝╚════██║ %u%%white%╚══██╔══╝ ██║  ██╗  ██║██╔════╝██╔══██╗██║ ██╔╝██╔════╝
-echo        %c%██████╦╝███████║   ██║   ██║     █████╗    ███╔═╝ %u%%white%   ██║    ╚██╗████╗██╔╝█████╗  ███████║█████═╝ ╚█████╗
-echo        %c%██╔══██╗██╔══██║   ██║   ██║     ██╔══╝  ██╔══╝   %u%%white%   ██║     ████╔═████║ ██╔══╝  ██╔══██║██╔═██╗  ╚═══██╗
-echo        %c%██████╦╝██║  ██║   ██║   ███████╗███████╗███████╗ %u%%white%   ██║     ╚██╔╝ ╚██╔╝ ███████╗██║  ██║██║ ╚██╗██████╔╝
-echo        %c%╚═════╝ ╚═╝  ╚═╝   ╚═╝   ╚══════╝╚══════╝╚══════╝ %u%%white%   ╚═╝      ╚═╝   ╚═╝  ╚══════╝╚═╝  ╚═╝╚═╝  ╚═╝╚═════╝
+echo        %c%██████╗ █████╗  ████████╗██╗     ███████╗███████╗ %u%%c2%████████╗ ██╗       ██╗███████╗ █████╗ ██╗  ██╗ ██████╗
+echo        %c%██╔══██╗██╔══██╗╚══██╔══╝██║     ██╔════╝╚════██║ %u%%c2%╚══██╔══╝ ██║  ██╗  ██║██╔════╝██╔══██╗██║ ██╔╝██╔════╝
+echo        %c%██████╦╝███████║   ██║   ██║     █████╗    ███╔═╝ %u%%c2%   ██║    ╚██╗████╗██╔╝█████╗  ███████║█████═╝ ╚█████╗
+echo        %c%██╔══██╗██╔══██║   ██║   ██║     ██╔══╝  ██╔══╝   %u%%c2%   ██║     ████╔═████║ ██╔══╝  ██╔══██║██╔═██╗  ╚═══██╗
+echo        %c%██████╦╝██║  ██║   ██║   ███████╗███████╗███████╗ %u%%c2%   ██║     ╚██╔╝ ╚██╔╝ ███████╗██║  ██║██║ ╚██╗██████╔╝
+echo        %c%╚═════╝ ╚═╝  ╚═╝   ╚═╝   ╚══════╝╚══════╝╚══════╝ %u%%c2%   ╚═╝      ╚═╝   ╚═╝  ╚══════╝╚═╝  ╚═╝╚═╝  ╚═╝╚═════╝
 echo.
 echo.
-echo                                 %c%Version:%u% %white%%version%%u%     %c%User:%u%%white% %username%%u%     %c%Date:%u%%white% %date%%u%
+echo                                 %c%Version:%u% %c2%%version%%u%     %c%User:%u%%c2% %username%%u%     %c%Date:%u%%c2% %date%%u%
 echo.
 echo.
-echo                   %c%GPU:%u%%white% %GPUName% %u%    %c%CPU:%u%%white% %CPUName%%u%
+echo                   %c%GPU:%u%%c2% %GPUName% %u%    %c%CPU:%u%%c2% %CPUName%%u%
 echo.
 echo.
-echo                                %c%Batlez%u%%white% Tweaks%u%%c% is a batch script that optimizes your system%u%
+echo                                %c%Batlez%u%%c2% Tweaks%u%%c% is a batch script that optimizes your system%u%
 echo                                      %c%to provide the best gaming experience possible%u%
+
 goto :eof
 
 
@@ -518,19 +533,21 @@ echo.
 echo                                                         [%c%7%u%] Info
 echo.
 echo.
-echo                                                       %c%[ X to close ]%u%
+echo                                          %c%[ T ] Change Colours   [ X to close ]%u%
 echo.
 set /p M="%c%Choose an option »%u% "
 set choice=%errorlevel%
+if /i "%M%"=="T" goto Presets
+if /i "%M%"=="C" goto Presets
 if "%M%"=="1" goto TweaksMenu
+
 if "%M%"=="2" goto HardwareMenu
 if "%M%"=="3" goto WindowsMenu
 if "%M%"=="4" goto PrivacyMenu
 if "%M%"=="5" goto Backup
 if "%M%"=="6" goto AdvancedMenu
 if "%M%"=="7" goto More
-if "%M%"=="X" goto Destruct
-if "%M%"=="x" goto Destruct
+if /i "%M%"=="X" goto Destruct
 echo %red%Invalid option. Please try again.%u%
 goto menu
 
@@ -587,15 +604,16 @@ echo ║                                    ABOUT                               
 echo ╚══════════════════════════════════════════════════════════════════════════════╝%u%
 echo.
 echo.
-echo      %green%▌ Creator:%u% %c%Batlez%u%
-echo      %green%▌ Purpose:%u% %c%Improve System Performance%u%
-echo      %green%▌ Version:%u% %c%%version% %u%
+echo      %c%▌%u% %white%Creator:%u% %c%Batlez%u%
+echo      %c%▌%u% %white%Purpose:%u% %c%Improve System Performance%u%
+echo      %c%▌%u% %white%Version:%u% %c%%version%%u%
 echo.
 echo.
-echo      %c%Batlez Tweaks represents years of research and development in system%u%
-echo      %c%optimization techniques. This comprehensive toolkit provides carefully%u%
-echo      %c%curated tweaks and modifications designed to enhance your computing%u%
-echo      %c%experience while maintaining system stability and reliability.%u%
+echo      %c%Batlez Tweaks%u% %silver%represents years of research and development in system%u%
+echo      %silver%optimization techniques. This comprehensive toolkit provides carefully%u%
+echo      %silver%curated tweaks and modifications designed to enhance your computing%u%
+echo      %silver%experience while maintaining system stability and reliability.%u%
+
 echo.
 echo.
 echo %c%══════════════════════════ PRESS ANY KEY TO CONTINUE ══════════════════════════%u%
@@ -612,59 +630,64 @@ echo ║                               IMPORTANT NOTICE                         
 echo ╚══════════════════════════════════════════════════════════════════════════════╝%u%
 echo.
 echo.
-echo %c%Batlez Tweaks is a professional optimization suite designed to enhance%u% 
-echo %c%system performance through proven methodologies and safe modifications.%u%
+echo      %c%Batlez Tweaks%u% %silver%is a professional optimization suite designed to enhance%u%
+echo      %silver%system performance through proven methodologies and safe modifications.%u%
 echo.
-echo %lime%   Performance Results:%u% %c%While these optimizations are scientifically%u%
-echo %c%   sound, individual results may vary based on hardware configuration,%u%
-echo %c%   software environment, and system specifications.%u%
+echo      %c%▌%u% %white%Performance Results:%u% %silver%While these optimizations are scientifically%u%
+echo        %silver%sound, individual results may vary based on hardware configuration,%u%
+echo        %silver%software environment, and system specifications.%u%
 echo.
-echo %lime%   User Responsibility:%u% %c%All modifications are applied at your own%u%
-echo %c%   discretion and risk. The developer assumes no liability for%u%
-echo %c%   system changes or potential issues arising from improper usage.%u%
+echo      %c%▌%u% %white%User Responsibility:%u% %silver%All modifications are applied at your own%u%
+echo        %silver%discretion and risk. The developer assumes no liability for%u%
+echo        %silver%system changes or potential issues arising from improper usage.%u%
 echo.
-echo %lime%   Best Practices:%u%
-echo %c%   • Create a system restore point before applying tweaks%u%
-echo %c%   • Read all descriptions carefully before proceeding%u%
-echo %c%   • Contact me if uncertain about any modifications%u%
+echo      %c%▌%u% %white%Best Practices:%u%
+echo        %c%•%u% %silver%Create a system restore point before applying tweaks%u%
+echo        %c%•%u% %silver%Read all descriptions carefully before proceeding%u%
+echo        %c%•%u% %silver%Contact me on Discord if uncertain about any modifications%u%
 echo.
-echo %lime%   Support:%u% %c%For technical assistance, reach out via%u% %lime%Discord: Croakq%u%
+echo      %c%▌%u% %white%Support:%u% %silver%For technical assistance, reach out via%u% %c%Discord: Croakq%u%
 echo.
 echo %c%══════════════════════════ PRESS ANY KEY TO CONTINUE ══════════════════════════%u%
 pause >nul
 goto More
+
 
 :credits
 cls
 call :SetupConsole
 echo.
 echo.
-echo %c%╔═══════════════════════════════════════════════════════════════════════════════╗
-echo ║                              CREDITS AND ACKNOWLEDGMENTS                      ║
-echo ╚═══════════════════════════════════════════════════════════════════════════════╝%u%
+echo %c%╔══════════════════════════════════════════════════════════════════════════════╗
+echo ║                         CREDITS AND ACKNOWLEDGMENTS                          ║
+echo ╚══════════════════════════════════════════════════════════════════════════════╝%u%
 echo.
 echo.
-echo       %c%Special thanks to the following contributors for their insights and improvements:%u%
+echo      %silver%Special thanks to the following contributors for their insights and improvements:%u%
 echo.
-echo       %lime%• imribiy%u% %c%– AMD GPU tweaks%u%
-echo       %lime%• Melody%u% %c%– AMD system tweaks%u%
-echo       %lime%• Redwan%u% %c%– Pack integration%u%
-echo       %lime%• ADEX%u% %c%– RAM optimization%u%
-echo       %lime%• tarekifla%u% %c%– Restore points and registry backups%u%
-echo       %lime%• Chicho%u% %c%– GUI contributions%u%
-echo       %lime%• gryOS%u% %c%– Affinity tuning%u%
-echo       %lime%• Hone%u% %c%– Game configs and general tweaks%u%
-echo       %lime%• Ghost Optimizer%u% %c%– General tweaks%u%
+echo      %c%•%u% %white%imribiy          %u% %grey%–%u%  %silver%AMD GPU tweaks%u%
+echo      %c%•%u% %white%Melody           %u% %grey%–%u%  %silver%AMD system tweaks%u%
+echo      %c%•%u% %white%Redwan           %u% %grey%–%u%  %silver%Pack integration%u%
+echo      %c%•%u% %white%ADEX             %u% %grey%–%u%  %silver%RAM optimization%u%
+echo      %c%•%u% %white%tarekifla        %u% %grey%–%u%  %silver%Restore points and registry backups%u%
+echo      %c%•%u% %white%Chicho           %u% %grey%–%u%  %silver%GUI contributions%u%
+echo      %c%•%u% %white%gryOS            %u% %grey%–%u%  %silver%Affinity tuning%u%
+echo      %c%•%u% %white%Hone             %u% %grey%–%u%  %silver%Game configs and general tweaks%u%
+echo      %c%•%u% %white%Ghost Optimizer  %u% %grey%–%u%  %silver%General tweaks%u%
+echo      %c%•%u% %white%privacy.sexy     %u% %grey%–%u%  %silver%Privacy and security knowledge%u%
+echo	  %c%•%u% %white%Quaked           %u% %grey%–%u%  %silver%Fortnite and Roblox tweaks%u%	
 echo.
-echo       %c%While I authored and organized the majority of this project,%u%
-echo       %c%their knowledge greatly enhanced it.%u%
+echo      %silver%While I authored and organized the majority of this project,%u%
+echo      %silver%their knowledge greatly enhanced it.%u%
 echo.
-echo       %violet%Thank you for your support.%u%
+echo      %c%Thank you for your support.%u%
 echo.
 echo.
 echo %c%══════════════════════════ PRESS ANY KEY TO CONTINUE ══════════════════════════%u%
 pause >nul
 goto More
+
+
 
 :changelog
 cls
@@ -672,25 +695,30 @@ call :SetupConsole
 echo.
 echo.
 echo %c%╔══════════════════════════════════════════════════════════════════════════════╗
-echo ║                               UPDATE HISTORY                                 ║
+echo ║                                UPDATE HISTORY                                ║
 echo ╚══════════════════════════════════════════════════════════════════════════════╝%u%
 echo.
 echo.
-echo         %c%Stay informed about the latest improvements, bug fixes, and new%u%
-echo         %c%features added to Batlez Tweaks. The complete changelog and%u%
-echo         %c%release history is maintained on our official repository.%u%
+echo      %c%▌%u% %white%Current Version:%u%  %c%!version! %u%
+echo      %c%▌%u% %white%Release Channel:%u%  %silver%Official GitHub Releases%u%
 echo.
-echo         %c%Opening release page in your default browser...%u%
+echo      %silver%Stay informed about the latest improvements, performance optimizations,%u%
+echo      %silver%and bug fixes. The complete changelog and version history is%u%
+echo      %silver%maintained on our official repository.%u%
+echo.
+echo      %c%•%u% %white%Official Repository:%u%
+echo        %c%https://github.com/Batlez/Batlez/releases%u%
+echo.
+echo      %silver%Opening release page in your default browser...%u%
 echo.
 timeout 6 >nul /nobreak
 start https://github.com/Batlez/Batlez/releases
-echo         %c%If the page doesn't open automatically, visit:%u%
-echo         %lime%https://github.com/Batlez/Batlez/releases%u%
-echo.
 echo.
 echo %c%══════════════════════════ PRESS ANY KEY TO CONTINUE ══════════════════════════%u%
 pause >nul
 goto More
+
+
 
 :Backup
 cls
@@ -721,7 +749,7 @@ call :DisplayBanner
 echo %c%                            ╔══════════════════════════════╦═══════════════════════════════╗ %u%
 echo                             %c%║%u% [%c%1%u%] Windows Cleaner          %c%║%u% [%c%7%u%] Mouse/Keyboard Tweaks     %c%║%u%
 echo                             %c%║%u% [%c%2%u%] BCDEdit Tweaks           %c%║%u% [%c%8%u%] Internet Refresher        %c%║%u%
-echo                             %c%║%u% [%c%3%u%] GPU Optimizations        %c%║%u% [%c%9%u%] Service Tweaks            %c%║%u%
+echo                             %c%║%u% [%c%3%u%] GPU Optimizations        %c%║%u% [%c%9%u%] Service Decreaser         %c%║%u%
 echo                             %c%║%u% [%c%4%u%] Network Tweaks           %c%║%u% [%c%10%u%] Debloater                %c%║%u%
 echo                             %c%║%u% [%c%5%u%] CPU Optimizations        %c%║%u% [%c%11%u%] Custom Power Plan        %c%║%u%
 echo                             %c%║%u% [%c%6%u%] Memory Optimizer         %c%║%u% [%c%12%u%] Browser Config           %c%║%u%
@@ -884,7 +912,7 @@ if "%EDGE_FOUND%"=="true" (
     reg add "HKLM\SOFTWARE\Policies\Microsoft\Edge" /v "ShowMicrosoftRewards" /t REG_DWORD /d "0" /f >nul 2>&1
     reg add "HKLM\SOFTWARE\Policies\Microsoft\Edge" /v "SpotlightExperiencesAndRecommendationsEnabled" /t REG_DWORD /d "0" /f >nul 2>&1
     reg add "HKLM\SOFTWARE\Policies\Microsoft\Edge" /v "ShowRecommendationsEnabled" /t REG_DWORD /d "0" /f >nul 2>&1
-    reg add "HKLM\SOFTWARE\Policies\Microsoft\Edge" /v "BingAdsSuppression" /t REG_DWORD /d "0" /f >nul 2>&1
+    reg add "HKLM\SOFTWARE\Policies\Microsoft\Edge" /v "BingAdsSuppression" /t REG_DWORD /d "1" /f >nul 2>&1
     reg add "HKLM\SOFTWARE\Policies\Microsoft\Edge" /v "PromotionalTabsEnabled" /t REG_DWORD /d "0" /f >nul 2>&1
     reg add "HKLM\SOFTWARE\Policies\Microsoft\Edge" /v "MicrosoftEdgeInsiderPromotionEnabled" /t REG_DWORD /d "0" /f >nul 2>&1
     reg add "HKLM\SOFTWARE\Policies\Microsoft\Edge" /v "ShowAcrobatSubscriptionButton" /t REG_DWORD /d "0" /f >nul 2>&1
@@ -902,7 +930,7 @@ if "%EDGE_FOUND%"=="true" (
     reg add "HKLM\SOFTWARE\Policies\Microsoft\Edge" /v "NewTabPageAllowedBackgroundTypes" /t REG_DWORD /d "1" /f >nul 2>&1
     reg add "HKLM\SOFTWARE\Policies\Microsoft\Edge" /v "NewTabPageQuickLinksEnabled" /t REG_DWORD /d "0" /f >nul 2>&1
     reg add "HKLM\SOFTWARE\Policies\Microsoft\Edge" /v "SignInCtaOnNtpEnabled" /t REG_DWORD /d "0" /f >nul 2>&1
-    reg add "HKLM\SOFTWARE\Policies\Microsoft\Edge" /v "NewTabPageHideDefaultTopSites" /t REG_DWORD /d "0" /f >nul 2>&1
+    reg add "HKLM\SOFTWARE\Policies\Microsoft\Edge" /v "NewTabPageHideDefaultTopSites" /t REG_DWORD /d "1" /f >nul 2>&1
     
     echo %c%• Disabling desktop search widget...%u%
     reg add "HKLM\SOFTWARE\Policies\Microsoft\Edge" /v "WebWidgetAllowed" /t REG_DWORD /d "0" /f >nul 2>&1
@@ -955,6 +983,10 @@ if "%CHROME_FOUND%"=="true" (
     reg add "HKLM\SOFTWARE\Policies\Google\Chrome" /v "BackgroundModeEnabled" /t REG_DWORD /d "0" /f >nul 2>&1
     
     echo %c%• Blocking Chrome Software Reporter Tool...%u%
+	for %%E in (CompatTelRunner.exe DeviceCensus.exe) do (
+		taskkill /f /im %%E >nul 2>&1
+		reg add "HKLM\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Image File Execution Options\%%E" /v "Debugger" /t REG_SZ /d "%SystemRoot%\System32\taskkill.exe" /f >nul 2>&1
+	)
     reg add "HKLM\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Image File Execution Options\software_reporter_tool.exe" /v "Debugger" /t REG_SZ /d "%SYSTEMROOT%\System32\taskkill.exe" /f >nul 2>&1
     tasklist /fi "ImageName eq software_reporter_tool.exe" /fo csv 2>NUL | find /i "software_reporter_tool.exe">NUL && (
         taskkill /f /im software_reporter_tool.exe >nul 2>&1
@@ -1103,170 +1135,6 @@ if "%FIREFOX_FOUND%"=="true" (
 ) else (
     echo %c%[4/8] Mozilla Firefox not detected, skipping...%u%
 )
-
-goto :eof
-
-:CreateFirefoxPrivacyConfig
-set "FIREFOX_PREF_DIR=%~1"
-if exist "%FIREFOX_PREF_DIR%" (
-    (
-        echo // Firefox Privacy Configuration - Generated by Batlez Tweaks on %DATE% %TIME%
-        echo // Comprehensive privacy and security settings
-        echo.
-        echo // === TELEMETRY AND DATA COLLECTION ===
-        echo pref^("toolkit.telemetry.unified", false^);
-        echo pref^("toolkit.telemetry.enabled", false^);
-        echo pref^("toolkit.telemetry.server", ""^);
-        echo pref^("toolkit.telemetry.archive.enabled", false^);
-        echo pref^("toolkit.telemetry.newProfilePing.enabled", false^);
-        echo pref^("toolkit.telemetry.shutdownPingSender.enabled", false^);
-        echo pref^("toolkit.telemetry.updatePing.enabled", false^);
-        echo pref^("toolkit.telemetry.bhrPing.enabled", false^);
-        echo pref^("toolkit.telemetry.firstShutdownPing.enabled", false^);
-        echo pref^("toolkit.telemetry.coverage.opt-out", true^);
-        echo pref^("toolkit.coverage.opt-out", true^);
-        echo pref^("datareporting.healthreport.uploadEnabled", false^);
-        echo pref^("datareporting.policy.dataSubmissionEnabled", false^);
-        echo.
-        echo // === CRASH REPORTING ===
-        echo pref^("breakpad.reportURL", ""^);
-        echo pref^("browser.tabs.crashReporting.sendReport", false^);
-        echo pref^("browser.crashReports.unsubmittedCheck.autoSubmit2", false^);
-        echo pref^("toolkit.crashreporter.infoURL", ""^);
-        echo.
-        echo // === STUDIES AND EXPERIMENTS ===
-        echo pref^("app.shield.optoutstudies.enabled", false^);
-        echo pref^("app.normandy.enabled", false^);
-        echo pref^("app.normandy.api_url", ""^);
-        echo pref^("messaging-system.rsexperimentloader.enabled", false^);
-        echo.
-        echo // === TRACKING PROTECTION ===
-        echo pref^("privacy.trackingprotection.enabled", true^);
-        echo pref^("privacy.trackingprotection.pbmode.enabled", true^);
-        echo pref^("privacy.trackingprotection.cryptomining.enabled", true^);
-        echo pref^("privacy.trackingprotection.fingerprinting.enabled", true^);
-        echo pref^("privacy.trackingprotection.socialtracking.enabled", true^);
-        echo pref^("privacy.socialtracking.block_cookies.enabled", true^);
-        echo.
-        echo // === FIREFOX SYNC AND ACCOUNTS ===
-        echo pref^("identity.fxaccounts.enabled", false^);
-        echo pref^("browser.sync.engine.addons", false^);
-        echo pref^("browser.sync.engine.bookmarks", false^);
-        echo pref^("browser.sync.engine.history", false^);
-        echo pref^("browser.sync.engine.passwords", false^);
-        echo pref^("browser.sync.engine.prefs", false^);
-        echo pref^("browser.sync.engine.tabs", false^);
-        echo pref^("services.sync.enabled", false^);
-        echo.
-        echo // === POCKET INTEGRATION ===
-        echo pref^("extensions.pocket.enabled", false^);
-        echo pref^("extensions.pocket.api", ""^);
-        echo pref^("extensions.pocket.loggedOutVariant", ""^);
-        echo pref^("extensions.pocket.oAuthConsumerKey", ""^);
-        echo pref^("extensions.pocket.site", ""^);
-        echo.
-        echo // === GEOLOCATION AND SENSORS ===
-        echo pref^("geo.enabled", false^);
-        echo pref^("geo.provider.use_gpsd", false^);
-        echo pref^("geo.provider.use_geoclue", false^);
-        echo pref^("permissions.default.geo", 2^);
-        echo pref^("permissions.default.camera", 2^);
-        echo pref^("permissions.default.microphone", 2^);
-        echo pref^("permissions.default.desktop-notification", 2^);
-        echo.
-        echo // === DNS AND NETWORK ===
-        echo pref^("network.trr.mode", 5^);
-        echo pref^("network.dns.disablePrefetch", true^);
-        echo pref^("network.dns.disablePrefetchFromHTTPS", true^);
-        echo pref^("network.predictor.enabled", false^);
-        echo pref^("network.predictor.enable-prefetch", false^);
-        echo pref^("network.prefetch-next", false^);
-        echo pref^("network.http.speculative-parallel-limit", 0^);
-        echo pref^("browser.urlbar.speculativeConnect.enabled", false^);
-        echo.
-        echo // === SEARCH AND SUGGESTIONS ===
-        echo pref^("browser.urlbar.suggest.searches", false^);
-        echo pref^("browser.search.suggest.enabled", false^);
-        echo pref^("browser.urlbar.suggest.quicksuggest.nonsponsored", false^);
-        echo pref^("browser.urlbar.suggest.quicksuggest.sponsored", false^);
-        echo pref^("browser.urlbar.quicksuggest.dataCollection.enabled", false^);
-        echo.
-        echo // === COOKIES AND STORAGE ===
-        echo pref^("network.cookie.cookieBehavior", 4^);
-        echo pref^("network.cookie.thirdparty.sessionOnly", true^);
-        echo pref^("network.cookie.thirdparty.nonsecureSessionOnly", true^);
-        echo pref^("privacy.partition.network_state", true^);
-        echo pref^("privacy.dynamic_firstparty.use_site", true^);
-        echo.
-        echo // === REFERRER POLICY ===
-        echo pref^("network.http.referer.XOriginPolicy", 2^);
-        echo pref^("network.http.referer.XOriginTrimmingPolicy", 2^);
-        echo.
-        echo // === WEBGL AND CANVAS ===
-        echo pref^("webgl.disabled", true^);
-        echo pref^("privacy.resistFingerprinting.block_mozAddonManager", true^);
-        echo pref^("privacy.resistFingerprinting", true^);
-        echo.
-        echo // === AUTOMATIC CONNECTIONS ===
-        echo pref^("browser.safebrowsing.downloads.remote.enabled", false^);
-        echo pref^("network.captive-portal-service.enabled", false^);
-        echo pref^("network.connectivity-service.enabled", false^);
-        echo.
-        echo // === NEW TAB PAGE ===
-        echo pref^("browser.newtabpage.enabled", false^);
-        echo pref^("browser.newtabpage.activity-stream.enabled", false^);
-        echo pref^("browser.newtabpage.activity-stream.telemetry", false^);
-        echo pref^("browser.newtabpage.activity-stream.feeds.telemetry", false^);
-        echo pref^("browser.newtabpage.activity-stream.feeds.snippets", false^);
-        echo pref^("browser.newtabpage.activity-stream.feeds.section.topstories", false^);
-        echo pref^("browser.newtabpage.activity-stream.section.highlights.includePocket", false^);
-        echo pref^("browser.newtabpage.activity-stream.showSponsored", false^);
-        echo pref^("browser.newtabpage.activity-stream.showSponsoredTopSites", false^);
-        echo.
-        echo // === PASSWORDS AND AUTOFILL ===
-        echo pref^("signon.rememberSignons", false^);
-        echo pref^("browser.formfill.enable", false^);
-        echo pref^("extensions.formautofill.addresses.enabled", false^);
-        echo pref^("extensions.formautofill.creditCards.enabled", false^);
-        echo.
-        echo // === PERFORMANCE AND MEMORY ===
-        echo pref^("browser.sessionstore.privacy_level", 2^);
-        echo pref^("browser.sessionstore.resume_from_crash", false^);
-        echo pref^("dom.disable_beforeunload", true^);
-        echo pref^("accessibility.force_disabled", 1^);
-        echo.
-        echo // === FIREFOX UPDATES ===
-        echo pref^("app.update.enabled", false^);
-        echo pref^("app.update.auto", false^);
-        echo pref^("app.update.mode", 0^);
-        echo pref^("app.update.service.enabled", false^);
-        echo.
-        echo // === MOZILLA CONNECTIONS ===
-        echo pref^("browser.ping-centre.telemetry", false^);
-        echo pref^("extensions.getAddons.showPane", false^);
-        echo pref^("extensions.htmlaboutaddons.recommendations.enabled", false^);
-        echo pref^("browser.discovery.enabled", false^);
-        echo pref^("browser.tabs.firefox-view", false^);
-        echo.
-        echo // === SECURITY OVERRIDES ===
-        echo pref^("security.tls.unrestricted_rc4_fallback", false^);
-        echo pref^("security.tls.insecure_fallback_hosts", ""^);
-        echo pref^("security.ssl.require_safe_negotiation", true^);
-        echo pref^("security.ssl.treat_unsafe_negotiation_as_broken", true^);
-        echo.
-        echo // === MISCELLANEOUS PRIVACY ===
-        echo pref^("beacon.enabled", false^);
-        echo pref^("dom.battery.enabled", false^);
-        echo pref^("device.sensors.enabled", false^);
-        echo pref^("dom.event.clipboardevents.enabled", false^);
-        echo pref^("media.navigator.enabled", false^);
-        echo pref^("browser.send_pings", false^);
-        echo pref^("browser.send_pings.require_same_host", true^);
-        echo.
-        echo // End of Privacy Configuration
-    ) > "%FIREFOX_PREF_DIR%\user.js" 2>nul
-)
-exit /b
 
 if "%OPERAGX_FOUND%"=="true" (
     echo.
@@ -1421,6 +1289,168 @@ echo.
 echo %c%══════════════════════════ PRESS ANY KEY TO CONTINUE ══════════════════════════%u%
 pause >nul
 goto TweaksMenu
+
+:CreateFirefoxPrivacyConfig
+set "FIREFOX_PREF_DIR=%~1"
+if exist "%FIREFOX_PREF_DIR%" (
+    (
+        echo // Firefox Privacy Configuration - Generated by Batlez Tweaks on %DATE% %TIME%
+        echo // Comprehensive privacy and security settings
+        echo.
+        echo // === TELEMETRY AND DATA COLLECTION ===
+        echo pref^("toolkit.telemetry.unified", false^);
+        echo pref^("toolkit.telemetry.enabled", false^);
+        echo pref^("toolkit.telemetry.server", ""^);
+        echo pref^("toolkit.telemetry.archive.enabled", false^);
+        echo pref^("toolkit.telemetry.newProfilePing.enabled", false^);
+        echo pref^("toolkit.telemetry.shutdownPingSender.enabled", false^);
+        echo pref^("toolkit.telemetry.updatePing.enabled", false^);
+        echo pref^("toolkit.telemetry.bhrPing.enabled", false^);
+        echo pref^("toolkit.telemetry.firstShutdownPing.enabled", false^);
+        echo pref^("toolkit.telemetry.coverage.opt-out", true^);
+        echo pref^("toolkit.coverage.opt-out", true^);
+        echo pref^("datareporting.healthreport.uploadEnabled", false^);
+        echo pref^("datareporting.policy.dataSubmissionEnabled", false^);
+        echo.
+        echo // === CRASH REPORTING ===
+        echo pref^("breakpad.reportURL", ""^);
+        echo pref^("browser.tabs.crashReporting.sendReport", false^);
+        echo pref^("browser.crashReports.unsubmittedCheck.autoSubmit2", false^);
+        echo pref^("toolkit.crashreporter.infoURL", ""^);
+        echo.
+        echo // === STUDIES AND EXPERIMENTS ===
+        echo pref^("app.shield.optoutstudies.enabled", false^);
+        echo pref^("app.normandy.enabled", false^);
+        echo pref^("app.normandy.api_url", ""^);
+        echo pref^("messaging-system.rsexperimentloader.enabled", false^);
+        echo.
+        echo // === TRACKING PROTECTION ===
+        echo pref^("privacy.trackingprotection.enabled", true^);
+        echo pref^("privacy.trackingprotection.pbmode.enabled", true^);
+        echo pref^("privacy.trackingprotection.cryptomining.enabled", true^);
+        echo pref^("privacy.trackingprotection.fingerprinting.enabled", true^);
+        echo pref^("privacy.trackingprotection.socialtracking.enabled", true^);
+        echo pref^("privacy.socialtracking.block_cookies.enabled", true^);
+        echo.
+        echo // === FIREFOX SYNC AND ACCOUNTS ===
+        echo pref^("identity.fxaccounts.enabled", false^);
+        echo pref^("browser.sync.engine.addons", false^);
+        echo pref^("browser.sync.engine.bookmarks", false^);
+        echo pref^("browser.sync.engine.history", false^);
+        echo pref^("browser.sync.engine.passwords", false^);
+        echo pref^("browser.sync.engine.prefs", false^);
+        echo pref^("browser.sync.engine.tabs", false^);
+        echo pref^("services.sync.enabled", false^);
+        echo.
+        echo // === POCKET INTEGRATION ===
+        echo pref^("extensions.pocket.enabled", false^);
+        echo pref^("extensions.pocket.api", ""^);
+        echo pref^("extensions.pocket.loggedOutVariant", ""^);
+        echo pref^("extensions.pocket.oAuthConsumerKey", ""^);
+        echo pref^("extensions.pocket.site", ""^);
+        echo.
+        echo // === GEOLOCATION AND SENSORS ===
+        echo pref^("geo.enabled", false^);
+        echo pref^("geo.provider.use_gpsd", false^);
+        echo pref^("geo.provider.use_geoclue", false^);
+        echo pref^("permissions.default.geo", 2^);
+        echo pref^("permissions.default.camera", 2^);
+        echo pref^("permissions.default.microphone", 2^);
+        echo pref^("permissions.default.desktop-notification", 2^);
+        echo.
+        echo // === DNS AND NETWORK ===
+        echo pref^("network.trr.mode", 5^);
+        echo pref^("network.dns.disablePrefetch", true^);
+        echo pref^("network.dns.disablePrefetchFromHTTPS", true^);
+        echo pref^("network.predictor.enabled", false^);
+        echo pref^("network.predictor.enable-prefetch", false^);
+        echo pref^("network.prefetch-next", false^);
+        echo pref^("network.http.speculative-parallel-limit", 0^);
+        echo pref^("browser.urlbar.speculativeConnect.enabled", false^);
+        echo.
+        echo // === SEARCH AND SUGGESTIONS ===
+        echo pref^("browser.urlbar.suggest.searches", false^);
+        echo pref^("browser.search.suggest.enabled", false^);
+        echo pref^("browser.urlbar.suggest.quicksuggest.nonsponsored", false^);
+        echo pref^("browser.urlbar.suggest.quicksuggest.sponsored", false^);
+        echo pref^("browser.urlbar.quicksuggest.dataCollection.enabled", false^);
+        echo.
+        echo // === COOKIES AND STORAGE ===
+        echo pref^("network.cookie.cookieBehavior", 4^);
+        echo pref^("network.cookie.thirdparty.sessionOnly", true^);
+        echo pref^("network.cookie.thirdparty.nonsecureSessionOnly", true^);
+        echo pref^("privacy.partition.network_state", true^);
+        echo pref^("privacy.dynamic_firstparty.use_site", true^);
+        echo.
+        echo // === REFERRER POLICY ===
+        echo pref^("network.http.referer.XOriginPolicy", 2^);
+        echo pref^("network.http.referer.XOriginTrimmingPolicy", 2^);
+        echo.
+        echo // === WEBGL AND CANVAS ===
+        echo pref^("webgl.disabled", false^);
+        echo pref^("privacy.resistFingerprinting.block_mozAddonManager", true^);
+        echo pref^("privacy.resistFingerprinting", true^);
+        echo.
+        echo // === AUTOMATIC CONNECTIONS ===
+        echo pref^("browser.safebrowsing.downloads.remote.enabled", false^);
+        echo pref^("network.captive-portal-service.enabled", false^);
+        echo pref^("network.connectivity-service.enabled", false^);
+        echo.
+        echo // === NEW TAB PAGE ===
+        echo pref^("browser.newtabpage.enabled", false^);
+        echo pref^("browser.newtabpage.activity-stream.enabled", false^);
+        echo pref^("browser.newtabpage.activity-stream.telemetry", false^);
+        echo pref^("browser.newtabpage.activity-stream.feeds.telemetry", false^);
+        echo pref^("browser.newtabpage.activity-stream.feeds.snippets", false^);
+        echo pref^("browser.newtabpage.activity-stream.feeds.section.topstories", false^);
+        echo pref^("browser.newtabpage.activity-stream.section.highlights.includePocket", false^);
+        echo pref^("browser.newtabpage.activity-stream.showSponsored", false^);
+        echo pref^("browser.newtabpage.activity-stream.showSponsoredTopSites", false^);
+        echo.
+        echo // === PASSWORDS AND AUTOFILL ===
+        echo pref^("signon.rememberSignons", false^);
+        echo pref^("browser.formfill.enable", false^);
+        echo pref^("extensions.formautofill.addresses.enabled", false^);
+        echo pref^("extensions.formautofill.creditCards.enabled", false^);
+        echo.
+        echo // === PERFORMANCE AND MEMORY ===
+        echo pref^("browser.sessionstore.privacy_level", 2^);
+        echo pref^("browser.sessionstore.resume_from_crash", false^);
+        echo pref^("dom.disable_beforeunload", true^);
+        echo pref^("accessibility.force_disabled", 1^);
+        echo.
+        echo // === FIREFOX UPDATES ===
+        echo pref^("app.update.enabled", false^);
+        echo pref^("app.update.auto", false^);
+        echo pref^("app.update.mode", 0^);
+        echo pref^("app.update.service.enabled", false^);
+        echo.
+        echo // === MOZILLA CONNECTIONS ===
+        echo pref^("browser.ping-centre.telemetry", false^);
+        echo pref^("extensions.getAddons.showPane", false^);
+        echo pref^("extensions.htmlaboutaddons.recommendations.enabled", false^);
+        echo pref^("browser.discovery.enabled", false^);
+        echo pref^("browser.tabs.firefox-view", false^);
+        echo.
+        echo // === SECURITY OVERRIDES ===
+        echo pref^("security.tls.unrestricted_rc4_fallback", false^);
+        echo pref^("security.tls.insecure_fallback_hosts", ""^);
+        echo pref^("security.ssl.require_safe_negotiation", true^);
+        echo pref^("security.ssl.treat_unsafe_negotiation_as_broken", true^);
+        echo.
+        echo // === MISCELLANEOUS PRIVACY ===
+        echo pref^("beacon.enabled", false^);
+        echo pref^("dom.battery.enabled", false^);
+        echo pref^("device.sensors.enabled", false^);
+        echo pref^("dom.event.clipboardevents.enabled", false^);
+        echo pref^("media.navigator.enabled", false^);
+        echo pref^("browser.send_pings", false^);
+        echo pref^("browser.send_pings.require_same_host", true^);
+        echo.
+        echo // End of Privacy Configuration
+    ) > "%FIREFOX_PREF_DIR%\user.js" 2>nul
+)
+exit /b
 
 :K
 cls
@@ -1733,8 +1763,8 @@ reg add "HKLM\SYSTEM\CurrentControlSet\Control\Power" /v "EnergyEstimationEnable
 reg add "HKLM\SYSTEM\CurrentControlSet\Control\Power" /v "CsEnabled" /t REG_DWORD /d "0" /f >nul 2>&1
 reg add "HKLM\SYSTEM\CurrentControlSet\Control\Power" /v "CoalescingTimerInterval" /t REG_DWORD /d "0" /f >nul 2>&1
 
-echo %c%  → Optimizing CPU vendor-specific settings...%u%
-wmic cpu get name | findstr /i "Intel" >nul && (
+echo %c%  → Optimizing CPU vendor-specific settings%u%
+reg query "HKLM\HARDWARE\DESCRIPTION\System\CentralProcessor\0" /v "ProcessorNameString" 2>nul | findstr /i "Intel" >nul && (
     echo %c%    → Applying Intel-specific optimizations...%u%
     reg add "HKLM\SYSTEM\CurrentControlSet\Control\Power" /v "Class2InitialUnparkCount" /t REG_DWORD /d "100" /f >nul 2>&1
     reg add "HKLM\SYSTEM\CurrentControlSet\Control\Power" /v "InitialUnparkCount" /t REG_DWORD /d "100" /f >nul 2>&1
@@ -1749,6 +1779,8 @@ echo %c%  → Configuring platform role for desktop...%u%
 reg add "HKLM\SYSTEM\CurrentControlSet\Control\Power" /v "PlatformRole" /t REG_DWORD /d "1" /f >nul 2>&1
 reg add "HKLM\SYSTEM\CurrentControlSet\Control\Power" /v "Class1InitialUnparkCount" /t REG_DWORD /d "100" /f >nul 2>&1
 reg add "HKLM\SYSTEM\CurrentControlSet\Control\Power" /v "CustomizeDuringSetup" /t REG_DWORD /d "1" /f >nul 2>&1
+powercfg /h off >nul 2>&1
+reg add "HKLM\SYSTEM\CurrentControlSet\Control\Session Manager\Power" /v "HiberbootEnabled" /t REG_DWORD /d "0" /f >nul 2>&1
 
 echo %c%  → Advanced performance tweaks applied successfully%u%
 goto :eof
@@ -1768,7 +1800,7 @@ echo %c%  → Creating configuration backup...%u%
 echo Desktop Ultimate Performance Plan Created: %date% %time% > "%temp%\desktop_plan_created"
 echo Scheme GUID: %CUSTOM_GUID% >> "%temp%\desktop_plan_created"
 echo CPU Vendor: >> "%temp%\desktop_plan_created"
-wmic cpu get name >> "%temp%\desktop_plan_created" 2>nul
+reg query "HKLM\HARDWARE\DESCRIPTION\System\CentralProcessor\0" /v "ProcessorNameString" >> "%temp%\desktop_plan_created" 2>nul
 
 echo %c%  → Power scheme activation completed%u%
 goto :eof
@@ -1789,6 +1821,7 @@ echo %c%• Smart CPU scaling based on power source%u%
 echo %c%• Optimized display and sleep timeouts for battery%u%
 echo %c%• USB power management for longer battery life%u%
 echo %c%• Gaming performance when connected to power%u%
+echo %c%• Display brightness set to 100%% maximum%u%
 echo.
 echo %red%%underline%Laptop Notice:%u%
 echo %c%This plan balances performance and battery life intelligently.%u%
@@ -1840,6 +1873,14 @@ echo %c%[6/10] Configuring Intelligent Display Settings...%u%
 powercfg /setacvalueindex 44444444-4444-4444-4444-444444444442 7516b95f-f776-4464-8c53-06167f40cc99 3c0bc021-c8a8-4e07-a973-6b14cbcb2b7e 900 >nul 2>&1
 powercfg /setdcvalueindex 44444444-4444-4444-4444-444444444442 7516b95f-f776-4464-8c53-06167f40cc99 3c0bc021-c8a8-4e07-a973-6b14cbcb2b7e 300 >nul 2>&1
 
+powercfg /setacvalueindex 44444444-4444-4444-4444-444444444442 7516b95f-f776-4464-8c53-06167f40cc99 aded5e82-b909-4619-9949-f5d71dac0bcb 100 >nul 2>&1
+powercfg /setdcvalueindex 44444444-4444-4444-4444-444444444442 7516b95f-f776-4464-8c53-06167f40cc99 aded5e82-b909-4619-9949-f5d71dac0bcb 100 >nul 2>&1
+powercfg /setacvalueindex 44444444-4444-4444-4444-444444444442 7516b95f-f776-4464-8c53-06167f40cc99 f1fbfde2-a960-4165-9f88-50667911ce96 100 >nul 2>&1
+powercfg /setdcvalueindex 44444444-4444-4444-4444-444444444442 7516b95f-f776-4464-8c53-06167f40cc99 f1fbfde2-a960-4165-9f88-50667911ce96 100 >nul 2>&1
+powercfg /setacvalueindex 44444444-4444-4444-4444-444444444442 7516b95f-f776-4464-8c53-06167f40cc99 fbd9aa66-9553-4097-ba44-ed6e9d65eab8 0 >nul 2>&1
+powercfg /setdcvalueindex 44444444-4444-4444-4444-444444444442 7516b95f-f776-4464-8c53-06167f40cc99 fbd9aa66-9553-4097-ba44-ed6e9d65eab8 0 >nul 2>&1
+powercfg /attributes 7516b95f-f776-4464-8c53-06167f40cc99 aded5e82-b909-4619-9949-f5d71dac0bcb -ATTRIB_HIDE >nul 2>&1
+
 powercfg /setacvalueindex 44444444-4444-4444-4444-444444444442 238C9FA8-0AAD-41ED-83F4-97BE242C8F20 29f6c1db-86da-48c5-9fdb-f2b67b1f44da 1800 >nul 2>&1
 powercfg /setdcvalueindex 44444444-4444-4444-4444-444444444442 238C9FA8-0AAD-41ED-83F4-97BE242C8F20 29f6c1db-86da-48c5-9fdb-f2b67b1f44da 900 >nul 2>&1
 
@@ -1860,6 +1901,7 @@ powercfg /setdcvalueindex 44444444-4444-4444-4444-444444444442 4f971e89-eebd-445
 
 echo %c%[10/10] Activating Laptop Power Plan...%u%
 powercfg -SETACTIVE "44444444-4444-4444-4444-444444444442" >nul 2>&1
+powershell -NoProfile -Command "Get-CimInstance -Namespace root/WMI -ClassName WmiMonitorBrightnessMethods -ErrorAction SilentlyContinue | Invoke-CimMethod -MethodName WmiSetBrightness -Arguments @{Timeout = 1; Brightness = 100} >$null 2>&1" >nul 2>&1
 
 goto PowerPlanComplete
 
@@ -1900,6 +1942,7 @@ if exist "%temp%\desktop_plan_created" (
     echo %c%• CPU: Smart scaling based on power source%u%
     echo %c%• GPU: Maximum performance on AC, auto on battery%u%
     echo %c%• Display: 15min AC timeout, 5min battery timeout%u%
+    echo %c%• Brightness: 100%% maximum level on AC and battery%u%
     echo %c%• Sleep: 30min AC timeout, 15min battery timeout%u%
     echo.
     echo %red%Perfect for: Gaming laptops with smart power management%u%
@@ -1961,6 +2004,8 @@ del /s /f /q "C:\Windows\Tmp\*.*" 2>nul
 del /s /f /q "C:\Windows\ff*.tmp" 2>nul
 del /s /f /q "C:\Windows\Prefetch\*.*" 2>nul
 del /s /f /q "%SystemRoot%\SoftwareDistribution\Download\*.*" 2>nul
+powercfg /h off >nul 2>&1
+reg add "HKLM\SYSTEM\CurrentControlSet\Control\Session Manager\Power" /v "HiberbootEnabled" /t REG_DWORD /d "0" /f >nul 2>&1
 
 echo %c%[2/8] Cleaning User Temporary Files...%u%
 if exist "%temp%" (
@@ -2104,27 +2149,29 @@ reg add "HKLM\SYSTEM\CurrentControlSet\Control\Session Manager\Kernel" /v "Coale
 reg add "HKLM\SYSTEM\CurrentControlSet\Control\Session Manager\Memory Management" /v "CoalescingTimerInterval" /t REG_DWORD /d "0" /f >nul 2>&1
 reg add "HKLM\SYSTEM\CurrentControlSet\Control\Session Manager\Executive" /v "CoalescingTimerInterval" /t REG_DWORD /d "0" /f >nul 2>&1
 reg add "HKLM\SYSTEM\CurrentControlSet\Control\Power\ModernSleep" /v "CoalescingTimerInterval" /t REG_DWORD /d "0" /f >nul 2>&1
+reg add "HKLM\SOFTWARE\Policies\Microsoft\Windows\DeliveryOptimization" /v "DODownloadMode" /t REG_DWORD /d "0" /f >nul 2>&1
+reg add "HKLM\SOFTWARE\Microsoft\Windows\CurrentVersion\DeliveryOptimization\Config" /v "DODownloadMode" /t REG_DWORD /d "0" /f >nul 2>&1
+reg add "HKCU\Software\Microsoft\Windows\CurrentVersion\DeliveryOptimization" /v "SystemSettingsDownloadMode" /t REG_DWORD /d "0" /f >nul 2>&1
 reg add "HKLM\SYSTEM\CurrentControlSet\Services\Ndu" /v "Start" /t REG_DWORD /d "4" /f >nul 2>&1
 reg add "HKLM\SYSTEM\CurrentControlSet\Services\NdisCap" /v "Start" /t REG_DWORD /d "4" /f >nul 2>&1
 reg add "HKLM\SYSTEM\CurrentControlSet\Services\NdisVirtualBus" /v "Start" /t REG_DWORD /d "4" /f >nul 2>&1
 reg add "HKLM\SOFTWARE\Microsoft\Windows\CurrentVersion\DriverSearching" /v "SearchOrderConfig" /t REG_DWORD /d "0" /f >nul 2>&1
-reg add "HKLM\SYSTEM\ControlSet001\Services\NlaSvc\Parameters\Internet" /v "EnableActiveProbing" /t REG_DWORD /d "0" /f >nul 2>&1
 
 echo.
 echo %c%╔══════════════════════════════════════════════════════════════════════════════╗
 echo ║                      BCDEDIT OPTIMIZATION IN PROGRESS                        ║
 echo ╚══════════════════════════════════════════════════════════════════════════════╝%u%
 
-echo %c%[Category 1/6] CPU Timer Optimization%u%
+echo %c%Category 1/6: CPU Timer Optimization%u%
 echo %c%These settings affect how Windows handles CPU timers and can improve performance%u%
 echo %c%and reduce input latency, but may cause instability on some systems.%u%
 echo.
-choice /C YN /M "%c%Apply CPU timer tweaks? (Y=Performance, N=Stability) %u%" /D N /T 10
+choice /C YN /M "%c%Apply CPU timer tweaks? (Y=Performance, N=Stability) %u%"
 echo.
 if errorlevel 2 (
-    echo %c%Skipping CPU timer tweaks for better stability...%u%
+    echo %c%Skipping CPU timer tweaks for better stability%u%
 ) else (
-    echo %c%[1/4] Applying dynamic tick optimization...%u%
+    echo %c%Step 1/4: Applying dynamic tick optimization%u%
     bcdedit /set disabledynamictick yes >nul 2>&1
     if !errorlevel! equ 0 (
         echo %c%  ✓ Dynamic tick disabled for consistent timer performance%u%
@@ -2132,7 +2179,7 @@ if errorlevel 2 (
         echo %c%  ✗ Failed to disable dynamic tick%u%
     )
     
-    echo %c%[2/4] Applying platform tick optimization...%u%
+    echo %c%Step 2/4: Applying platform tick optimization%u%
     bcdedit /set useplatformtick yes >nul 2>&1
     if !errorlevel! equ 0 (
         echo %c%  ✓ Platform tick enabled for improved timing accuracy%u%
@@ -2140,7 +2187,7 @@ if errorlevel 2 (
         echo %c%  ✗ Failed to enable platform tick%u%
     )
     
-    echo %c%[3/4] Applying TSC synchronization policy enhancement...%u%
+    echo %c%Step 3/4: Applying TSC synchronization policy enhancement%u%
     bcdedit /set tscsyncpolicy enhanced >nul 2>&1
     if !errorlevel! equ 0 (
         echo %c%  ✓ TSC sync policy set to enhanced for better CPU timing%u%
@@ -2148,7 +2195,7 @@ if errorlevel 2 (
         echo %c%  ✗ Failed to set TSC sync policy%u%
     )
     
-    echo %c%[4/4] Applying high precision event timer optimization...%u%
+    echo %c%Step 4/4: Disabling Early Launch Anti-Malware ELAM drivers%u%
     bcdedit /set disableelamdrivers yes >nul 2>&1
     if !errorlevel! equ 0 (
         echo %c%  ✓ ELAM drivers disabled for reduced timer overhead%u%
@@ -2158,16 +2205,16 @@ if errorlevel 2 (
 )
 
 echo.
-echo %c%[Category 2/6] CPU Architecture Settings%u%
+echo %c%Category 2/6: CPU Architecture Settings%u%
 echo %c%These settings optimize how Windows interacts with your CPU architecture.%u%
 echo %c%They can improve performance but may cause instability on some systems.%u%
 echo.
-choice /C YN /M "%c%Apply CPU architecture tweaks? (Y=Performance, N=Compatibility) %u%" /D N /T 10
+choice /C YN /M "%c%Apply CPU architecture tweaks? (Y=Performance, N=Compatibility) %u%"
 echo.
 if errorlevel 2 (
-    echo %c%Skipping CPU architecture tweaks for better compatibility...%u%
+    echo %c%Skipping CPU architecture tweaks for better compatibility%u%
 ) else (
-    echo %c%[1/5] Applying legacy APIC mode optimization...%u%
+    echo %c%Step 1/5: Applying legacy APIC mode optimization%u%
     bcdedit /set uselegacyapicmode no >nul 2>&1
     if !errorlevel! equ 0 (
         echo %c%  ✓ Legacy APIC mode disabled for modern interrupt handling%u%
@@ -2175,7 +2222,7 @@ if errorlevel 2 (
         echo %c%  ✗ Failed to disable legacy APIC mode%u%
     )
     
-    echo %c%[2/5] Applying advanced x2APIC policy...%u%
+    echo %c%Step 2/5: Applying advanced x2APIC policy%u%
     bcdedit /set x2apicpolicy Enable >nul 2>&1
     if !errorlevel! equ 0 (
         echo %c%  ✓ x2APIC policy enabled for improved interrupt handling%u%
@@ -2183,7 +2230,7 @@ if errorlevel 2 (
         echo %c%  ✗ Failed to enable x2APIC policy%u%
     )
     
-    echo %c%[3/5] Applying MSI (Message Signaled Interrupts) optimization...%u%
+    echo %c%Step 3/5: Applying MSI optimization%u%
     bcdedit /set MSI Default >nul 2>&1
     if !errorlevel! equ 0 (
         echo %c%  ✓ MSI set to Default for optimal interrupt delivery%u%
@@ -2191,7 +2238,7 @@ if errorlevel 2 (
         echo %c%  ✗ Failed to set MSI to Default%u%
     )
     
-    echo %c%[4/5] Optimizing CPU MSR settings...%u%
+    echo %c%Step 4/5: Optimizing CPU MSR settings%u%
     bcdedit /set usemsr No >nul 2>&1
     if !errorlevel! equ 0 (
         echo %c%  ✓ CPU MSR access optimized for performance%u%
@@ -2199,37 +2246,26 @@ if errorlevel 2 (
         echo %c%  ✗ Failed to optimize CPU MSR access%u%
     )
     
-    echo %c%[5/5] Applying CPU isolation settings...%u%
+    echo %c%Step 5/5: Applying CPU isolation settings%u%
     bcdedit /set isolatedcontext No >nul 2>&1
     if !errorlevel! equ 0 (
         echo %c%  ✓ Isolated context disabled for lower CPU overhead%u%
     ) else (
         echo %c%  ✗ Failed to disable isolated context%u%
     )
-    bcdedit /set highestmode Yes >nul 2>&1
-    bcdedit /set noumex Yes >nul 2>&1
-    bcdedit /set usefirmwarepcisettings No >nul 2>&1
 )
 
 echo.
-echo %c%[Category 3/6] Memory Optimization Settings%u%
+echo %c%Category 3/6: Memory Optimization Settings%u%
 echo %c%These settings modify how Windows manages system memory.%u%
 echo %c%They can improve performance but may reduce stability on some systems.%u%
 echo.
-choice /C YN /M "%c%Apply memory optimization tweaks? (Y=Performance, N=Stability) %u%" /D N /T 10
+choice /C YN /M "%c%Apply memory optimization tweaks? (Y=Performance, N=Stability) %u%"
 echo.
 if errorlevel 2 (
-    echo %c%Skipping memory optimization tweaks for better stability...%u%
+    echo %c%Skipping memory optimization tweaks for better stability%u%
 ) else (
-    echo %c%[1/4] Applying user virtual address space increase...%u%
-    bcdedit /set increaseuserva 8192 >nul 2>&1
-    if !errorlevel! equ 0 (
-        echo %c%  ✓ User virtual address space increased for better memory allocation%u%
-    ) else (
-        echo %c%  ✗ Failed to increase user virtual address space%u%
-    )
-    
-    echo %c%[2/4] Optimizing first megabyte memory policy...%u%
+    echo %c%Step 1/3: Optimizing first megabyte memory policy%u%
     bcdedit /set firstmegabytepolicy UseAll >nul 2>&1
     if !errorlevel! equ 0 (
         echo %c%  ✓ First megabyte policy optimized for full memory utilization%u%
@@ -2237,7 +2273,7 @@ if errorlevel 2 (
         echo %c%  ✗ Failed to optimize first megabyte policy%u%
     )
     
-    echo %c%[3/4] Applying memory addressing optimization...%u%
+    echo %c%Step 2/3: Applying memory addressing optimization%u%
     bcdedit /set linearaddress57 OptOut >nul 2>&1
     if !errorlevel! equ 0 (
         echo %c%  ✓ 57-bit linear addressing optimized for performance%u%
@@ -2245,7 +2281,7 @@ if errorlevel 2 (
         echo %c%  ✗ Failed to optimize 57-bit linear addressing%u%
     )
     
-    echo %c%[4/4] Configuring performance memory allocation...%u%
+    echo %c%Step 3/3: Configuring performance memory allocation%u%
     bcdedit /set perfmem Standard >nul 2>&1
     if !errorlevel! equ 0 (
         echo %c%  ✓ Performance memory allocation enabled for optimized memory usage%u%
@@ -2257,16 +2293,16 @@ if errorlevel 2 (
 )
 
 echo.
-echo %c%[Category 4/6] PCI and Hardware Interface Settings%u%
+echo %c%Category 4/6: PCI and Hardware Interface Settings%u%
 echo %c%These settings modify how Windows interacts with hardware controllers.%u%
 echo %c%They can improve performance but may cause compatibility issues with some hardware.%u%
 echo.
-choice /C YN /M "%c%Apply PCI and hardware tweaks? (Y=Performance, N=Compatibility) %u%" /D N /T 10
+choice /C YN /M "%c%Apply PCI and hardware tweaks? (Y=Performance, N=Compatibility) %u%"
 echo.
 if errorlevel 2 (
-    echo %c%Skipping PCI and hardware tweaks for better compatibility...%u%
+    echo %c%Skipping PCI and hardware tweaks for better compatibility%u%
 ) else (
-    echo %c%[1/5] Applying firmware PCI settings optimization...%u%
+    echo %c%Step 1/5: Applying firmware PCI settings optimization%u%
     bcdedit /set usefirmwarepcisettings No >nul 2>&1
     if !errorlevel! equ 0 (
         echo %c%  ✓ Firmware PCI settings disabled for manual PCI control%u%
@@ -2274,7 +2310,7 @@ if errorlevel 2 (
         echo %c%  ✗ Failed to disable firmware PCI settings%u%
     )
     
-    echo %c%[2/5] Applying physical destination optimization...%u%
+    echo %c%Step 2/5: Applying physical destination optimization%u%
     bcdedit /set usephysicaldestination No >nul 2>&1
     if !errorlevel! equ 0 (
         echo %c%  ✓ Physical destination disabled for logical interrupt routing%u%
@@ -2282,7 +2318,7 @@ if errorlevel 2 (
         echo %c%  ✗ Failed to disable physical destination%u%
     )
     
-    echo %c%[3/5] Applying TPM boot entropy optimization...%u%
+    echo %c%Step 3/5: Applying TPM boot entropy optimization%u%
     bcdedit /set tpmbootentropy ForceDisable >nul 2>&1
     if !errorlevel! equ 0 (
         echo %c%  ✓ TPM boot entropy force disabled for faster boot times%u%
@@ -2290,7 +2326,7 @@ if errorlevel 2 (
         echo %c%  ✗ Failed to disable TPM boot entropy%u%
     )
     
-    echo %c%[4/5] Optimizing PCI Express settings...%u%
+    echo %c%Step 4/5: Optimizing PCI Express settings%u%
     bcdedit /set pciexpress Default >nul 2>&1
     if !errorlevel! equ 0 (
         echo %c%  ✓ PCI Express set to Default for optimal performance%u%
@@ -2298,7 +2334,7 @@ if errorlevel 2 (
         echo %c%  ✗ Failed to set PCI Express to Default%u%
     )
     
-    echo %c%[5/5] Applying hardware PTE optimization...%u%
+    echo %c%Step 5/5: Applying hardware PTE optimization%u%
     bcdedit /set forcehardwarepte No >nul 2>&1
     if !errorlevel! equ 0 (
         echo %c%  ✓ Hardware PTE forcing disabled for improved memory management%u%
@@ -2308,16 +2344,16 @@ if errorlevel 2 (
 )
 
 echo.
-echo %c%[Category 5/6] Boot Experience Settings%u%
+echo %c%Category 5/6: Boot Experience Settings%u%
 echo %c%These settings optimize the Windows boot process for speed.%u%
 echo %c%They will make the boot process faster but may hide useful information.%u%
 echo.
-choice /C YN /M "%c%Apply boot experience tweaks? (Y=Faster boot, N=Normal boot) %u%" /D N /T 10
+choice /C YN /M "%c%Apply boot experience tweaks? (Y=Faster boot, N=Normal boot) %u%"
 echo.
 if errorlevel 2 (
-    echo %c%Keeping normal boot experience...%u%
+    echo %c%Keeping normal boot experience%u%
 ) else (
-    echo %c%[1/5] Applying boot UX optimization...%u%
+    echo %c%Step 1/5: Applying boot UX optimization%u%
     bcdedit /set bootux Disabled >nul 2>&1
     if !errorlevel! equ 0 (
         echo %c%  ✓ Boot UX disabled for faster boot process%u%
@@ -2325,7 +2361,7 @@ if errorlevel 2 (
         echo %c%  ✗ Failed to disable boot UX%u%
     )
     
-    echo %c%[2/5] Applying quiet boot optimization...%u%
+    echo %c%Step 2/5: Applying quiet boot optimization%u%
     bcdedit /set quietboot yes >nul 2>&1
     if !errorlevel! equ 0 (
         echo %c%  ✓ Quiet boot enabled for cleaner boot experience%u%
@@ -2333,7 +2369,7 @@ if errorlevel 2 (
         echo %c%  ✗ Failed to enable quiet boot%u%
     )
     
-    echo %c%[3/5] Disabling boot logging...%u%
+    echo %c%Step 3/5: Disabling boot logging%u%
     bcdedit /set bootlog No >nul 2>&1
     if !errorlevel! equ 0 (
         echo %c%  ✓ Boot logging disabled for faster boot%u%
@@ -2341,7 +2377,7 @@ if errorlevel 2 (
         echo %c%  ✗ Failed to disable boot logging%u%
     )
     
-    echo %c%[4/5] Optimizing boot status policy...%u%
+    echo %c%Step 4/5: Optimizing boot status policy%u%
     bcdedit /set bootstatuspolicy IgnoreAllFailures >nul 2>&1
     if !errorlevel! equ 0 (
         echo %c%  ✓ Boot status policy set to ignore non-critical failures%u%
@@ -2349,7 +2385,7 @@ if errorlevel 2 (
         echo %c%  ✗ Failed to set boot status policy%u%
     )
     
-    echo %c%[5/5] Disabling driver initialization messages...%u%
+    echo %c%Step 5/5: Disabling driver initialization messages%u%
     bcdedit /set sos No >nul 2>&1
     if !errorlevel! equ 0 (
         echo %c%  ✓ SOS boot messages disabled for cleaner boot%u%
@@ -2359,19 +2395,19 @@ if errorlevel 2 (
 )
 
 echo.
-echo %c%[Category 6/6] %red%Security Settings (HIGH RISK)%u%
+echo %c%Category 6/6: %red%Security Settings - HIGH RISK%u%
 echo %c%%red%WARNING: These settings disable critical Windows security features.%u%
 echo %c%%red%Disabling these protections may leave your system vulnerable to malware%u%
 echo %c%%red%and exploits. Only use these if you fully understand the risks.%u%
 echo.
-choice /C YN /M "%red%Disable security features for performance? (NOT RECOMMENDED) (Y/N) %u%" /D N /T 10
+choice /C YN /M "%red%Disable security features for performance? (NOT RECOMMENDED) (Y/N) %u%"
 echo.
 if errorlevel 2 (
-    echo %c%Keeping security features enabled (recommended)...%u%
+    echo %c%Keeping security features enabled%u%
 ) else (
-    echo %c%%red%[WARNING] Disabling critical security features as requested...%u%
+    echo %c%%red%Disabling critical security features as requested%u%
     
-    echo %c%[1/7] Applying load options optimization...%u%
+    echo %c%Step 1/7: Applying load options optimization%u%
     bcdedit /set loadoptions DISABLE_INTEGRITY_CHECKS >nul 2>&1
     if !errorlevel! equ 0 (
         echo %c%  ✓ Load options set to disable integrity checks%u%
@@ -2379,7 +2415,8 @@ if errorlevel 2 (
         echo %c%  ✗ Failed to set load options%u%
     )
     
-    echo %c%[2/7] Applying integrity checks optimization...%u%
+    echo %c%Step 2/7: Applying integrity checks optimization%u%
+    echo %red%  Warning: some anti-cheat systems flag disabled driver signature enforcement.%u%
     bcdedit /set nointegritychecks Yes >nul 2>&1
     if !errorlevel! equ 0 (
         echo %c%  ✓ Integrity checks disabled for improved performance%u%
@@ -2387,7 +2424,7 @@ if errorlevel 2 (
         echo %c%  ✗ Failed to disable integrity checks%u%
     )
     
-    echo %c%[3/7] Configuring test signing...%u%
+    echo %c%Step 3/7: Configuring test signing%u%
     bcdedit /set testsigning No >nul 2>&1
     if !errorlevel! equ 0 (
         echo %c%  ✓ Test signing disabled for production environment%u%
@@ -2395,7 +2432,7 @@ if errorlevel 2 (
         echo %c%  ✗ Failed to disable test signing%u%
     )
     
-    echo %c%[4/7] Disabling hypervisor...%u%
+    echo %c%Step 4/7: Disabling hypervisor%u%
     bcdedit /set hypervisorlaunchtype off >nul 2>&1
     if !errorlevel! equ 0 (
         echo %c%  ✓ Hypervisor launch disabled for maximum gaming performance%u%
@@ -2403,15 +2440,15 @@ if errorlevel 2 (
         echo %c%  ✗ Failed to disable hypervisor launch%u%
     )
     
-    echo %c%[5/7] Configuring Data Execution Prevention...%u%
-    bcdedit /set nx AlwaysOff >nul 2>&1
+    echo %c%Step 5/7: Configuring Data Execution Prevention%u%
+    bcdedit /set nx OptIn >nul 2>&1
     if !errorlevel! equ 0 (
-        echo %c%  ✓ NX (DEP) disabled for compatibility and performance%u%
+        echo %c%  ✓ NX DEP set to OptIn - compatible with Vanguard EAC BattlEye%u%
     ) else (
-        echo %c%  ✗ Failed to disable NX (DEP)%u%
+        echo %c%  ✗ Failed to configure NX DEP%u%
     )
     
-    echo %c%[6/7] Disabling virtualization-based security...%u%
+    echo %c%Step 6/7: Disabling virtualization-based security%u%
     bcdedit /set vsmlaunchtype Off >nul 2>&1
     if !errorlevel! equ 0 (
         echo %c%  ✓ Virtualization-based security disabled for performance%u%
@@ -2419,7 +2456,7 @@ if errorlevel 2 (
         echo %c%  ✗ Failed to disable virtualization-based security%u%
     )
     
-    echo %c%[7/7] Disabling credential guard...%u%
+    echo %c%Step 7/7: Disabling virtual machine platform%u%
     bcdedit /set vm No >nul 2>&1
     if !errorlevel! equ 0 (
         echo %c%  ✓ Virtual machine platform disabled for performance%u%
@@ -2429,18 +2466,18 @@ if errorlevel 2 (
 )
 
 echo.
-echo %c%[Optional] %yellow%Expert Mode - Advanced Boot Settings%u%
+echo %c%Optional: %yellow%Expert Mode - Advanced Boot Settings%u%
 echo %c%%yellow%These settings are for expert users only and may cause serious system issues%u%
 echo %c%%yellow%if applied incorrectly. Most users should skip this section.%u%
 echo.
-choice /C YN /M "%yellow%Enable expert mode settings? (Advanced users only) (Y/N) %u%" /D N /T 10
+choice /C YN /M "%yellow%Enable expert mode settings? (Advanced users only) (Y/N) %u%"
 echo.
 if errorlevel 2 (
-    echo %c%Skipping expert mode settings...%u%
+    echo %c%Skipping expert mode settings%u%
 ) else (
-    echo %c%%yellow%[WARNING] Applying expert-level boot configuration settings...%u%
+    echo %c%%yellow%Applying expert-level boot configuration settings%u%
     
-    echo %c%[1/7] Advanced debug port configuration...%u%
+    echo %c%Step 1/6: Advanced debug port configuration%u%
     bcdedit /set debug No >nul 2>&1
     if !errorlevel! equ 0 (
         echo %c%  ✓ Debug mode disabled for improved performance%u%
@@ -2448,7 +2485,7 @@ if errorlevel 2 (
         echo %c%  ✗ Failed to disable debug mode%u%
     )
     
-    echo %c%[2/7] Advanced Emergency Management Services...%u%
+    echo %c%Step 2/6: Advanced Emergency Management Services%u%
     bcdedit /set bootems No >nul 2>&1
     if !errorlevel! equ 0 (
         echo %c%  ✓ Boot EMS disabled for cleaner boot process%u%
@@ -2456,15 +2493,7 @@ if errorlevel 2 (
         echo %c%  ✗ Failed to disable boot EMS%u%
     )
     
-    echo %c%[3/7] Advanced cluster mode addressing...%u%
-    bcdedit /set clustermodeaddressing 1 >nul 2>&1
-    if !errorlevel! equ 0 (
-        echo %c%  ✓ Cluster mode addressing optimized for performance%u%
-    ) else (
-        echo %c%  ✗ Failed to optimize cluster mode addressing%u%
-    )
-    
-    echo %c%[4/7] Advanced XSave policy...%u%
+    echo %c%Step 3/6: Advanced XSave policy%u%
     bcdedit /set xsavedisable No >nul 2>&1
     if !errorlevel! equ 0 (
         echo %c%  ✓ XSave functionality enabled for optimal CPU operation%u%
@@ -2472,7 +2501,7 @@ if errorlevel 2 (
         echo %c%  ✗ Failed to enable XSave functionality%u%
     )
     
-    echo %c%[5/7] Advanced graphics mode settings...%u%
+    echo %c%Step 4/6: Advanced graphics mode settings%u%
     bcdedit /set graphicsmodedisabled No >nul 2>&1
     if !errorlevel! equ 0 (
         echo %c%  ✓ Graphics mode enabled for proper display functionality%u%
@@ -2480,7 +2509,7 @@ if errorlevel 2 (
         echo %c%  ✗ Failed to enable graphics mode%u%
     )
     
-    echo %c%[6/7] Advanced highest mode setting...%u%
+    echo %c%Step 5/6: Advanced highest mode setting%u%
     bcdedit /set highestmode Yes >nul 2>&1
     if !errorlevel! equ 0 (
         echo %c%  ✓ Highest resolution mode enabled%u%
@@ -2488,7 +2517,7 @@ if errorlevel 2 (
         echo %c%  ✗ Failed to enable highest resolution mode%u%
     )
     
-    echo %c%[7/7] Advanced legacy platform configuration...%u%
+    echo %c%Step 6/6: Advanced legacy platform configuration%u%
     bcdedit /set forcelegacyplatform No >nul 2>&1
     if !errorlevel! equ 0 (
         echo %c%  ✓ Legacy platform forcing disabled for modern hardware support%u%
@@ -2517,7 +2546,7 @@ echo %c%• Load options configured to disable integrity checks for performance%
 echo %c%• Integrity checks disabled to reduce boot and runtime overhead%u%
 echo %c%• Test signing disabled for production-level system configuration%u%
 echo %c%• Hypervisor launch disabled for maximum gaming and application performance%u%
-echo %c%• NX (Data Execution Prevention) disabled for enhanced compatibility%u%
+echo %c%• NX (Data Execution Prevention) set to OptIn for anti-cheat compatibility%u%
 echo.
 echo %red%Boot Configuration Benefits:%u%
 echo %c%• Significantly reduced system boot times%u%
@@ -2531,7 +2560,7 @@ echo %c%• Maximum performance configuration for gaming workloads%u%
 echo.
 echo %red%Important Security and Compatibility Notes:%u%
 echo %c%• Some security features have been disabled for maximum performance%u%
-echo %c%• Integrity checks and DEP have been turned off - monitor system stability%u%
+echo %c%• Integrity checks turned off (DEP kept OptIn for anti-cheat compatibility)%u%
 echo %c%• Hypervisor features are disabled - virtualization software may not work%u%
 echo %c%• These changes optimize for performance over security%u%
 echo %c%• All changes can be reverted using BCDEdit if needed%u%
@@ -2568,8 +2597,8 @@ if not exist "C:\BatlezTools\TimerResolution\SetTimerResolution.exe" (
 )
 
 echo.
-echo %c%[2/3] Detecting Windows version...%u%
-for /f "tokens=2 delims==" %%v in ('wmic os get BuildNumber /value 2^>nul ^| findstr "="') do set "OS_BUILD=%%v"
+echo %c%Step 2/3: Detecting Windows version%u%
+for /f "tokens=3" %%v in ('reg query "HKLM\SOFTWARE\Microsoft\Windows NT\CurrentVersion" /v CurrentBuildNumber 2^>nul ^| findstr /i "CurrentBuildNumber"') do set "OS_BUILD=%%v"
 set /a OS_BUILD_NUM=OS_BUILD+0
 echo %green%  Windows 11 detected%u%
 
@@ -2754,6 +2783,10 @@ echo.
 echo %c%Standard:%u% Profile Inspector + driver tweaks + latency optimizations
 echo %c%Experimental:%u% %red%Disables ALL NVIDIA power management. Higher heat + power draw.%u%
 echo.
+echo %red%Note:%u% %c%This menu applies low-level GPU registry tweaks (Profile Inspector, DPC,%u%
+echo %c%preemption). For full interactive driver debloating (NVIDIA App, overlay,%u%
+echo %c%services, telemetry, domain blocking), see Hardware Menu → NVIDIA Driver Optimizer.%u%
+echo.
 set /p NvChoice="%c%Choose an option »%u% "
 if "%NvChoice%"=="0" goto C
 if "%NvChoice%"=="1" goto NVIDIAGPUStandard
@@ -2793,7 +2826,7 @@ echo ║                      %green%NVIDIA%u%%c% OPTIMIZATION IN PROGRESS      
 echo ╚══════════════════════════════════════════════════════════════════════════════╝%u%
 
 echo.
-echo %c%[1/8] Downloading NVIDIA Profile Inspector...%u%
+echo %c%[1/30] Downloading NVIDIA Profile Inspector...%u%
 mkdir "%TEMP%\nvidiaProfileInspector\" 2>nul
 rmdir /S /Q "%TEMP%\nvidiaProfileInspector\" 2>nul
 curl -g -L -# -o "%TEMP%\nvidiaProfileInspector.zip" "https://github.com/Orbmu2k/nvidiaProfileInspector/releases/latest/download/nvidiaProfileInspector.zip" 2>nul
@@ -2803,11 +2836,11 @@ chcp 65001 >nul
 del /F /Q "%TEMP%\nvidiaProfileInspector.zip" 2>nul
 curl -g -L -# -o "%TEMP%\nvidiaProfileInspector\NVIDIAProfileInspector.nip" "https://raw.githubusercontent.com/Batlez/Batlez-Tweaks/main/Tools/NVIDIA.nip" 2>nul
 
-echo %c%[2/8] Configuring Driver Thread Priorities...%u%
+echo %c%[2/30] Configuring Driver Thread Priorities...%u%
 reg add "HKLM\SYSTEM\CurrentControlSet\Services\nvlddmkm\Parameters" /v "ThreadPriority" /t REG_DWORD /d "31" /f >nul 2>&1
 reg add "HKLM\SYSTEM\CurrentControlSet\Services\DXGKrnl\Parameters" /v "ThreadPriority" /t REG_DWORD /d "15" /f >nul 2>&1
 
-echo %c%[3/8] Optimizing DPC and Core Distribution...%u%
+echo %c%[3/30] Optimizing DPC and Core Distribution...%u%
 reg add "HKLM\SYSTEM\CurrentControlSet\Services\nvlddmkm\FTS" /v "EnableRID61684" /t REG_DWORD /d "1" /f >nul 2>&1
 reg add "HKLM\SYSTEM\CurrentControlSet\Control\GraphicsDrivers" /v "RmGpsPsEnablePerCpuCoreDpc" /t REG_DWORD /d "1" /f >nul 2>&1
 reg add "HKLM\SYSTEM\CurrentControlSet\Control\GraphicsDrivers\Power" /v "RmGpsPsEnablePerCpuCoreDpc" /t REG_DWORD /d "1" /f >nul 2>&1
@@ -2815,7 +2848,7 @@ reg add "HKLM\SYSTEM\CurrentControlSet\Services\nvlddmkm" /v "RmGpsPsEnablePerCp
 reg add "HKLM\SYSTEM\CurrentControlSet\Services\nvlddmkm\NVAPI" /v "RmGpsPsEnablePerCpuCoreDpc" /t REG_DWORD /d "1" /f >nul 2>&1
 reg add "HKLM\SYSTEM\CurrentControlSet\Services\nvlddmkm\Global\NVTweak" /v "RmGpsPsEnablePerCpuCoreDpc" /t REG_DWORD /d "1" /f >nul 2>&1
 
-echo %c%[4/8] Enhancing System Performance Features...%u%
+echo %c%[4/30] Enhancing System Performance Features...%u%
 reg add "HKLM\SOFTWARE\NVIDIA Corporation\Global\System" /v "TurboQueue" /t REG_DWORD /d "1" /f >nul 2>&1
 reg add "HKLM\SOFTWARE\NVIDIA Corporation\Global\System" /v "EnableVIASBA" /t REG_DWORD /d "1" /f >nul 2>&1
 reg add "HKLM\SOFTWARE\NVIDIA Corporation\Global\System" /v "EnableIrongateSBA" /t REG_DWORD /d "1" /f >nul 2>&1
@@ -2826,7 +2859,7 @@ reg add "HKLM\SOFTWARE\NVIDIA Corporation\Global\System" /v "ShadowFB" /t REG_DW
 reg add "HKLM\SOFTWARE\NVIDIA Corporation\Global\System" /v "TexturePrecache" /t REG_DWORD /d "1" /f >nul 2>&1
 reg add "HKLM\SOFTWARE\NVIDIA Corporation\Global\System" /v "EnableFastCopyPixels" /t REG_DWORD /d "1" /f >nul 2>&1
 
-echo %c%[5/8] Configuring GPU Preemption for Multi-Monitor Compatibility...%u%
+echo %c%[5/30] Configuring GPU Preemption for Multi-Monitor Compatibility...%u%
 reg add "HKLM\SYSTEM\CurrentControlSet\Services\nvlddmkm\FTS" /v "EnablePreemption" /t REG_DWORD /d "1" /f >nul 2>&1
 reg add "HKLM\SYSTEM\CurrentControlSet\Services\nvlddmkm\FTS" /v "GPUPreemptionLevel" /t REG_DWORD /d "2" /f >nul 2>&1
 reg add "HKLM\SYSTEM\CurrentControlSet\Services\nvlddmkm\FTS" /v "ComputePreemption" /t REG_DWORD /d "2" /f >nul 2>&1
@@ -2834,14 +2867,14 @@ reg add "HKLM\SYSTEM\CurrentControlSet\Services\nvlddmkm\FTS" /v "DisablePreempt
 reg add "HKLM\SYSTEM\CurrentControlSet\Services\nvlddmkm\FTS" /v "DisableCudaContextPreemption" /t REG_DWORD /d "0" /f >nul 2>&1
 reg add "HKLM\SYSTEM\CurrentControlSet\Services\nvlddmkm\FTS" /v "DisablePreemptionOnS3S4" /t REG_DWORD /d "0" /f >nul 2>&1
 
-echo %c%[6/8] Configuring Graphics Driver Settings...%u%
+echo %c%[6/30] Configuring Graphics Driver Settings...%u%
 reg add "HKLM\SYSTEM\CurrentControlSet\Control\GraphicsDrivers" /v "RMDisablePostL2Compression" /t REG_DWORD /d "1" /f >nul 2>&1
 reg add "HKLM\SYSTEM\CurrentControlSet\Control\GraphicsDrivers" /v "RmDisableRegistryCaching" /t REG_DWORD /d "1" /f >nul 2>&1
 reg add "HKLM\SYSTEM\CurrentControlSet\Control\GraphicsDrivers" /v "DisableWriteCombining" /t REG_DWORD /d "1" /f >nul 2>&1
 reg add "HKLM\SYSTEM\CurrentControlSet\Control\GraphicsDrivers" /v "MonitorLatencyTolerance" /t REG_DWORD /d "1" /f >nul 2>&1
 reg add "HKLM\SYSTEM\CurrentControlSet\Control\GraphicsDrivers" /v "MonitorRefreshLatencyTolerance" /t REG_DWORD /d "1" /f >nul 2>&1
 
-echo %c%[7/8] Optimizing Power Management and Latency...%u%
+echo %c%[7/30] Optimizing Power Management and Latency...%u%
 reg add "HKLM\SYSTEM\CurrentControlSet\Control\Power" /v "ExitLatency" /t REG_DWORD /d "1" /f >nul 2>&1
 reg add "HKLM\SYSTEM\CurrentControlSet\Control\Power" /v "Latency" /t REG_DWORD /d "1" /f >nul 2>&1
 reg add "HKLM\SYSTEM\CurrentControlSet\Control\Power" /v "LatencyToleranceDefault" /t REG_DWORD /d "1" /f >nul 2>&1
@@ -2851,18 +2884,18 @@ reg add "HKLM\SYSTEM\CurrentControlSet\Control\Power" /v "MinimumThrottlePercent
 reg add "HKLM\SYSTEM\CurrentControlSet\Control\Power" /v "InterruptSteeringDisabled" /t REG_DWORD /d "1" /f >nul 2>&1
 reg add "HKLM\SYSTEM\CurrentControlSet\Services\nvlddmkm" /v "EnableHDAudioD3Cold" /t REG_DWORD /d "0" /f >nul 2>&1
 
-echo %c%[8/8] Applying NVIDIA Profile Configuration...%u%
+echo %c%[8/30] Applying NVIDIA Profile Configuration...%u%
 cd /d "%TEMP%\nvidiaProfileInspector\" 2>nul
 nvidiaProfileInspector.exe "NVIDIAProfileInspector.nip" >nul 2>&1
 reg add "HKCU\Software\NVIDIA Corporation\NvTray" /v "StartOnLogin" /t REG_DWORD /d "0" /f >nul 2>&1
 reg add "HKLM\SYSTEM\CurrentControlSet\Services\nvlddmkm\FTS" /v "EnableGR535" /t REG_DWORD /d "0" /f >nul 2>&1
 
-echo %c%[9/12] Locking GPU to Maximum P-State (eliminates clock micro-stutters)...%u%
+echo %c%[9/30] Locking GPU to Maximum P-State (eliminates clock micro-stutters)...%u%
 reg add "HKLM\SYSTEM\CurrentControlSet\Control\Class\{4d36e968-e325-11ce-bfc1-08002be10318}\0000" /v "DisableDynamicPstate" /t REG_DWORD /d "1" /f >nul 2>&1
 reg add "HKLM\SYSTEM\CurrentControlSet\Control\Class\{4d36e968-e325-11ce-bfc1-08002be10318}\0000" /v "DisableAsyncPstates" /t REG_DWORD /d "1" /f >nul 2>&1
 reg add "HKLM\SYSTEM\CurrentControlSet\Control\Class\{4d36e968-e325-11ce-bfc1-08002be10318}\0000" /v "SlideMCLK" /t REG_DWORD /d "0" /f >nul 2>&1
 
-echo %c%[10/12] Disabling GPU Engine Gating (prevents mid-frame power-gating)...%u%
+echo %c%[10/30] Disabling GPU Engine Gating (prevents mid-frame power-gating)...%u%
 reg add "HKLM\SYSTEM\CurrentControlSet\Control\Class\{4d36e968-e325-11ce-bfc1-08002be10318}\0000" /v "RMElcg" /t REG_DWORD /d "1431655765" /f >nul 2>&1
 reg add "HKLM\SYSTEM\CurrentControlSet\Control\Class\{4d36e968-e325-11ce-bfc1-08002be10318}\0000" /v "RMBlcg" /t REG_DWORD /d "286331153" /f >nul 2>&1
 reg add "HKLM\SYSTEM\CurrentControlSet\Control\Class\{4d36e968-e325-11ce-bfc1-08002be10318}\0000" /v "RMElpg" /t REG_DWORD /d "4095" /f >nul 2>&1
@@ -2872,7 +2905,7 @@ reg add "HKLM\SYSTEM\CurrentControlSet\Control\Class\{4d36e968-e325-11ce-bfc1-08
 reg add "HKLM\SYSTEM\CurrentControlSet\Control\Class\{4d36e968-e325-11ce-bfc1-08002be10318}\0000" /v "PreferSystemMemoryContiguous" /t REG_DWORD /d "1" /f >nul 2>&1
 reg add "HKLM\SYSTEM\CurrentControlSet\Services\nvlddmkm" /v "PreferSystemMemoryContiguous" /t REG_DWORD /d "1" /f >nul 2>&1
 
-echo %c%[11/12] Disabling NVIDIA Driver Diagnostic Logging (reduces overhead)...%u%
+echo %c%[11/30] Disabling NVIDIA Driver Diagnostic Logging (reduces overhead)...%u%
 reg add "HKLM\SYSTEM\CurrentControlSet\Control\Class\{4d36e968-e325-11ce-bfc1-08002be10318}\0000" /v "RmRcWatchdog" /t REG_DWORD /d "0" /f >nul 2>&1
 reg add "HKLM\SYSTEM\CurrentControlSet\Control\Class\{4d36e968-e325-11ce-bfc1-08002be10318}\0000" /v "RmLogonRC" /t REG_DWORD /d "0" /f >nul 2>&1
 reg add "HKLM\SYSTEM\CurrentControlSet\Control\Class\{4d36e968-e325-11ce-bfc1-08002be10318}\0000" /v "RMIntrDetailedLogs" /t REG_DWORD /d "0" /f >nul 2>&1
@@ -2886,7 +2919,7 @@ reg add "HKLM\SYSTEM\CurrentControlSet\Services\nvlddmkm\Parameters" /v "LogPagi
 reg add "HKLM\SYSTEM\CurrentControlSet\Services\nvlddmkm\Parameters" /v "LogEventEntries" /t REG_DWORD /d "0" /f >nul 2>&1
 reg add "HKLM\SYSTEM\CurrentControlSet\Services\nvlddmkm\Parameters" /v "LogErrorEntries" /t REG_DWORD /d "0" /f >nul 2>&1
 
-echo %c%[12/12] Disabling PCIe ASPM for GPU (reduces PCIe power-state latency)...%u%
+echo %c%[12/30] Disabling PCIe ASPM for GPU (reduces PCIe power-state latency)...%u%
 reg add "HKLM\SYSTEM\CurrentControlSet\Control\Class\{4d36e968-e325-11ce-bfc1-08002be10318}\0000" /v "RmOverrideSupportChipsetAspm" /t REG_DWORD /d "1" /f >nul 2>&1
 reg add "HKLM\SYSTEM\CurrentControlSet\Control\Class\{4d36e968-e325-11ce-bfc1-08002be10318}\0000" /v "RMEnableASPMDT" /t REG_DWORD /d "1" /f >nul 2>&1
 reg add "HKLM\SYSTEM\CurrentControlSet\Control\Class\{4d36e968-e325-11ce-bfc1-08002be10318}\0000" /v "RMDisableGpuASPMFlags" /t REG_DWORD /d "3" /f >nul 2>&1
@@ -2894,7 +2927,7 @@ reg add "HKLM\SYSTEM\CurrentControlSet\Control\Class\{4d36e968-e325-11ce-bfc1-08
 reg add "HKLM\SYSTEM\CurrentControlSet\Control\GraphicsDrivers" /v "TdrLevel" /t REG_DWORD /d "0" /f >nul 2>&1
 reg add "HKLM\SYSTEM\CurrentControlSet\Control\GraphicsDrivers" /v "DpiMapIommuContiguous" /t REG_DWORD /d "1" /f >nul 2>&1
 
-echo %c%[13/15] Applying NVIDIA driver scheduling latency suite...%u%
+echo %c%[13/30] Applying NVIDIA driver scheduling latency suite...%u%
 reg add "HKLM\SYSTEM\CurrentControlSet\Control\Class\{4d36e968-e325-11ce-bfc1-08002be10318}\0000" /v "D3PCLatency" /t REG_DWORD /d "1" /f >nul 2>&1
 reg add "HKLM\SYSTEM\CurrentControlSet\Control\Class\{4d36e968-e325-11ce-bfc1-08002be10318}\0000" /v "F1TransitionLatency" /t REG_DWORD /d "1" /f >nul 2>&1
 reg add "HKLM\SYSTEM\CurrentControlSet\Control\Class\{4d36e968-e325-11ce-bfc1-08002be10318}\0000" /v "LOWLATENCY" /t REG_DWORD /d "1" /f >nul 2>&1
@@ -2921,7 +2954,7 @@ reg add "HKLM\SYSTEM\CurrentControlSet\Control\Class\{4d36e968-e325-11ce-bfc1-08
 reg add "HKLM\SYSTEM\CurrentControlSet\Services\nvlddmkm\Global\NVTweak" /v "DisplayPowerSaving" /t REG_DWORD /d "0" /f >nul 2>&1
 reg add "HKLM\SYSTEM\CurrentControlSet\Services\nvlddmkm" /v "DisableWriteCombining" /t REG_DWORD /d "1" /f >nul 2>&1
 
-echo %c%[14/15] Applying GraphicsDrivers power state latency floor (all transitions)...%u%
+echo %c%[14/30] Applying GraphicsDrivers power state latency floor (all transitions)...%u%
 reg add "HKLM\SYSTEM\CurrentControlSet\Control\GraphicsDrivers\Power" /v "DefaultD3TransitionLatencyActivelyUsed" /t REG_DWORD /d "1" /f >nul 2>&1
 reg add "HKLM\SYSTEM\CurrentControlSet\Control\GraphicsDrivers\Power" /v "DefaultD3TransitionLatencyIdleLongTime" /t REG_DWORD /d "1" /f >nul 2>&1
 reg add "HKLM\SYSTEM\CurrentControlSet\Control\GraphicsDrivers\Power" /v "DefaultD3TransitionLatencyIdleMonitorOff" /t REG_DWORD /d "1" /f >nul 2>&1
@@ -2945,11 +2978,14 @@ reg add "HKLM\SYSTEM\CurrentControlSet\Control\GraphicsDrivers\Power" /v "MaxIAv
 reg add "HKLM\SYSTEM\CurrentControlSet\Control\GraphicsDrivers\Power" /v "MiracastPerfTrackGraphicsLatency" /t REG_DWORD /d "1" /f >nul 2>&1
 reg add "HKLM\SYSTEM\CurrentControlSet\Control\GraphicsDrivers\Power" /v "TransitionLatency" /t REG_DWORD /d "1" /f >nul 2>&1
 
-echo %c%[15/16] Disabling GPU energy measurement driver...%u%
+echo %c%[15/30] Disabling GPU energy measurement driver...%u%
 reg add "HKLM\SYSTEM\CurrentControlSet\Services\GpuEnergyDrv" /v "Start" /t REG_DWORD /d "4" /f >nul 2>&1
 reg add "HKLM\SYSTEM\CurrentControlSet\Services\GpuEnergyDr" /v "Start" /t REG_DWORD /d "4" /f >nul 2>&1
+for %%s in (GpuEnergyDrv MicrosoftCopilotElevationService MicrosoftEdgeElevationService) do (
+    reg add "HKLM\SYSTEM\CurrentControlSet\Services\%%s" /v "Start" /t REG_DWORD /d "4" /f >nul 2>&1
+)
 
-echo %c%[16/16] Applying ECC, interrupt locking, large pages, and PCIe tweaks...%u%
+echo %c%[16/30] Applying ECC, interrupt locking, large pages, and PCIe tweaks...%u%
 reg add "HKLM\SYSTEM\CurrentControlSet\Control\Class\{4d36e968-e325-11ce-bfc1-08002be10318}\0000" /v "RmEccScrubEnable" /t REG_DWORD /d "0" /f >nul 2>&1
 reg add "HKLM\SYSTEM\CurrentControlSet\Control\Class\{4d36e968-e325-11ce-bfc1-08002be10318}\0000" /v "RmIntrLockingMode" /t REG_DWORD /d "1" /f >nul 2>&1
 reg add "HKLM\SYSTEM\CurrentControlSet\Control\Class\{4d36e968-e325-11ce-bfc1-08002be10318}\0000" /v "RMEnableLargePages" /t REG_DWORD /d "1" /f >nul 2>&1
@@ -2958,7 +2994,7 @@ reg add "HKLM\SYSTEM\CurrentControlSet\Control\Class\{4d36e968-e325-11ce-bfc1-08
 reg add "HKLM\SYSTEM\CurrentControlSet\Control\Class\{4d36e968-e325-11ce-bfc1-08002be10318}\0000" /v "RMTimeSyncMode" /t REG_DWORD /d "1" /f >nul 2>&1
 reg add "HKLM\SYSTEM\CurrentControlSet\Control\Class\{4d36e968-e325-11ce-bfc1-08002be10318}\0000" /v "RMDisablePcieProtections" /t REG_DWORD /d "1" /f >nul 2>&1
 
-echo %c%[17/22] Increasing DirectX layer performance...%u%
+echo %c%[17/30] Increasing DirectX layer performance...%u%
 reg add "HKLM\SOFTWARE\Microsoft\Direct3D" /v "D3D10Debug" /t REG_DWORD /d "2" /f >nul 2>&1
 reg add "HKLM\SOFTWARE\WOW6432Node\Microsoft\Direct3D" /v "D3D10Debug" /t REG_DWORD /d "2" /f >nul 2>&1
 reg add "HKLM\SOFTWARE\Microsoft\Direct3D" /v "AllowTearing" /t REG_DWORD /d "1" /f >nul 2>&1
@@ -2984,7 +3020,7 @@ reg add "HKLM\SOFTWARE\WOW6432Node\Microsoft\DirectX" /v "EnableStereo" /t REG_D
 reg add "HKLM\SOFTWARE\Microsoft\DirectX" /v "AllowTearing" /t REG_DWORD /d "1" /f >nul 2>&1
 reg add "HKLM\SOFTWARE\WOW6432Node\Microsoft\DirectX" /v "AllowTearing" /t REG_DWORD /d "1" /f >nul 2>&1
 
-echo %c%[18/22] Disabling additional NVIDIA GPU logging...%u%
+echo %c%[18/30] Disabling additional NVIDIA GPU logging...%u%
 reg add "HKLM\SYSTEM\CurrentControlSet\Control\Class\{4d36e968-e325-11ce-bfc1-08002be10318}\0000" /v "RMTraceLevel" /t REG_DWORD /d "0" /f >nul 2>&1
 reg add "HKLM\SYSTEM\CurrentControlSet\Control\Class\{4d36e968-e325-11ce-bfc1-08002be10318}\0000" /v "NVLogLevel" /t REG_DWORD /d "0" /f >nul 2>&1
 reg add "HKLM\SYSTEM\CurrentControlSet\Control\Class\{4d36e968-e325-11ce-bfc1-08002be10318}\0000" /v "RMDbgLevel" /t REG_DWORD /d "0" /f >nul 2>&1
@@ -3023,7 +3059,7 @@ reg delete "HKLM\SYSTEM\CurrentControlSet\Control\Session Manager\Environment" /
 sc config NvTelemetry start= disabled >nul 2>&1
 sc config NvProfileUpdater64 start= disabled >nul 2>&1
 
-echo %c%[19/22] Disabling unusual Vulkan layers (HKLM + HKCU)...%u%
+echo %c%[19/30] Disabling unusual Vulkan layers (HKLM + HKCU)...%u%
 reg add "HKLM\SYSTEM\CurrentControlSet\Control\Session Manager\Environment" /v "VK_LOADER_DEBUG" /t REG_SZ /d "none" /f >nul 2>&1
 reg add "HKLM\SYSTEM\CurrentControlSet\Control\Session Manager\Environment" /v "DISABLE_VK_LAYER_VALVE_steam_overlay_1" /t REG_SZ /d "1" /f >nul 2>&1
 reg add "HKLM\SYSTEM\CurrentControlSet\Control\Session Manager\Environment" /v "DISABLE_VK_LAYER_NV_optimus" /t REG_SZ /d "1" /f >nul 2>&1
@@ -3055,7 +3091,7 @@ reg add "HKCU\Environment" /v "VK_SAMPLE_COUNT_OVERRIDE" /t REG_SZ /d "1" /f >nu
 reg add "HKCU\Environment" /v "VK_ENABLE_RAY_TRACING" /t REG_SZ /d "0" /f >nul 2>&1
 reg add "HKCU\Environment" /v "VK_USE_DXR" /t REG_SZ /d "0" /f >nul 2>&1
 
-echo %c%[20/22] Disabling Vulkan post-rendering scaling, AI filters, and anti-aliasing...%u%
+echo %c%[20/30] Disabling Vulkan post-rendering scaling, AI filters, and anti-aliasing...%u%
 reg add "HKLM\SYSTEM\CurrentControlSet\Services\nvlddmkm\FTS" /v "EnableNIS" /t REG_DWORD /d "0" /f >nul 2>&1
 reg add "HKLM\SYSTEM\CurrentControlSet\Services\nvlddmkm\FTS" /v "EnableDSR" /t REG_DWORD /d "0" /f >nul 2>&1
 reg add "HKLM\SYSTEM\CurrentControlSet\Services\nvlddmkm\FTS" /v "EnableSharpening" /t REG_DWORD /d "0" /f >nul 2>&1
@@ -3105,7 +3141,7 @@ reg add "HKLM\SOFTWARE\NVIDIA Corporation\Global\NVTweak" /v "EnableFSAA" /t REG
 reg add "HKLM\SOFTWARE\NVIDIA Corporation\Global\NVTweak" /v "EnableAA" /t REG_DWORD /d "0" /f >nul 2>&1
 reg add "HKLM\SOFTWARE\NVIDIA Corporation\Global\NvDriver" /v "ResizableBar" /t REG_DWORD /d "0" /f >nul 2>&1
 
-echo %c%[21/22] Optimizing nvlddmkm FTS, Global, and Video performance settings...%u%
+echo %c%[21/30] Optimizing nvlddmkm FTS, Global, and Video performance settings...%u%
 reg add "HKLM\SYSTEM\CurrentControlSet\Services\nvlddmkm" /v "DisablePreemption" /t REG_DWORD /d "1" /f >nul 2>&1
 reg add "HKLM\SYSTEM\CurrentControlSet\Services\nvlddmkm" /v "TdrLevel" /t REG_DWORD /d "0" /f >nul 2>&1
 reg add "HKLM\SYSTEM\CurrentControlSet\Services\nvlddmkm" /v "TdrDelay" /t REG_DWORD /d "10" /f >nul 2>&1
@@ -3160,7 +3196,7 @@ reg add "HKLM\SYSTEM\CurrentControlSet\Services\nvlddmkm\Video" /v "EnableDynami
 reg add "HKLM\SYSTEM\CurrentControlSet\Services\nvlddmkm\Video" /v "EnableGammaRamp" /t REG_DWORD /d "0" /f >nul 2>&1
 reg add "HKLM\SYSTEM\CurrentControlSet\Services\nvlddmkm\Video" /v "EnablePresentationQueue" /t REG_DWORD /d "1" /f >nul 2>&1
 
-echo %c%[22/22] Zeroing nvlddmkm Global Startup event keys...%u%
+echo %c%[22/30] Zeroing nvlddmkm Global Startup event keys...%u%
 reg add "HKLM\SYSTEM\CurrentControlSet\Services\nvlddmkm\Global\Startup\ XgpuBalloonInit" /ve /t REG_DWORD /d "0" /f >nul 2>&1
 reg add "HKLM\SYSTEM\CurrentControlSet\Services\nvlddmkm\Global\Startup\AceCacheHDRInfo" /ve /t REG_DWORD /d "0" /f >nul 2>&1
 reg add "HKLM\SYSTEM\CurrentControlSet\Services\nvlddmkm\Global\Startup\AceCachePFFValues" /ve /t REG_DWORD /d "0" /f >nul 2>&1
@@ -3287,7 +3323,7 @@ echo %c%[29/30] Disabling system-wide ray tracing and AA flags (GraphicsDrivers)
 reg add "HKLM\SYSTEM\CurrentControlSet\Control\GraphicsDrivers" /v "DisableDXR" /t REG_DWORD /d "1" /f >nul 2>&1
 reg add "HKLM\SYSTEM\CurrentControlSet\Control\GraphicsDrivers" /v "DisableRayTracing" /t REG_DWORD /d "1" /f >nul 2>&1
 reg add "HKLM\SYSTEM\CurrentControlSet\Control\GraphicsDrivers" /v "DisableHardwareRaytracing" /t REG_DWORD /d "1" /f >nul 2>&1
-reg add "HKLM\SYSTEM\CurrentControlSet\Control\GraphicsDrivers" /v "HwSchMode" /t REG_DWORD /d "1" /f >nul 2>&1
+reg add "HKLM\SYSTEM\CurrentControlSet\Control\GraphicsDrivers" /v "HwSchMode" /t REG_DWORD /d "2" /f >nul 2>&1
 reg add "HKLM\SYSTEM\CurrentControlSet\Control\GraphicsDrivers" /v "EnableMSAA" /t REG_DWORD /d "0" /f >nul 2>&1
 reg add "HKLM\SYSTEM\CurrentControlSet\Control\GraphicsDrivers" /v "EnableFxaa" /t REG_DWORD /d "0" /f >nul 2>&1
 reg add "HKLM\SYSTEM\CurrentControlSet\Control\GraphicsDrivers" /v "EnableAA" /t REG_DWORD /d "0" /f >nul 2>&1
@@ -3328,6 +3364,7 @@ echo %c%• NVIDIA DSR/DLDSR dynamic resolution scaling disabled%u%
 echo %c%• NVIDIA FTS ray tracing disabled (RTX, DXR)%u%
 echo %c%• NVIDIA FTS anti-aliasing disabled (MSAA, CSAA, HQAA)%u%
 echo %c%• System-wide ray tracing and AA flags set (GraphicsDrivers, HwSchMode=1)%u%
+echo %c%• Hardware-Accelerated GPU Scheduling enabled (HwSchMode=2)%u%
 echo %c%• Vulkan ray tracing blocked via environment variable%u%
 echo.
 echo %red%Performance Notes:%u%
@@ -3544,6 +3581,10 @@ echo %c%• Optimize 3D rendering and anti-aliasing settings%u%
 echo %c%• Configure video enhancement and DXVA settings%u%
 echo %c%• Disable unnecessary AMD services and telemetry%u%
 echo.
+echo %red%Note:%u% %c%This menu applies low-level GPU registry tweaks and delegates shared%u%
+echo %c%telemetry/service work to AMD Driver Optimizer subroutines. For the full%u%
+echo %c%interactive wizard with update preferences and domain blocking, see Hardware Menu.%u%
+echo.
 echo %red%%underline%Performance Notice:%u%
 echo %c%These optimizations prioritize performance over power efficiency.%u%
 echo %c%AMD Radeon Software features like Chill and Anti-Lag will be disabled.%u%
@@ -3558,12 +3599,12 @@ echo ║                       %red%AMD%u%%c% OPTIMIZATION IN PROGRESS          
 echo ╚══════════════════════════════════════════════════════════════════════════════╝%u%
 
 echo.
-echo %c%[1/7] Enabling ReBAR and Modern GPU Features...%u%
+echo %c%[1/11] Enabling ReBAR and Modern GPU Features...%u%
 reg add "HKLM\SYSTEM\ControlSet001\Control\Class\{4d36e968-e325-11ce-bfc1-08002be10318}\0000" /v "KMD_EnableReBarForLegacyASIC" /t REG_DWORD /d "1" /f >nul 2>&1
 reg add "HKLM\SYSTEM\ControlSet001\Control\Class\{4d36e968-e325-11ce-bfc1-08002be10318}\0000" /v "KMD_RebarControlMode" /t REG_DWORD /d "1" /f >nul 2>&1
 reg add "HKLM\SYSTEM\ControlSet001\Control\Class\{4d36e968-e325-11ce-bfc1-08002be10318}\0000" /v "KMD_RebarControlSupport" /t REG_DWORD /d "1" /f >nul 2>&1
 
-echo %c%[2/7] Disabling Power Management Features...%u%
+echo %c%[2/11] Disabling Power Management Features...%u%
 reg add "HKLM\System\CurrentControlSet\Control\Class\{4d36e968-e325-11ce-bfc1-08002be10318}\0000" /v "KMD_USUEnable" /t REG_DWORD /d "0" /f >nul 2>&1
 reg add "HKLM\System\CurrentControlSet\Control\Class\{4d36e968-e325-11ce-bfc1-08002be10318}\0000" /v "KMD_RadeonBoostEnabled" /t REG_DWORD /d "0" /f >nul 2>&1
 reg add "HKLM\System\CurrentControlSet\Control\Class\{4d36e968-e325-11ce-bfc1-08002be10318}\0000" /v "KMD_ChillEnabled" /t REG_DWORD /d "0" /f >nul 2>&1
@@ -3573,7 +3614,7 @@ reg add "HKLM\SYSTEM\CurrentControlSet\Control\Class\{4d36e968-e325-11ce-bfc1-08
 reg add "HKLM\SYSTEM\CurrentControlSet\Control\Class\{4d36e968-e325-11ce-bfc1-08002be10318}\0000" /v "KMD_DisableDPD" /t REG_DWORD /d "1" /f >nul 2>&1
 reg add "HKLM\SYSTEM\CurrentControlSet\Control\Class\{4d36e968-e325-11ce-bfc1-08002be10318}\0000" /v "KMD_EnableMSHWS" /t REG_DWORD /d "0" /f >nul 2>&1
 
-echo %c%[3/7] Configuring 3D Rendering and Anti-Aliasing...%u%
+echo %c%[3/11] Configuring 3D Rendering and Anti-Aliasing...%u%
 reg add "HKLM\System\CurrentControlSet\Control\Class\{4d36e968-e325-11ce-bfc1-08002be10318}\0000\UMD" /v "Main3D" /t REG_BINARY /d "3100" /f >nul 2>&1
 reg add "HKLM\System\CurrentControlSet\Control\Class\{4d36e968-e325-11ce-bfc1-08002be10318}\0000\UMD" /v "AntiAlias" /t REG_BINARY /d "3100" /f >nul 2>&1
 reg add "HKLM\System\CurrentControlSet\Control\Class\{4d36e968-e325-11ce-bfc1-08002be10318}\0000\UMD" /v "AntiAliasSamples" /t REG_BINARY /d "3000" /f >nul 2>&1
@@ -3581,35 +3622,36 @@ reg add "HKLM\System\CurrentControlSet\Control\Class\{4d36e968-e325-11ce-bfc1-08
 reg add "HKLM\System\CurrentControlSet\Control\Class\{4d36e968-e325-11ce-bfc1-08002be10318}\0000\UMD" /v "Tessellation" /t REG_BINARY /d "3100" /f >nul 2>&1
 reg add "HKLM\System\CurrentControlSet\Control\Class\{4d36e968-e325-11ce-bfc1-08002be10318}\0000\UMD" /v "HighQualityAF" /t REG_BINARY /d "3100" /f >nul 2>&1
 
-echo %c%[4/7] Optimizing Texture and Buffer Settings...%u%
+echo %c%[4/11] Optimizing Texture and Buffer Settings...%u%
 reg add "HKLM\System\CurrentControlSet\Control\Class\{4d36e968-e325-11ce-bfc1-08002be10318}\0000\UMD" /v "TextureOpt" /t REG_BINARY /d "30000000" /f >nul 2>&1
 reg add "HKLM\System\CurrentControlSet\Control\Class\{4d36e968-e325-11ce-bfc1-08002be10318}\0000\UMD" /v "TextureLod" /t REG_BINARY /d "30000000" /f >nul 2>&1
 reg add "HKLM\System\CurrentControlSet\Control\Class\{4d36e968-e325-11ce-bfc1-08002be10318}\0000\UMD" /v "EnableTripleBuffering" /t REG_BINARY /d "3000" /f >nul 2>&1
 reg add "HKLM\System\CurrentControlSet\Control\Class\{4d36e968-e325-11ce-bfc1-08002be10318}\0000\UMD" /v "ShaderCache" /t REG_BINARY /d "3100" /f >nul 2>&1
 reg add "HKLM\System\CurrentControlSet\Control\Class\{4d36e968-e325-11ce-bfc1-08002be10318}\0000\UMD" /v "ExportCompressedTex" /t REG_BINARY /d "31000000" /f >nul 2>&1
 
-echo %c%[5/7] Configuring Display and VSync Settings...%u%
+echo %c%[5/11] Configuring Display and VSync Settings...%u%
 reg add "HKLM\System\CurrentControlSet\Control\Class\{4d36e968-e325-11ce-bfc1-08002be10318}\0000\UMD" /v "VSyncControl" /t REG_BINARY /d "3100" /f >nul 2>&1
 reg add "HKLM\System\CurrentControlSet\Control\Class\{4d36e968-e325-11ce-bfc1-08002be10318}\0000\UMD" /v "TurboSync" /t REG_BINARY /d "3000" /f >nul 2>&1
 reg add "HKLM\System\CurrentControlSet\Control\Class\{4d36e968-e325-11ce-bfc1-08002be10318}\0000\UMD" /v "AntiStuttering" /t REG_BINARY /d "3100" /f >nul 2>&1
 reg add "HKLM\System\CurrentControlSet\Control\Class\{4d36e968-e325-11ce-bfc1-08002be10318}\0000\UMD" /v "DisplayCrossfireLogo" /t REG_BINARY /d "3000" /f >nul 2>&1
 
-echo %c%[6/7] Optimizing Video Enhancement and DXVA...%u%
+echo %c%[6/11] Optimizing Video Enhancement and DXVA...%u%
 reg add "HKLM\System\CurrentControlSet\Control\Class\{4d36e968-e325-11ce-bfc1-08002be10318}\0000\UMD\DXVA" /v "LRTCEnable" /t REG_BINARY /d "30000000" /f >nul 2>&1
 reg add "HKLM\System\CurrentControlSet\Control\Class\{4d36e968-e325-11ce-bfc1-08002be10318}\0000\UMD\DXVA" /v "MosquitoNoiseRemoval_ENABLE" /t REG_BINARY /d "30000000" /f >nul 2>&1
 reg add "HKLM\System\CurrentControlSet\Control\Class\{4d36e968-e325-11ce-bfc1-08002be10318}\0000\UMD\DXVA" /v "Deblocking_ENABLE" /t REG_BINARY /d "30000000" /f >nul 2>&1
 reg add "HKLM\System\CurrentControlSet\Control\Class\{4d36e968-e325-11ce-bfc1-08002be10318}\0000\UMD\DXVA" /v "ColorVibrance_ENABLE" /t REG_BINARY /d "31000000" /f >nul 2>&1
 reg add "HKLM\System\CurrentControlSet\Control\Class\{4d36e968-e325-11ce-bfc1-08002be10318}\0000\UMD\DXVA" /v "BlueStretch_ENABLE" /t REG_BINARY /d "31000000" /f >nul 2>&1
 
-echo %c%[7/7] Disabling AMD Services and Telemetry...%u%
+echo %c%[7/11] Disabling AMD Services and Telemetry...%u%
 reg add "HKLM\System\CurrentControlSet\Services\amdwddmg" /v "ChillEnabled" /t REG_DWORD /d "0" /f >nul 2>&1
-reg add "HKLM\System\CurrentControlSet\Services\AMD Crash Defender Service" /v "Start" /t REG_DWORD /d "4" /f >nul 2>&1
-reg add "HKLM\System\CurrentControlSet\Services\AMD External Events Utility" /v "Start" /t REG_DWORD /d "4" /f >nul 2>&1
-reg add "HKLM\System\CurrentControlSet\Services\amdfendr" /v "Start" /t REG_DWORD /d "4" /f >nul 2>&1
-reg add "HKLM\System\CurrentControlSet\Services\amdfendrmgr" /v "Start" /t REG_DWORD /d "4" /f >nul 2>&1
-reg add "HKLM\System\CurrentControlSet\Services\amdlog" /v "Start" /t REG_DWORD /d "4" /f >nul 2>&1
 reg add "HKLM\SYSTEM\CurrentControlSet\Control\Class\{4d36e968-e325-11ce-bfc1-08002be10318}\0000" /v "DisableDMACopy" /t REG_DWORD /d "1" /f >nul 2>&1
 reg add "HKLM\SYSTEM\CurrentControlSet\Control\Class\{4d36e968-e325-11ce-bfc1-08002be10318}\0000" /v "DisableBlockWrite" /t REG_DWORD /d "0" /f >nul 2>&1
+set "DISABLE_AMD_SERVICES=true"
+set "DISABLE_METRICS=true"
+set "DISABLE_UPDATES=false"
+call :AMD_Step2_DisableServices
+call :AMD_Step3_DisableTelemetry
+call :AMD_Step6_CleanTasks
 
 echo %c%[8/11] Disabling AMD driver-level image enhancement hooks...%u%
 reg add "HKLM\SYSTEM\CurrentControlSet\Services\amdkmdag" /v "EnableRSR" /t REG_DWORD /d "0" /f >nul 2>&1
@@ -3737,9 +3779,8 @@ echo ║                      WI-FI OPTIMIZATION IN PROGRESS                    
 echo ╚══════════════════════════════════════════════════════════════════════════════╝%u%
 
 echo.
-echo %c%[1/20] Configuring Core TCP/IP Settings...%u%
+echo %c%Step 1/20: Configuring Core TCP/IP Settings%u%
 netsh int tcp set global rss=enabled >nul 2>&1
-netsh int tcp set global chimney=disabled >nul 2>&1
 netsh int tcp set global autotuninglevel=normal >nul 2>&1
 netsh int tcp set global ecncapability=enabled >nul 2>&1
 netsh int tcp set global timestamps=disabled >nul 2>&1
@@ -3750,7 +3791,7 @@ netsh int tcp set global pacingprofile=off >nul 2>&1
 netsh int tcp set global MaxSynRetransmissions=2 >nul 2>&1
 netsh int tcp set heuristics disabled >nul 2>&1
 
-echo %c%[2/20] Detecting and Configuring Wi-Fi Interface...%u%
+echo %c%Step 2/20: Detecting and Configuring Wi-Fi Interface%u%
 set "WIFI_IFACE="
 for /f "tokens=2 delims=:" %%I in ('netsh interface show interface 2^>nul ^| findstr /i "Wireless"') do set "WIFI_IFACE=%%~I"
 if defined WIFI_IFACE (
@@ -3765,7 +3806,7 @@ if defined WIFI_IFACE (
 netsh wlan set profileparameter name=* connectiontype=ESS >nul 2>&1
 netsh wlan set profileparameter name=* connectionmode=auto >nul 2>&1
 
-echo %c%[3/20] Configuring Wireless Adapter Power Management...%u%
+echo %c%Step 3/20: Configuring Wireless Adapter Power Management%u%
 for /f "tokens=*" %%A in ('reg query "HKLM\SYSTEM\CurrentControlSet\Control\Class\{4d36e972-e325-11ce-bfc1-08002be10318}" /s /f "RadioEnable" 2^>nul ^| findstr /i "HKEY"') do (
     reg add "%%A" /v "RadioEnable" /t REG_DWORD /d "1" /f >nul 2>&1
     reg add "%%A" /v "PowerSaveMode" /t REG_DWORD /d "0" /f >nul 2>&1
@@ -3777,7 +3818,7 @@ for /f "tokens=*" %%A in ('reg query "HKLM\SYSTEM\CurrentControlSet\Control\Clas
     reg add "%%A" /v "*WakeOnPattern" /t REG_SZ /d "0" /f >nul 2>&1
 )
 
-echo %c%[4/20] Optimizing 802.11 Wireless Protocol Settings...%u%
+echo %c%Step 4/20: Optimizing 802.11 Wireless Protocol Settings%u%
 for /f "tokens=*" %%A in ('reg query "HKLM\SYSTEM\CurrentControlSet\Control\Class\{4d36e972-e325-11ce-bfc1-08002be10318}" /s /f "MIMOPowerSaveMode" 2^>nul ^| findstr /i "HKEY"') do (
     reg add "%%A" /v "MIMOPowerSaveMode" /t REG_DWORD /d "3" /f >nul 2>&1
     reg add "%%A" /v "*WirelessMode" /t REG_DWORD /d "8" /f >nul 2>&1
@@ -3789,7 +3830,7 @@ for /f "tokens=*" %%A in ('reg query "HKLM\SYSTEM\CurrentControlSet\Control\Clas
     reg add "%%A" /v "*BeamForming" /t REG_DWORD /d "1" /f >nul 2>&1
 )
 
-echo %c%[5/20] Disabling Wi-Fi Sense and Hotspot Features...%u%
+echo %c%Step 5/20: Disabling Wi-Fi Sense and Hotspot Features%u%
 reg add "HKLM\SOFTWARE\Microsoft\PolicyManager\default\WiFi\AllowWiFiHotSpotReporting" /v "value" /t REG_DWORD /d "0" /f >nul 2>&1
 reg add "HKLM\SOFTWARE\Microsoft\PolicyManager\default\WiFi\AllowAutoConnectToWiFiSenseHotspots" /v "value" /t REG_DWORD /d "0" /f >nul 2>&1
 reg add "HKLM\SOFTWARE\Microsoft\WcmSvc\wifinetworkmanager\config" /v "AutoConnectAllowedOEM" /t REG_DWORD /d "0" /f >nul 2>&1
@@ -3798,34 +3839,33 @@ reg add "HKLM\SOFTWARE\Microsoft\WifiNetworkManager\HotspotLogin" /v "IsEnabled"
 sc config WlanSvc start= auto >nul 2>&1
 sc start WlanSvc >nul 2>&1
 
-echo %c%[6/20] Configuring Advanced Wi-Fi Network Settings...%u%
+echo %c%Step 6/20: Configuring Advanced Wi-Fi Network Settings%u%
 reg add "HKLM\SYSTEM\CurrentControlSet\Services\WlanSvc\Parameters" /v "BackgroundScanEnabled" /t REG_DWORD /d "0" /f >nul 2>&1
 reg add "HKLM\SYSTEM\CurrentControlSet\Services\WlanSvc\Parameters" /v "BssTypeSelection" /t REG_DWORD /d "1" /f >nul 2>&1
 reg add "HKLM\SOFTWARE\Microsoft\WlanSvc\Parameters" /v "ProfileDirectoryPath" /t REG_SZ /d "" /f >nul 2>&1
 reg add "HKLM\SOFTWARE\Microsoft\WcmSvc\Tethering" /v "HotspotConfigured" /t REG_DWORD /d "0" /f >nul 2>&1
 
-echo %c%[7/20] Applying Wi-Fi Gaming and Performance Optimizations...%u%
+echo %c%Step 7/20: Applying Wi-Fi Gaming and Performance Optimizations%u%
 reg add "HKLM\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Multimedia\SystemProfile" /v "NetworkThrottlingIndex" /t REG_DWORD /d "4294967295" /f >nul 2>&1
-reg add "HKLM\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Multimedia\SystemProfile" /v "SystemResponsiveness" /t REG_DWORD /d "10" /f >nul 2>&1
+reg add "HKLM\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Multimedia\SystemProfile" /v "SystemResponsiveness" /t REG_DWORD /d 10 /f >nul 2>&1
 reg add "HKLM\SYSTEM\CurrentControlSet\Services\Tcpip\Parameters" /v "TcpAckFrequency" /t REG_DWORD /d "1" /f >nul 2>&1
 reg add "HKLM\SYSTEM\CurrentControlSet\Services\Tcpip\Parameters" /v "TCPNoDelay" /t REG_DWORD /d "1" /f >nul 2>&1
 reg add "HKLM\SYSTEM\CurrentControlSet\Services\Tcpip\Parameters" /v "TcpDelAckTicks" /t REG_DWORD /d "0" /f >nul 2>&1
 reg add "HKLM\SYSTEM\CurrentControlSet\Services\Tcpip\Parameters" /v "TcpInitialRTT" /t REG_DWORD /d "3" /f >nul 2>&1
 
-echo %c%[8/20] Applying advanced TCP stack optimizations for wireless...%u%
+echo %c%Step 8/20: Applying advanced TCP stack optimizations for wireless%u%
 reg add "HKLM\SYSTEM\CurrentControlSet\Services\Tcpip\Parameters" /v "Tcp1323Opts" /t REG_DWORD /d 1 /f >nul 2>&1
 reg add "HKLM\SYSTEM\CurrentControlSet\Services\Tcpip\Parameters\Interfaces" /v "TcpAckFrequency" /t REG_DWORD /d 1 /f >nul 2>&1
 reg add "HKLM\SYSTEM\CurrentControlSet\Services\Tcpip\Parameters\Interfaces" /v "TCPNoDelay" /t REG_DWORD /d 1 /f >nul 2>&1
 reg add "HKLM\SYSTEM\CurrentControlSet\Services\Tcpip\Parameters" /v "DefaultTTL" /t REG_DWORD /d 64 /f >nul 2>&1
-reg add "HKLM\SYSTEM\CurrentControlSet\Services\Tcpip\Parameters" /v "TcpWindowSize" /t REG_DWORD /d 32768 /f >nul 2>&1
-reg add "HKLM\SYSTEM\CurrentControlSet\Services\Tcpip\Parameters" /v "GlobalMaxTcpWindowSize" /t REG_DWORD /d 32768 /f >nul 2>&1
 reg add "HKLM\SYSTEM\CurrentControlSet\Services\Tcpip\Parameters" /v "SackOpts" /t REG_DWORD /d 1 /f >nul 2>&1
 reg add "HKLM\SYSTEM\CurrentControlSet\Services\Tcpip\Parameters" /v "TcpMaxDupAcks" /t REG_DWORD /d 2 /f >nul 2>&1
 reg add "HKLM\SYSTEM\CurrentControlSet\Services\Tcpip\Parameters" /v "EnableTCPA" /t REG_DWORD /d 1 /f >nul 2>&1
 reg add "HKLM\SYSTEM\CurrentControlSet\Services\Tcpip\Parameters" /v "EnableRSS" /t REG_DWORD /d 1 /f >nul 2>&1
-reg add "HKLM\SYSTEM\CurrentControlSet\Services\Tcpip\Parameters" /v "EnableTCPChimney" /t REG_DWORD /d 1 /f >nul 2>&1
+netsh int tcp set supplemental Template=Internet CongestionProvider=ctcp >nul 2>&1
+netsh int tcp set supplemental Template=Datacenter CongestionProvider=ctcp >nul 2>&1
 
-echo %c%[9/20] Applying UDP optimizations for wireless gaming and streaming...%u%
+echo %c%Step 9/20: Applying UDP optimizations for wireless gaming and streaming%u%
 reg add "HKLM\SYSTEM\CurrentControlSet\Services\AFD\Parameters" /v "FastSendDatagramThreshold" /t REG_DWORD /d 1500 /f >nul 2>&1
 reg add "HKLM\SYSTEM\CurrentControlSet\Services\AFD\Parameters" /v "FastCopyReceiveThreshold" /t REG_DWORD /d 1500 /f >nul 2>&1
 reg add "HKLM\SYSTEM\CurrentControlSet\Services\AFD\Parameters" /v "DynamicSendBufferDisable" /t REG_DWORD /d 0 /f >nul 2>&1
@@ -3837,7 +3877,7 @@ reg add "HKLM\SYSTEM\CurrentControlSet\Services\AFD\Parameters" /v "MediumBuffer
 reg add "HKLM\SYSTEM\CurrentControlSet\Services\AFD\Parameters" /v "SmallBufferSize" /t REG_DWORD /d 128 /f >nul 2>&1
 reg add "HKLM\SYSTEM\CurrentControlSet\Services\AFD\Parameters" /v "TransmitWorker" /t REG_DWORD /d 16 /f >nul 2>&1
 
-echo %c%[10/20] Optimizing DNS cache for wireless browsing...%u%
+echo %c%Step 10/20: Optimizing DNS cache for wireless browsing%u%
 reg add "HKLM\SYSTEM\CurrentControlSet\Services\Dnscache\Parameters" /v "CacheHashTableBucketSize" /t REG_DWORD /d 1 /f >nul 2>&1
 reg add "HKLM\SYSTEM\CurrentControlSet\Services\Dnscache\Parameters" /v "CacheHashTableSize" /t REG_DWORD /d 384 /f >nul 2>&1
 reg add "HKLM\SYSTEM\CurrentControlSet\Services\Dnscache\Parameters" /v "DnsCacheTimeout" /t REG_DWORD /d 86400 /f >nul 2>&1
@@ -3845,13 +3885,13 @@ reg add "HKLM\SYSTEM\CurrentControlSet\Services\Dnscache\Parameters" /v "Negativ
 reg add "HKLM\SYSTEM\CurrentControlSet\Services\Dnscache\Parameters" /v "NetFailureCacheTime" /t REG_DWORD /d 30 /f >nul 2>&1
 reg add "HKLM\SYSTEM\CurrentControlSet\Services\Dnscache\Parameters" /v "MaxCacheSize" /t REG_DWORD /d 16777216 /f >nul 2>&1
 
-echo %c%[11/20] Configuring QoS for wireless traffic prioritization...%u%
+echo %c%Step 11/20: Configuring QoS for wireless traffic prioritization%u%
 reg add "HKLM\SOFTWARE\Policies\Microsoft\Windows\Psched" /v "NonBestEffortLimit" /t REG_DWORD /d 0 /f >nul 2>&1
 reg add "HKLM\SOFTWARE\Policies\Microsoft\Windows\Psched" /v "TimerResolution" /t REG_DWORD /d 1 /f >nul 2>&1
 reg add "HKLM\SOFTWARE\Policies\Microsoft\Windows\Psched" /v "MaxOutstandingSends" /t REG_DWORD /d 32768 /f >nul 2>&1
 reg add "HKLM\SYSTEM\CurrentControlSet\Services\Psched" /v "NonBestEffortLimit" /t REG_DWORD /d 0 /f >nul 2>&1
 
-echo %c%[12/20] Optimizing wireless network memory management...%u%
+echo %c%Step 12/20: Optimizing wireless network memory management%u%
 reg add "HKLM\SYSTEM\CurrentControlSet\Services\Tcpip\Parameters" /v "MaxUserPort" /t REG_DWORD /d 65534 /f >nul 2>&1
 reg add "HKLM\SYSTEM\CurrentControlSet\Services\Tcpip\Parameters" /v "TcpTimedWaitDelay" /t REG_DWORD /d 30 /f >nul 2>&1
 reg add "HKLM\SYSTEM\CurrentControlSet\Services\Tcpip\Parameters" /v "MaxFreeTcbs" /t REG_DWORD /d 32768 /f >nul 2>&1
@@ -3859,36 +3899,35 @@ reg add "HKLM\SYSTEM\CurrentControlSet\Services\Tcpip\Parameters" /v "MaxHashTab
 reg add "HKLM\SYSTEM\CurrentControlSet\Services\Tcpip\Parameters" /v "MaxConnectResponseRetransmissions" /t REG_DWORD /d 2 /f >nul 2>&1
 reg add "HKLM\SYSTEM\CurrentControlSet\Services\Tcpip\Parameters" /v "MaxDataRetransmissions" /t REG_DWORD /d 3 /f >nul 2>&1
 
-echo %c%[13/20] Configuring IPv4/IPv6 stack for wireless networks...%u%
+echo %c%Step 13/20: Configuring IPv4/IPv6 stack for wireless networks%u%
 reg add "HKLM\SYSTEM\CurrentControlSet\Services\Tcpip6\Parameters" /v "DisabledComponents" /t REG_DWORD /d 32 /f >nul 2>&1
 reg add "HKLM\SYSTEM\CurrentControlSet\Services\Tcpip\Parameters" /v "EnableICMPRedirect" /t REG_DWORD /d 0 /f >nul 2>&1
 reg add "HKLM\SYSTEM\CurrentControlSet\Services\Tcpip\Parameters" /v "EnablePMTUDiscovery" /t REG_DWORD /d 1 /f >nul 2>&1
 reg add "HKLM\SYSTEM\CurrentControlSet\Services\Tcpip\Parameters" /v "EnableDeadGWDetect" /t REG_DWORD /d 1 /f >nul 2>&1
 reg add "HKLM\SYSTEM\CurrentControlSet\Services\Tcpip\Parameters" /v "DisableIPSourceRouting" /t REG_DWORD /d 2 /f >nul 2>&1
 
-echo %c%[14/20] Optimizing additional wireless adapter settings...%u%
+echo %c%Step 14/20: Optimizing additional wireless adapter settings%u%
 powercfg -setacvalueindex scheme_current sub_processor PERFBOOSTMODE 2 >nul 2>&1
 powercfg -setacvalueindex scheme_current sub_processor PERFBOOSTPOL 100 >nul 2>&1
 powercfg -setdcvalueindex scheme_current sub_processor PERFBOOSTMODE 1 >nul 2>&1
 powercfg -setdcvalueindex scheme_current sub_processor PERFBOOSTPOL 60 >nul 2>&1
 powercfg -setactive scheme_current >nul 2>&1
-for /f "tokens=1* delims=" %%i in ('wmic path Win32_NetworkAdapter where "NetEnabled=true and AdapterTypeId=9" get PNPDeviceID /format:value ^| findstr "PNPDeviceID"') do (
-    for /f "tokens=2 delims==" %%j in ("%%i") do (
-        reg add "HKLM\SYSTEM\CurrentControlSet\Enum\%%j\Device Parameters" /v "SelectiveSuspendEnabled" /t REG_DWORD /d 0 /f >nul 2>&1
-        reg add "HKLM\SYSTEM\CurrentControlSet\Enum\%%j\Device Parameters" /v "SelectiveSuspendOn" /t REG_DWORD /d 0 /f >nul 2>&1
-        reg add "HKLM\SYSTEM\CurrentControlSet\Enum\%%j\Device Parameters" /v "BSSType" /t REG_DWORD /d 1 /f >nul 2>&1
-    )
+chcp 437 >nul
+for /f "delims=" %%j in ('powershell -NoProfile -Command "Get-NetAdapter -ErrorAction SilentlyContinue | Where-Object { $_.PhysicalMediaType -match '802\.11' -or $_.Name -like '*Wi-Fi*' } | Select-Object -ExpandProperty PnpDeviceID"') do (
+    reg add "HKLM\SYSTEM\CurrentControlSet\Enum\%%j\Device Parameters" /v "SelectiveSuspendEnabled" /t REG_DWORD /d 0 /f >nul 2>&1
+    reg add "HKLM\SYSTEM\CurrentControlSet\Enum\%%j\Device Parameters" /v "SelectiveSuspendOn" /t REG_DWORD /d 0 /f >nul 2>&1
+    reg add "HKLM\SYSTEM\CurrentControlSet\Enum\%%j\Device Parameters" /v "BSSType" /t REG_DWORD /d 1 /f >nul 2>&1
 )
+chcp 65001 >nul
 
-echo %c%[15/20] Configuring advanced wireless settings...%u%
+echo %c%Step 15/20: Configuring advanced wireless settings%u%
 if defined WIFI_IFACE (
     netsh wlan set autoconfig enabled=yes interface="!WIFI_IFACE!" >nul 2>&1
     netsh wlan set blockperiod interface="!WIFI_IFACE!" timeout=1 >nul 2>&1
 )
-netsh interface tcp set global netdma=enabled >nul 2>&1
 netsh interface tcp set global dca=enabled >nul 2>&1
 
-echo %c%[16/20] Applying gaming mode optimizations for Wi-Fi...%u%
+echo %c%Step 16/20: Applying gaming mode optimizations for Wi-Fi%u%
 reg add "HKLM\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Multimedia\SystemProfile\Tasks\Games" /v "GPU Priority" /t REG_DWORD /d 8 /f >nul 2>&1
 reg add "HKLM\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Multimedia\SystemProfile\Tasks\Games" /v "Priority" /t REG_DWORD /d 6 /f >nul 2>&1
 reg add "HKLM\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Multimedia\SystemProfile\Tasks\Games" /v "Scheduling Category" /t REG_SZ /d "High" /f >nul 2>&1
@@ -3898,31 +3937,31 @@ reg add "HKLM\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Multimedia\SystemProf
 reg add "HKCU\SOFTWARE\Microsoft\GameBar" /v "GameDVR_FSEBehavior" /t REG_DWORD /d 2 /f >nul 2>&1
 reg add "HKCU\SOFTWARE\Microsoft\GameBar" /v "GameDVR_Enabled" /t REG_DWORD /d 0 /f >nul 2>&1
 
-echo %c%[17/20] Configuring streaming optimization for wireless...%u%
+echo %c%Step 17/20: Configuring streaming optimization for wireless%u%
 reg add "HKLM\SYSTEM\CurrentControlSet\Services\Tcpip\Parameters" /v "initialRto" /t REG_DWORD /d 2000 /f >nul 2>&1
 reg add "HKLM\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Multimedia\SystemProfile\Tasks\Audio" /v "GPU Priority" /t REG_DWORD /d 8 /f >nul 2>&1
 reg add "HKLM\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Multimedia\SystemProfile\Tasks\Audio" /v "Priority" /t REG_DWORD /d 6 /f >nul 2>&1
 reg add "HKLM\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Multimedia\SystemProfile\Tasks\Audio" /v "Scheduling Category" /t REG_SZ /d "High" /f >nul 2>&1
 
-echo %c%[18/20] Optimizing wireless hardware features...%u%
-for /f "tokens=3*" %%i in ('reg query "HKLM\SYSTEM\CurrentControlSet\Control\Class\{4D36E972-E325-11CE-BFC1-08002BE10318}" /s /v ComponentId 2^>nul ^| findstr /C:"ms_tcpip"') do (
-    for /f "delims=\" tokens=6" %%k in ("%%i") do (
-        reg add "HKLM\SYSTEM\CurrentControlSet\Control\Class\{4D36E972-E325-11CE-BFC1-08002BE10318}\%%k" /v "*TCPUDPChecksumOffloadIPv4" /t REG_SZ /d "3" /f >nul 2>&1
-        reg add "HKLM\SYSTEM\CurrentControlSet\Control\Class\{4D36E972-E325-11CE-BFC1-08002BE10318}\%%k" /v "*TCPUDPChecksumOffloadIPv6" /t REG_SZ /d "3" /f >nul 2>&1
-        reg add "HKLM\SYSTEM\CurrentControlSet\Control\Class\{4D36E972-E325-11CE-BFC1-08002BE10318}\%%k" /v "*RSS" /t REG_SZ /d "1" /f >nul 2>&1
-        reg add "HKLM\SYSTEM\CurrentControlSet\Control\Class\{4D36E972-E325-11CE-BFC1-08002BE10318}\%%k" /v "*NumRssQueues" /t REG_SZ /d "2" /f >nul 2>&1
-        reg add "HKLM\SYSTEM\CurrentControlSet\Control\Class\{4D36E972-E325-11CE-BFC1-08002BE10318}\%%k" /v "*InterruptModeration" /t REG_SZ /d "1" /f >nul 2>&1
-        reg add "HKLM\SYSTEM\CurrentControlSet\Control\Class\{4D36E972-E325-11CE-BFC1-08002BE10318}\%%k" /v "*ReceiveBuffers" /t REG_SZ /d "512" /f >nul 2>&1
-        reg add "HKLM\SYSTEM\CurrentControlSet\Control\Class\{4D36E972-E325-11CE-BFC1-08002BE10318}\%%k" /v "*TransmitBuffers" /t REG_SZ /d "512" /f >nul 2>&1
+echo %c%Step 18/20: Optimizing wireless hardware features%u%
+for /f "tokens=*" %%a in ('reg query "HKLM\SYSTEM\CurrentControlSet\Control\Class\{4d36e972-e325-11ce-bfc1-08002be10318}" 2^>nul ^| findstr /r "\\00[0-9][0-9]$"') do (
+    reg query "%%a" /v "ComponentId" 2>nul | findstr /i "PCI\ USB\" >nul && (
+        reg add "%%a" /v "*TCPUDPChecksumOffloadIPv4" /t REG_SZ /d "3" /f >nul 2>&1
+        reg add "%%a" /v "*TCPUDPChecksumOffloadIPv6" /t REG_SZ /d "3" /f >nul 2>&1
+        reg add "%%a" /v "*RSS" /t REG_SZ /d "1" /f >nul 2>&1
+        reg add "%%a" /v "*NumRssQueues" /t REG_SZ /d "2" /f >nul 2>&1
+        reg add "%%a" /v "*InterruptModeration" /t REG_SZ /d "1" /f >nul 2>&1
+        reg add "%%a" /v "*ReceiveBuffers" /t REG_SZ /d "512" /f >nul 2>&1
+        reg add "%%a" /v "*TransmitBuffers" /t REG_SZ /d "512" /f >nul 2>&1
     )
 )
 
-echo %c%[19/20] Applying wireless security optimizations...%u%
+echo %c%Step 19/20: Applying wireless security optimizations%u%
 netsh advfirewall set allprofiles state on >nul 2>&1
 netsh advfirewall set allprofiles firewallpolicy blockinbound,allowoutbound >nul 2>&1
 reg add "HKLM\SOFTWARE\Microsoft\Windows NT\CurrentVersion\NetworkList\DefaultPolicies" /v "f0276b85-4e9f-44e4-a6ee-c4ed78d6dc5e" /t REG_DWORD /d 1 /f >nul 2>&1
 
-echo %c%[20/20] Refreshing Network Configuration...%u%
+echo %c%Step 20/20: Refreshing Network Configuration%u%
 ipconfig /flushdns >nul 2>&1
 netsh winsock reset >nul 2>&1
 netsh int ip reset >nul 2>&1
@@ -4026,10 +4065,11 @@ echo ╚════════════════════════
 echo.
 echo %c%[1/16] Detecting Ethernet interfaces and speed...%u%
 set "ETHERNET_SPEED=Unknown"
-for /f "tokens=2 delims==" %%a in ('wmic path win32_networkadapter where "NetConnectionStatus=2 and AdapterTypeId=0" get Speed /format:value 2^>nul ^| findstr "Speed"') do (
-    set /a "SPEED_MBPS=%%a/1000000"
-    set "ETHERNET_SPEED=!SPEED_MBPS! Mbps"
+chcp 437 >nul
+for /f "delims=" %%a in ('powershell -NoProfile -Command "Get-NetAdapter -ErrorAction SilentlyContinue | Where-Object { $_.PhysicalMediaType -match '802\.3' -or $_.Name -like '*Ethernet*' } | Select-Object -ExpandProperty LinkSpeed"') do (
+    set "ETHERNET_SPEED=%%a"
 )
+chcp 65001 >nul
 echo %c%  → Detected Ethernet speed: !ETHERNET_SPEED!%u%
 
 echo %c%[2/16] Applying advanced TCP stack optimizations for wired networks...%u%
@@ -4040,13 +4080,10 @@ reg add "HKLM\SYSTEM\CurrentControlSet\Services\Tcpip\Parameters\Interfaces" /v 
 reg add "HKLM\SYSTEM\CurrentControlSet\Services\Tcpip\Parameters\Interfaces" /v "TCPNoDelay" /t REG_DWORD /d 1 /f >nul 2>&1
 reg add "HKLM\SYSTEM\CurrentControlSet\Services\Tcpip\Parameters" /v "DefaultTTL" /t REG_DWORD /d 64 /f >nul 2>&1
 reg add "HKLM\SYSTEM\CurrentControlSet\Services\Tcpip\Parameters" /v "TcpInitialRTT" /t REG_DWORD /d 300 /f >nul 2>&1
-reg add "HKLM\SYSTEM\CurrentControlSet\Services\Tcpip\Parameters" /v "GlobalMaxTcpWindowSize" /t REG_DWORD /d 65535 /f >nul 2>&1
-reg add "HKLM\SYSTEM\CurrentControlSet\Services\Tcpip\Parameters" /v "TcpWindowSize" /t REG_DWORD /d 65535 /f >nul 2>&1
 reg add "HKLM\SYSTEM\CurrentControlSet\Services\Tcpip\Parameters" /v "SackOpts" /t REG_DWORD /d 1 /f >nul 2>&1
 reg add "HKLM\SYSTEM\CurrentControlSet\Services\Tcpip\Parameters" /v "TcpMaxDupAcks" /t REG_DWORD /d 2 /f >nul 2>&1
 reg add "HKLM\SYSTEM\CurrentControlSet\Services\Tcpip\Parameters" /v "EnableTCPA" /t REG_DWORD /d 1 /f >nul 2>&1
 reg add "HKLM\SYSTEM\CurrentControlSet\Services\Tcpip\Parameters" /v "EnableRSS" /t REG_DWORD /d 1 /f >nul 2>&1
-reg add "HKLM\SYSTEM\CurrentControlSet\Services\Tcpip\Parameters" /v "EnableTCPChimney" /t REG_DWORD /d 1 /f >nul 2>&1
 
 echo %c%[3/16] Applying UDP optimizations for wired gaming and streaming...%u%
 reg add "HKLM\SYSTEM\CurrentControlSet\Services\AFD\Parameters" /v "FastSendDatagramThreshold" /t REG_DWORD /d 1500 /f >nul 2>&1
@@ -4094,16 +4131,16 @@ echo %c%[8/16] Optimizing Ethernet adapter power and performance settings...%u%
 powercfg -setacvalueindex scheme_current sub_processor PERFBOOSTMODE 2 >nul 2>&1
 powercfg -setacvalueindex scheme_current sub_processor PERFBOOSTPOL 100 >nul 2>&1
 powercfg -setactive scheme_current >nul 2>&1
-for /f "tokens=1* delims=" %%i in ('wmic path Win32_NetworkAdapter where "NetEnabled=true and AdapterTypeId=0" get PNPDeviceID /format:value ^| findstr "PNPDeviceID"') do (
-    for /f "tokens=2 delims==" %%j in ("%%i") do (
-        reg add "HKLM\SYSTEM\CurrentControlSet\Enum\%%j\Device Parameters" /v "SelectiveSuspendEnabled" /t REG_DWORD /d 0 /f >nul 2>&1
-        reg add "HKLM\SYSTEM\CurrentControlSet\Enum\%%j\Device Parameters" /v "SelectiveSuspendOn" /t REG_DWORD /d 0 /f >nul 2>&1
-        reg add "HKLM\SYSTEM\CurrentControlSet\Enum\%%j\Device Parameters" /v "FlowControl" /t REG_DWORD /d 3 /f >nul 2>&1
-        reg add "HKLM\SYSTEM\CurrentControlSet\Enum\%%j\Device Parameters" /v "SpeedDuplex" /t REG_DWORD /d 0 /f >nul 2>&1
-        reg add "HKLM\SYSTEM\CurrentControlSet\Enum\%%j\Device Parameters" /v "WakeOnMagicPacket" /t REG_DWORD /d 0 /f >nul 2>&1
-        reg add "HKLM\SYSTEM\CurrentControlSet\Enum\%%j\Device Parameters" /v "WakeOnPattern" /t REG_DWORD /d 0 /f >nul 2>&1
-    )
+chcp 437 >nul
+for /f "delims=" %%j in ('powershell -NoProfile -Command "Get-NetAdapter -ErrorAction SilentlyContinue | Where-Object { $_.PhysicalMediaType -match '802\.3' -or $_.Name -like '*Ethernet*' } | Select-Object -ExpandProperty PnpDeviceID"') do (
+    reg add "HKLM\SYSTEM\CurrentControlSet\Enum\%%j\Device Parameters" /v "SelectiveSuspendEnabled" /t REG_DWORD /d 0 /f >nul 2>&1
+    reg add "HKLM\SYSTEM\CurrentControlSet\Enum\%%j\Device Parameters" /v "SelectiveSuspendOn" /t REG_DWORD /d 0 /f >nul 2>&1
+    reg add "HKLM\SYSTEM\CurrentControlSet\Enum\%%j\Device Parameters" /v "FlowControl" /t REG_DWORD /d 3 /f >nul 2>&1
+    reg add "HKLM\SYSTEM\CurrentControlSet\Enum\%%j\Device Parameters" /v "SpeedDuplex" /t REG_DWORD /d 0 /f >nul 2>&1
+    reg add "HKLM\SYSTEM\CurrentControlSet\Enum\%%j\Device Parameters" /v "WakeOnMagicPacket" /t REG_DWORD /d 0 /f >nul 2>&1
+    reg add "HKLM\SYSTEM\CurrentControlSet\Enum\%%j\Device Parameters" /v "WakeOnPattern" /t REG_DWORD /d 0 /f >nul 2>&1
 )
+chcp 65001 >nul
 
 echo %c%[8b/16] Disabling adapter power management, WoL, offloads and interrupt moderation...%u%
 for /f "tokens=*" %%A in ('reg query "HKLM\SYSTEM\CurrentControlSet\Control\Class\{4d36e972-e325-11ce-bfc1-08002be10318}" /s /v "*SpeedDuplex" 2^>nul ^| findstr /i "HKEY"') do (
@@ -4150,9 +4187,7 @@ for /f "tokens=*" %%A in ('reg query "HKLM\SYSTEM\CurrentControlSet\Control\Clas
 
 echo %c%[9/16] Configuring advanced Ethernet TCP settings...%u%
 netsh interface tcp set global autotuninglevel=normal >nul 2>&1
-netsh interface tcp set global chimney=enabled >nul 2>&1
 netsh interface tcp set global rss=enabled >nul 2>&1
-netsh interface tcp set global netdma=enabled >nul 2>&1
 netsh interface tcp set global dca=enabled >nul 2>&1
 netsh interface tcp set global ecncapability=enabled >nul 2>&1
 
@@ -4183,21 +4218,21 @@ reg add "HKLM\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Multimedia\SystemProf
 reg add "HKLM\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Multimedia\SystemProfile\Tasks\Audio" /v "Scheduling Category" /t REG_SZ /d "High" /f >nul 2>&1
 
 echo %c%[13/16] Optimizing Ethernet hardware features...%u%
-for /f "tokens=3*" %%i in ('reg query "HKLM\SYSTEM\CurrentControlSet\Control\Class\{4D36E972-E325-11CE-BFC1-08002BE10318}" /s /v ComponentId 2^>nul ^| findstr /C:"ms_tcpip"') do (
-    for /f "delims=\" tokens=6" %%k in ("%%i") do (
-        reg add "HKLM\SYSTEM\CurrentControlSet\Control\Class\{4D36E972-E325-11CE-BFC1-08002BE10318}\%%k" /v "*TCPUDPChecksumOffloadIPv4" /t REG_SZ /d "3" /f >nul 2>&1
-        reg add "HKLM\SYSTEM\CurrentControlSet\Control\Class\{4D36E972-E325-11CE-BFC1-08002BE10318}\%%k" /v "*TCPUDPChecksumOffloadIPv6" /t REG_SZ /d "3" /f >nul 2>&1
-        reg add "HKLM\SYSTEM\CurrentControlSet\Control\Class\{4D36E972-E325-11CE-BFC1-08002BE10318}\%%k" /v "*LsoV2IPv4" /t REG_SZ /d "1" /f >nul 2>&1
-        reg add "HKLM\SYSTEM\CurrentControlSet\Control\Class\{4D36E972-E325-11CE-BFC1-08002BE10318}\%%k" /v "*LsoV2IPv6" /t REG_SZ /d "1" /f >nul 2>&1
-        reg add "HKLM\SYSTEM\CurrentControlSet\Control\Class\{4D36E972-E325-11CE-BFC1-08002BE10318}\%%k" /v "*RSS" /t REG_SZ /d "1" /f >nul 2>&1
-        reg add "HKLM\SYSTEM\CurrentControlSet\Control\Class\{4D36E972-E325-11CE-BFC1-08002BE10318}\%%k" /v "*NumRssQueues" /t REG_SZ /d "4" /f >nul 2>&1
-        reg add "HKLM\SYSTEM\CurrentControlSet\Control\Class\{4D36E972-E325-11CE-BFC1-08002BE10318}\%%k" /v "*FlowControl" /t REG_SZ /d "3" /f >nul 2>&1
-        reg add "HKLM\SYSTEM\CurrentControlSet\Control\Class\{4D36E972-E325-11CE-BFC1-08002BE10318}\%%k" /v "*JumboPacket" /t REG_SZ /d "9014" /f >nul 2>&1
-        reg add "HKLM\SYSTEM\CurrentControlSet\Control\Class\{4D36E972-E325-11CE-BFC1-08002BE10318}\%%k" /v "*InterruptModeration" /t REG_SZ /d "1" /f >nul 2>&1
-        reg add "HKLM\SYSTEM\CurrentControlSet\Control\Class\{4D36E972-E325-11CE-BFC1-08002BE10318}\%%k" /v "*ReceiveBuffers" /t REG_SZ /d "1024" /f >nul 2>&1
-        reg add "HKLM\SYSTEM\CurrentControlSet\Control\Class\{4D36E972-E325-11CE-BFC1-08002BE10318}\%%k" /v "*TransmitBuffers" /t REG_SZ /d "1024" /f >nul 2>&1
-        reg add "HKLM\SYSTEM\CurrentControlSet\Control\Class\{4D36E972-E325-11CE-BFC1-08002BE10318}\%%k" /v "*IPChecksumOffloadIPv4" /t REG_SZ /d "3" /f >nul 2>&1
-        reg add "HKLM\SYSTEM\CurrentControlSet\Control\Class\{4D36E972-E325-11CE-BFC1-08002BE10318}\%%k" /v "*PriorityVLANTag" /t REG_SZ /d "3" /f >nul 2>&1
+for /f "tokens=*" %%a in ('reg query "HKLM\SYSTEM\CurrentControlSet\Control\Class\{4d36e972-e325-11ce-bfc1-08002be10318}" 2^>nul ^| findstr /r "\\00[0-9][0-9]$"') do (
+    reg query "%%a" /v "ComponentId" 2>nul | findstr /i "PCI\ USB\" >nul && (
+        reg add "%%a" /v "*TCPUDPChecksumOffloadIPv4" /t REG_SZ /d "3" /f >nul 2>&1
+        reg add "%%a" /v "*TCPUDPChecksumOffloadIPv6" /t REG_SZ /d "3" /f >nul 2>&1
+        reg add "%%a" /v "*LsoV2IPv4" /t REG_SZ /d "1" /f >nul 2>&1
+        reg add "%%a" /v "*LsoV2IPv6" /t REG_SZ /d "1" /f >nul 2>&1
+        reg add "%%a" /v "*RSS" /t REG_SZ /d "1" /f >nul 2>&1
+        reg add "%%a" /v "*NumRssQueues" /t REG_SZ /d "4" /f >nul 2>&1
+        reg add "%%a" /v "*FlowControl" /t REG_SZ /d "3" /f >nul 2>&1
+        reg add "%%a" /v "*JumboPacket" /t REG_SZ /d "9014" /f >nul 2>&1
+        reg add "%%a" /v "*InterruptModeration" /t REG_SZ /d "1" /f >nul 2>&1
+        reg add "%%a" /v "*ReceiveBuffers" /t REG_SZ /d "1024" /f >nul 2>&1
+        reg add "%%a" /v "*TransmitBuffers" /t REG_SZ /d "1024" /f >nul 2>&1
+        reg add "%%a" /v "*IPChecksumOffloadIPv4" /t REG_SZ /d "3" /f >nul 2>&1
+        reg add "%%a" /v "*PriorityVLANTag" /t REG_SZ /d "3" /f >nul 2>&1
     )
 )
 
@@ -4346,15 +4381,12 @@ reg add "HKLM\SYSTEM\CurrentControlSet\Services\Tcpip\Parameters" /v "TcpAckFreq
 reg add "HKLM\SYSTEM\CurrentControlSet\Services\Tcpip\Parameters\Interfaces" /v "TcpAckFrequency" /t REG_DWORD /d 1 /f >nul 2>&1
 reg add "HKLM\SYSTEM\CurrentControlSet\Services\Tcpip\Parameters\Interfaces" /v "TCPNoDelay" /t REG_DWORD /d 1 /f >nul 2>&1
 reg add "HKLM\SYSTEM\CurrentControlSet\Services\Tcpip\Parameters" /v "DefaultTTL" /t REG_DWORD /d 64 /f >nul 2>&1
-reg add "HKLM\SYSTEM\CurrentControlSet\Services\Tcpip\Parameters" /v "TcpWindowSize" /t REG_DWORD /d 65535 /f >nul 2>&1
-reg add "HKLM\SYSTEM\CurrentControlSet\Services\Tcpip\Parameters" /v "GlobalMaxTcpWindowSize" /t REG_DWORD /d 65535 /f >nul 2>&1
 reg add "HKLM\SYSTEM\CurrentControlSet\Services\Tcpip\Parameters" /v "TcpInitialRTT" /t REG_DWORD /d 300 /f >nul 2>&1
 reg add "HKLM\SYSTEM\CurrentControlSet\Services\Tcpip\Parameters" /v "SackOpts" /t REG_DWORD /d 1 /f >nul 2>&1
 reg add "HKLM\SYSTEM\CurrentControlSet\Services\Tcpip\Parameters" /v "TcpMaxDupAcks" /t REG_DWORD /d 2 /f >nul 2>&1
 reg add "HKLM\SYSTEM\CurrentControlSet\Services\Tcpip\Parameters" /v "EnablePMTUBHDetect" /t REG_DWORD /d 0 /f >nul 2>&1
 reg add "HKLM\SYSTEM\CurrentControlSet\Services\Tcpip\Parameters" /v "EnableTCPA" /t REG_DWORD /d 1 /f >nul 2>&1
 reg add "HKLM\SYSTEM\CurrentControlSet\Services\Tcpip\Parameters" /v "EnableRSS" /t REG_DWORD /d 1 /f >nul 2>&1
-reg add "HKLM\SYSTEM\CurrentControlSet\Services\Tcpip\Parameters" /v "EnableTCPChimney" /t REG_DWORD /d 1 /f >nul 2>&1
 reg add "HKLM\SYSTEM\CurrentControlSet\Services\Tcpip\Parameters" /v "EnableWsd" /t REG_DWORD /d 0 /f >nul 2>&1
 
 echo %c%[3/18] Applying UDP optimizations for gaming and streaming...%u%
@@ -4383,6 +4415,9 @@ reg add "HKLM\SYSTEM\CurrentControlSet\Services\Dnscache\Parameters" /v "MaxCach
 reg add "HKLM\SYSTEM\CurrentControlSet\Services\Dnscache\Parameters" /v "MaxSOACacheEntryTtlLimit" /t REG_DWORD /d 300 /f >nul 2>&1
 reg add "HKLM\SYSTEM\CurrentControlSet\Services\Dnscache\Parameters" /v "MaxCacheTtl" /t REG_DWORD /d 86400 /f >nul 2>&1
 reg add "HKLM\SYSTEM\CurrentControlSet\Services\Dnscache\Parameters" /v "MaxNegativeCacheTtl" /t REG_DWORD /d 300 /f >nul 2>&1
+reg add "HKLM\SOFTWARE\Policies\Microsoft\Windows NT\DNSClient" /v "MaxNegativeCacheTtl" /t REG_DWORD /d "300" /f >nul 2>&1
+reg add "HKLM\SYSTEM\CurrentControlSet\Services\Dnscache\Parameters" /v "EnableNetbios" /t REG_DWORD /d "0" /f >nul 2>&1
+reg add "HKLM\SOFTWARE\Microsoft\Windows\CurrentVersion\Internet Settings\WinHttp" /v "DisableWpad" /t REG_DWORD /d "1" /f >nul 2>&1
 
 echo %c%[5/18] Configuring QoS packet scheduler for maximum performance...%u%
 reg add "HKLM\SOFTWARE\Policies\Microsoft\Windows\Psched" /v "NonBestEffortLimit" /t REG_DWORD /d 0 /f >nul 2>&1
@@ -4420,14 +4455,14 @@ powercfg -setacvalueindex scheme_current sub_processor PERFBOOSTPOL 100 >nul 2>&
 powercfg -setdcvalueindex scheme_current sub_processor PERFBOOSTMODE 1 >nul 2>&1
 powercfg -setdcvalueindex scheme_current sub_processor PERFBOOSTPOL 60 >nul 2>&1
 powercfg -setactive scheme_current >nul 2>&1
-for /f "tokens=1* delims=" %%i in ('wmic path Win32_NetworkAdapter where "NetEnabled=true" get PNPDeviceID /format:value ^| findstr "PNPDeviceID"') do (
-    for /f "tokens=2 delims==" %%j in ("%%i") do (
-        reg add "HKLM\SYSTEM\CurrentControlSet\Enum\%%j\Device Parameters" /v "SelectiveSuspendEnabled" /t REG_DWORD /d 0 /f >nul 2>&1
-        reg add "HKLM\SYSTEM\CurrentControlSet\Enum\%%j\Device Parameters" /v "SelectiveSuspendOn" /t REG_DWORD /d 0 /f >nul 2>&1
-        reg add "HKLM\SYSTEM\CurrentControlSet\Enum\%%j\Device Parameters" /v "DeviceSelectiveSuspended" /t REG_DWORD /d 0 /f >nul 2>&1
-        reg add "HKLM\SYSTEM\CurrentControlSet\Enum\%%j\Device Parameters" /v "EnableSelectiveSuspend" /t REG_DWORD /d 0 /f >nul 2>&1
-    )
+chcp 437 >nul
+for /f "delims=" %%j in ('powershell -NoProfile -Command "Get-NetAdapter -Physical -ErrorAction SilentlyContinue | Select-Object -ExpandProperty PnpDeviceID"') do (
+    reg add "HKLM\SYSTEM\CurrentControlSet\Enum\%%j\Device Parameters" /v "SelectiveSuspendEnabled" /t REG_DWORD /d 0 /f >nul 2>&1
+    reg add "HKLM\SYSTEM\CurrentControlSet\Enum\%%j\Device Parameters" /v "SelectiveSuspendOn" /t REG_DWORD /d 0 /f >nul 2>&1
+    reg add "HKLM\SYSTEM\CurrentControlSet\Enum\%%j\Device Parameters" /v "DeviceSelectiveSuspended" /t REG_DWORD /d 0 /f >nul 2>&1
+    reg add "HKLM\SYSTEM\CurrentControlSet\Enum\%%j\Device Parameters" /v "EnableSelectiveSuspend" /t REG_DWORD /d 0 /f >nul 2>&1
 )
+chcp 65001 >nul
 
 echo %c%[8b/18] Disabling adapter power management, WoL, offloads and interrupt moderation...%u%
 for /f "tokens=*" %%A in ('reg query "HKLM\SYSTEM\CurrentControlSet\Control\Class\{4d36e972-e325-11ce-bfc1-08002be10318}" /s /v "*SpeedDuplex" 2^>nul ^| findstr /i "HKEY"') do (
@@ -4500,25 +4535,23 @@ if "!CONN_TYPE!"=="WiFi" (
     echo %c%  → Applying WiFi-specific optimizations...%u%
     reg add "HKLM\SYSTEM\CurrentControlSet\Services\Tcpip\Parameters" /v "TcpInitialRTT" /t REG_DWORD /d 400 /f >nul 2>&1
     reg add "HKLM\SYSTEM\CurrentControlSet\Services\Tcpip\Parameters" /v "GlobalMaxTcpWindowSize" /t REG_DWORD /d 32768 /f >nul 2>&1
-    netsh interface tcp set global autotuninglevel=normal >nul 2>&1
-    for /f %%a in ('wmic path win32_networkadapter where "NetConnectionStatus=2 and AdapterTypeId=9" get PNPDeviceID /format:value ^| findstr "PNPDeviceID"') do (
-        for /f "tokens=2 delims==" %%b in ("%%a") do (
-            reg add "HKLM\SYSTEM\CurrentControlSet\Enum\%%b\Device Parameters" /v "ScanWhenAssociated" /t REG_DWORD /d 0 /f >nul 2>&1
-            reg add "HKLM\SYSTEM\CurrentControlSet\Enum\%%b\Device Parameters" /v "PowerSaveMode" /t REG_DWORD /d 0 /f >nul 2>&1
-            reg add "HKLM\SYSTEM\CurrentControlSet\Enum\%%b\Device Parameters" /v "RoamTrigger" /t REG_DWORD /d 80 /f >nul 2>&1
-        )
+    chcp 437 >nul
+    for /f "delims=" %%b in ('powershell -NoProfile -Command "Get-NetAdapter -ErrorAction SilentlyContinue | Where-Object { $_.PhysicalMediaType -match '802\.11' -or $_.Name -like '*Wi-Fi*' } | Select-Object -ExpandProperty PnpDeviceID"') do (
+        reg add "HKLM\SYSTEM\CurrentControlSet\Enum\%%b\Device Parameters" /v "ScanWhenAssociated" /t REG_DWORD /d 0 /f >nul 2>&1
+        reg add "HKLM\SYSTEM\CurrentControlSet\Enum\%%b\Device Parameters" /v "PowerSaveMode" /t REG_DWORD /d 0 /f >nul 2>&1
+        reg add "HKLM\SYSTEM\CurrentControlSet\Enum\%%b\Device Parameters" /v "RoamTrigger" /t REG_DWORD /d 80 /f >nul 2>&1
     )
+    chcp 65001 >nul
 ) else if "!CONN_TYPE!"=="Ethernet" (
     echo %c%  → Applying Ethernet-specific optimizations...%u%
     reg add "HKLM\SYSTEM\CurrentControlSet\Services\Tcpip\Parameters" /v "TcpInitialRTT" /t REG_DWORD /d 300 /f >nul 2>&1
-    reg add "HKLM\SYSTEM\CurrentControlSet\Services\Tcpip\Parameters" /v "GlobalMaxTcpWindowSize" /t REG_DWORD /d 65535 /f >nul 2>&1
     netsh interface tcp set global autotuninglevel=normal >nul 2>&1
-    for /f %%a in ('wmic path win32_networkadapter where "NetConnectionStatus=2 and AdapterTypeId=0" get PNPDeviceID /format:value ^| findstr "PNPDeviceID"') do (
-        for /f "tokens=2 delims==" %%b in ("%%a") do (
-            reg add "HKLM\SYSTEM\CurrentControlSet\Enum\%%b\Device Parameters" /v "FlowControl" /t REG_DWORD /d 3 /f >nul 2>&1
-            reg add "HKLM\SYSTEM\CurrentControlSet\Enum\%%b\Device Parameters" /v "SpeedDuplex" /t REG_DWORD /d 0 /f >nul 2>&1
-        )
+    chcp 437 >nul
+    for /f "delims=" %%b in ('powershell -NoProfile -Command "Get-NetAdapter -ErrorAction SilentlyContinue | Where-Object { $_.PhysicalMediaType -match '802\.3' -or $_.Name -like '*Ethernet*' } | Select-Object -ExpandProperty PnpDeviceID"') do (
+        reg add "HKLM\SYSTEM\CurrentControlSet\Enum\%%b\Device Parameters" /v "FlowControl" /t REG_DWORD /d 3 /f >nul 2>&1
+        reg add "HKLM\SYSTEM\CurrentControlSet\Enum\%%b\Device Parameters" /v "SpeedDuplex" /t REG_DWORD /d 0 /f >nul 2>&1
     )
+    chcp 65001 >nul
 ) else if "!CONN_TYPE!"=="Fiber" (
     echo %c%  → Applying Fiber/High-speed optimizations...%u%
     reg add "HKLM\SYSTEM\CurrentControlSet\Services\Tcpip\Parameters" /v "TcpInitialRTT" /t REG_DWORD /d 200 /f >nul 2>&1
@@ -4532,9 +4565,7 @@ if "!CONN_TYPE!"=="WiFi" (
     netsh interface tcp set global autotuninglevel=normal >nul 2>&1
 )
 
-netsh interface tcp set global chimney=enabled >nul 2>&1
 netsh interface tcp set global rss=enabled >nul 2>&1
-netsh interface tcp set global netdma=enabled >nul 2>&1
 netsh interface tcp set global dca=enabled >nul 2>&1
 netsh interface tcp set global ecncapability=enabled >nul 2>&1
 
@@ -4599,23 +4630,23 @@ reg add "HKLM\SYSTEM\CurrentControlSet\Services\LanmanServer\Parameters" /v "SMB
 reg add "HKLM\SYSTEM\CurrentControlSet\Services\Tcpip\Parameters" /v "NoNameReleaseOnDemand" /t REG_DWORD /d 1 /f >nul 2>&1
 
 echo %c%[16/18] Optimizing hardware-level network adapter features...%u%
-for /f "tokens=3*" %%i in ('reg query "HKLM\SYSTEM\CurrentControlSet\Control\Class\{4D36E972-E325-11CE-BFC1-08002BE10318}" /s /v ComponentId 2^>nul ^| findstr /C:"ms_tcpip"') do (
-    for /f "delims=\" tokens=6" %%k in ("%%i") do (
-        reg add "HKLM\SYSTEM\CurrentControlSet\Control\Class\{4D36E972-E325-11CE-BFC1-08002BE10318}\%%k" /v "*TCPUDPChecksumOffloadIPv4" /t REG_SZ /d "3" /f >nul 2>&1
-        reg add "HKLM\SYSTEM\CurrentControlSet\Control\Class\{4D36E972-E325-11CE-BFC1-08002BE10318}\%%k" /v "*TCPUDPChecksumOffloadIPv6" /t REG_SZ /d "3" /f >nul 2>&1
-        reg add "HKLM\SYSTEM\CurrentControlSet\Control\Class\{4D36E972-E325-11CE-BFC1-08002BE10318}\%%k" /v "*LsoV2IPv4" /t REG_SZ /d "1" /f >nul 2>&1
-        reg add "HKLM\SYSTEM\CurrentControlSet\Control\Class\{4D36E972-E325-11CE-BFC1-08002BE10318}\%%k" /v "*LsoV2IPv6" /t REG_SZ /d "1" /f >nul 2>&1
-        reg add "HKLM\SYSTEM\CurrentControlSet\Control\Class\{4D36E972-E325-11CE-BFC1-08002BE10318}\%%k" /v "*RSS" /t REG_SZ /d "1" /f >nul 2>&1
-        reg add "HKLM\SYSTEM\CurrentControlSet\Control\Class\{4D36E972-E325-11CE-BFC1-08002BE10318}\%%k" /v "*NumRssQueues" /t REG_SZ /d "4" /f >nul 2>&1
-        reg add "HKLM\SYSTEM\CurrentControlSet\Control\Class\{4D36E972-E325-11CE-BFC1-08002BE10318}\%%k" /v "*FlowControl" /t REG_SZ /d "3" /f >nul 2>&1
-        reg add "HKLM\SYSTEM\CurrentControlSet\Control\Class\{4D36E972-E325-11CE-BFC1-08002BE10318}\%%k" /v "*JumboPacket" /t REG_SZ /d "9014" /f >nul 2>&1
-        reg add "HKLM\SYSTEM\CurrentControlSet\Control\Class\{4D36E972-E325-11CE-BFC1-08002BE10318}\%%k" /v "*InterruptModeration" /t REG_SZ /d "1" /f >nul 2>&1
-        reg add "HKLM\SYSTEM\CurrentControlSet\Control\Class\{4D36E972-E325-11CE-BFC1-08002BE10318}\%%k" /v "*ReceiveBuffers" /t REG_SZ /d "1024" /f >nul 2>&1
-        reg add "HKLM\SYSTEM\CurrentControlSet\Control\Class\{4D36E972-E325-11CE-BFC1-08002BE10318}\%%k" /v "*TransmitBuffers" /t REG_SZ /d "1024" /f >nul 2>&1
-        reg add "HKLM\SYSTEM\CurrentControlSet\Control\Class\{4D36E972-E325-11CE-BFC1-08002BE10318}\%%k" /v "*IPChecksumOffloadIPv4" /t REG_SZ /d "3" /f >nul 2>&1
-        reg add "HKLM\SYSTEM\CurrentControlSet\Control\Class\{4D36E972-E325-11CE-BFC1-08002BE10318}\%%k" /v "*PriorityVLANTag" /t REG_SZ /d "3" /f >nul 2>&1
-        reg add "HKLM\SYSTEM\CurrentControlSet\Control\Class\{4D36E972-E325-11CE-BFC1-08002BE10318}\%%k" /v "*VMQ" /t REG_SZ /d "0" /f >nul 2>&1
-        reg add "HKLM\SYSTEM\CurrentControlSet\Control\Class\{4D36E972-E325-11CE-BFC1-08002BE10318}\%%k" /v "*SRIOV" /t REG_SZ /d "0" /f >nul 2>&1
+for /f "tokens=*" %%a in ('reg query "HKLM\SYSTEM\CurrentControlSet\Control\Class\{4d36e972-e325-11ce-bfc1-08002be10318}" 2^>nul ^| findstr /r "\\00[0-9][0-9]$"') do (
+    reg query "%%a" /v "ComponentId" 2>nul | findstr /i "PCI\ USB\" >nul && (
+        reg add "%%a" /v "*TCPUDPChecksumOffloadIPv4" /t REG_SZ /d "3" /f >nul 2>&1
+        reg add "%%a" /v "*TCPUDPChecksumOffloadIPv6" /t REG_SZ /d "3" /f >nul 2>&1
+        reg add "%%a" /v "*LsoV2IPv4" /t REG_SZ /d "1" /f >nul 2>&1
+        reg add "%%a" /v "*LsoV2IPv6" /t REG_SZ /d "1" /f >nul 2>&1
+        reg add "%%a" /v "*RSS" /t REG_SZ /d "1" /f >nul 2>&1
+        reg add "%%a" /v "*NumRssQueues" /t REG_SZ /d "4" /f >nul 2>&1
+        reg add "%%a" /v "*FlowControl" /t REG_SZ /d "3" /f >nul 2>&1
+        reg add "%%a" /v "*JumboPacket" /t REG_SZ /d "9014" /f >nul 2>&1
+        reg add "%%a" /v "*InterruptModeration" /t REG_SZ /d "1" /f >nul 2>&1
+        reg add "%%a" /v "*ReceiveBuffers" /t REG_SZ /d "1024" /f >nul 2>&1
+        reg add "%%a" /v "*TransmitBuffers" /t REG_SZ /d "1024" /f >nul 2>&1
+        reg add "%%a" /v "*IPChecksumOffloadIPv4" /t REG_SZ /d "3" /f >nul 2>&1
+        reg add "%%a" /v "*PriorityVLANTag" /t REG_SZ /d "3" /f >nul 2>&1
+        reg add "%%a" /v "*VMQ" /t REG_SZ /d "0" /f >nul 2>&1
+        reg add "%%a" /v "*SRIOV" /t REG_SZ /d "0" /f >nul 2>&1
     )
 )
 
@@ -4626,6 +4657,7 @@ nbtstat -RR >nul 2>&1
 nbtstat -R >nul 2>&1
 netsh interface ip delete arpcache >nul 2>&1
 netsh interface ip delete destinationcache >nul 2>&1
+netsh interface teredo set state disabled >nul 2>&1
 ipconfig /release >nul 2>&1
 timeout /t 2 >nul
 ipconfig /renew >nul 2>&1
@@ -4793,64 +4825,54 @@ echo ║                       %blue%INTEL%c% OPTIMIZATION IN PROGRESS          
 echo ╚══════════════════════════════════════════════════════════════════════════════╝%u%
 
 echo.
-echo %c%[1/12] Detecting CPU Specifications...%u%
+echo %c%Step 1/12: Detecting CPU Specifications%u%
 
 set "NumberOfCores=6"
 set "MaxClockSpeed=3000"
 set "CPU_SCORE=18000"
 
-for /f "tokens=2 delims==" %%a in ('wmic cpu get NumberOfCores /format:value 2^>nul ^| findstr /i "NumberOfCores" 2^>nul') do (
-    set "temp_cores=%%a"
-    if defined temp_cores (
-        for /f "tokens=* delims= " %%b in ("!temp_cores!") do set "temp_cores=%%b"
-        if not "!temp_cores!"=="" (
-            set /a "test_cores=!temp_cores!" 2>nul
-            if !test_cores! GEQ 1 if !test_cores! LEQ 32 set "NumberOfCores=!test_cores!"
-        )
-    )
+chcp 437 >nul
+for /f "tokens=2*" %%A in ('reg query "HKLM\HARDWARE\DESCRIPTION\System\CentralProcessor\0" /v "ProcessorNameString" 2^>nul ^| findstr "ProcessorNameString"') do set "CPUName=%%B"
+for /f "tokens=3" %%A in ('reg query "HKLM\HARDWARE\DESCRIPTION\System\CentralProcessor\0" /v "~MHz" 2^>nul ^| findstr "~MHz"') do (
+    set /a "temp_speed=%%A" 2>nul
+    if !temp_speed! GEQ 500 if !temp_speed! LEQ 10000 set "MaxClockSpeed=!temp_speed!"
 )
-
-for /f "tokens=2 delims==" %%a in ('wmic cpu get MaxClockSpeed /format:value 2^>nul ^| findstr /i "MaxClockSpeed" 2^>nul') do (
-    set "temp_speed=%%a"
-    if defined temp_speed (
-        for /f "tokens=* delims= " %%b in ("!temp_speed!") do set "temp_speed=%%b"
-        if not "!temp_speed!"=="" (
-            set /a "test_speed=!temp_speed!" 2>nul
-            if !test_speed! GEQ 1000 if !test_speed! LEQ 8000 set "MaxClockSpeed=!test_speed!"
-        )
-    )
+for /f "delims=" %%a in ('powershell -NoProfile -Command "(Get-CimInstance Win32_Processor).NumberOfCores" 2^>nul') do (
+    set /a "test_cores=%%a" 2>nul
+    if !test_cores! GEQ 1 if !test_cores! LEQ 128 set "NumberOfCores=!test_cores!"
 )
+chcp 65001 >nul
 
 set /a "CPU_SCORE=%NumberOfCores% * %MaxClockSpeed%" 2>nul
 if %CPU_SCORE% LEQ 0 set "CPU_SCORE=18000"
 
-echo %c%CPU detected   %NumberOfCores% cores at %MaxClockSpeed% MHz (Score   %CPU_SCORE%)%u%
+echo %c%CPU detected: %NumberOfCores% cores at %MaxClockSpeed% MHz - Score: %CPU_SCORE%%u%
 
-echo %c%[2/12] Configuring Intel Power Management...%u%
+echo %c%Step 2/12: Configuring Intel Power Management%u%
 reg add "HKLM\SYSTEM\CurrentControlSet\Control\Power\PowerSettings\54533251-82be-4824-96c1-47b60b740d00\893dee8e-2bef-41e0-89c6-b55d0929964c" /v "ValueMax" /t REG_DWORD /d "100" /f >nul 2>&1
 reg add "HKLM\SYSTEM\CurrentControlSet\Control\Power\PowerSettings\54533251-82be-4824-96c1-47b60b740d00\893dee8e-2bef-41e0-89c6-b55d0929964c\DefaultPowerSchemeValues\8c5e7fda-e8bf-4a96-9a85-a6e23a8c635c" /v "ValueMax" /t REG_DWORD /d "100" /f >nul 2>&1
 
-echo %c%[3/12] Disabling Intel C-States for Performance...%u%
+echo %c%Step 3/12: Disabling Intel C-States for Performance%u%
 reg add "HKLM\SYSTEM\CurrentControlSet\Control\Power\PowerSettings\54533251-82be-4824-96c1-47b60b740d00\0cc5b647-c1df-4637-891a-dec35c318583" /v "ValueMin" /t REG_DWORD /d "0" /f >nul 2>&1
 reg add "HKLM\SYSTEM\CurrentControlSet\Control\Power\PowerSettings\54533251-82be-4824-96c1-47b60b740d00\0cc5b647-c1df-4637-891a-dec35c318583" /v "ValueMax" /t REG_DWORD /d "0" /f >nul 2>&1
 reg add "HKLM\SYSTEM\ControlSet001\Control\Power\PowerSettings\54533251-82be-4824-96c1-47b60b740d00\0cc5b647-c1df-4637-891a-dec35c318583" /v "ValueMax" /t REG_DWORD /d "0" /f >nul 2>&1
 reg add "HKLM\SYSTEM\ControlSet001\Control\Power\PowerSettings\54533251-82be-4824-96c1-47b60b740d00\0cc5b647-c1df-4637-891a-dec35c318583" /v "ValueMin" /t REG_DWORD /d "0" /f >nul 2>&1
 
-echo %c%[4/12] Optimizing Intel Turbo Boost and SpeedStep...%u%
+echo %c%Step 4/12: Optimizing Intel Turbo Boost and SpeedStep%u%
 reg add "HKLM\SYSTEM\CurrentControlSet\Control\Power\PowerSettings\54533251-82be-4824-96c1-47b60b740d00\be337238-0d82-4146-a960-4f3749d470c7" /v "ValueMax" /t REG_DWORD /d "2" /f >nul 2>&1
 reg add "HKLM\SYSTEM\CurrentControlSet\Control\Power\PowerSettings\54533251-82be-4824-96c1-47b60b740d00\45bcc044-d885-43e2-8605-ee0ec6e96b59" /v "ValueMax" /t REG_DWORD /d "100" /f >nul 2>&1
 reg add "HKLM\SYSTEM\CurrentControlSet\Control\Power\PowerSettings\54533251-82be-4824-96c1-47b60b740d00\45bcc044-d885-43e2-8605-ee0ec6e96b59" /v "ValueMin" /t REG_DWORD /d "100" /f >nul 2>&1
 
-echo %c%[5/12] Configuring Intel Spectre/Meltdown Mitigations...%u%
-wmic cpu get name 2>nul | findstr /i "Intel" >nul && (
+echo %c%Step 5/12: Configuring Intel Spectre and Meltdown Mitigations%u%
+reg query "HKLM\HARDWARE\DESCRIPTION\System\CentralProcessor\0" /v "ProcessorNameString" 2>nul | findstr /i "Intel" >nul && (
     reg add "HKLM\SYSTEM\CurrentControlSet\Control\Session Manager\Memory Management" /v "FeatureSettingsOverride" /t REG_DWORD /d "0" /f >nul 2>&1
     reg add "HKLM\SYSTEM\CurrentControlSet\Control\Session Manager\Memory Management" /v "FeatureSettingsOverrideMask" /t REG_DWORD /d "3" /f >nul 2>&1
 )
 
-echo %c%[6/12] Optimizing System Responsiveness...%u%
-reg add "HKLM\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Multimedia\SystemProfile" /v "SystemResponsiveness" /t REG_DWORD /d "10" /f >nul 2>&1
+echo %c%Step 6/12: Optimizing System Responsiveness%u%
+reg add "HKLM\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Multimedia\SystemProfile" /v "SystemResponsiveness" /t REG_DWORD /d 10 /f >nul 2>&1
 
-echo %c%[7/12] Configuring CPU-Based Timer Resolution...%u%
+echo %c%Step 7/12: Configuring CPU-Based Timer Resolution%u%
 if %CPU_SCORE% LEQ 8000 (
     echo %c%Low-end CPU detected - Using conservative timer settings%u%
     reg delete "HKLM\SOFTWARE\Policies\Microsoft\Windows\Psched" /v "TimerResolution" /f >nul 2>&1
@@ -4869,7 +4891,7 @@ if %CPU_SCORE% LEQ 8000 (
     )
 )
 
-echo %c%[8/12] Setting CPU-Based Cursor Update Interval...%u%
+echo %c%Step 8/12: Setting CPU-Based Cursor Update Interval%u%
 if %CPU_SCORE% LEQ 10000 (
     reg add "HKLM\SOFTWARE\Microsoft\Input\Settings\ControllerProcessor\CursorSpeed" /v "CursorUpdateInterval" /t REG_DWORD /d "5" /f >nul 2>&1
 ) else (
@@ -4880,12 +4902,12 @@ if %CPU_SCORE% LEQ 10000 (
     )
 )
 
-echo %c%[9/12] Optimizing Power Throttling and Thread Management...%u%
+echo %c%Step 9/12: Optimizing Power Throttling and Thread Management%u%
 reg add "HKLM\SYSTEM\CurrentControlSet\Control\Power\PowerThrottling" /v "PowerThrottlingOff" /t REG_DWORD /d "1" /f >nul 2>&1
 reg add "HKLM\SYSTEM\CurrentControlSet\Control\Session Manager\kernel" /v "ThreadDpcEnable" /t REG_DWORD /d "1" /f >nul 2>&1
 reg add "HKLM\SYSTEM\CurrentControlSet\Control\Session Manager\kernel" /v "DpcTimeout" /t REG_DWORD /d "0" /f >nul 2>&1
 
-echo %c%[10/12] Configuring CPU Affinity and CSRSS Priority...%u%
+echo %c%Step 10/12: Configuring CPU Affinity and CSRSS Priority%u%
 reg add "HKLM\SYSTEM\CurrentControlSet\Control\PriorityControl" /v "Win32PrioritySeparation" /t REG_DWORD /d "38" /f >nul 2>&1
 reg add "HKLM\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Image File Execution Options\csrss.exe\PerfOptions" /v "CpuPriorityClass" /t REG_DWORD /d "4" /f >nul 2>&1
 reg add "HKLM\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Image File Execution Options\csrss.exe\PerfOptions" /v "IoPriority" /t REG_DWORD /d "3" /f >nul 2>&1
@@ -4895,27 +4917,12 @@ reg add "HKLM\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Image File Execution 
 reg add "HKLM\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Image File Execution Options\dwm.exe\PerfOptions" /v "IoPriority" /t REG_DWORD /d "3" /f >nul 2>&1
 reg add "HKLM\SOFTWARE\WOW6432Node\Microsoft\Windows NT\CurrentVersion\Image File Execution Options\dwm.exe\PerfOptions" /v "CpuPriorityClass" /t REG_DWORD /d "4" /f >nul 2>&1
 reg add "HKLM\SOFTWARE\WOW6432Node\Microsoft\Windows NT\CurrentVersion\Image File Execution Options\dwm.exe\PerfOptions" /v "IoPriority" /t REG_DWORD /d "3" /f >nul 2>&1
-reg add "HKLM\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Image File Execution Options\lsass.exe\PerfOptions" /v "CpuPriorityClass" /t REG_DWORD /d "1" /f >nul 2>&1
-reg add "HKLM\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Image File Execution Options\lsass.exe\PerfOptions" /v "IoPriority" /t REG_DWORD /d "0" /f >nul 2>&1
-reg add "HKLM\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Image File Execution Options\lsass.exe\PerfOptions" /v "PagePriority" /t REG_DWORD /d "0" /f >nul 2>&1
-reg add "HKLM\SOFTWARE\WOW6432Node\Microsoft\Windows NT\CurrentVersion\Image File Execution Options\lsass.exe\PerfOptions" /v "CpuPriorityClass" /t REG_DWORD /d "1" /f >nul 2>&1
-reg add "HKLM\SOFTWARE\WOW6432Node\Microsoft\Windows NT\CurrentVersion\Image File Execution Options\lsass.exe\PerfOptions" /v "IoPriority" /t REG_DWORD /d "0" /f >nul 2>&1
-reg add "HKLM\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Image File Execution Options\svchost.exe\PerfOptions" /v "CpuPriorityClass" /t REG_DWORD /d "1" /f >nul 2>&1
-reg add "HKLM\SOFTWARE\WOW6432Node\Microsoft\Windows NT\CurrentVersion\Image File Execution Options\svchost.exe\PerfOptions" /v "CpuPriorityClass" /t REG_DWORD /d "1" /f >nul 2>&1
-reg add "HKLM\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Image File Execution Options\SearchIndexer.exe\PerfOptions" /v "CpuPriorityClass" /t REG_DWORD /d "1" /f >nul 2>&1
-reg add "HKLM\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Image File Execution Options\SearchIndexer.exe\PerfOptions" /v "IoPriority" /t REG_DWORD /d "0" /f >nul 2>&1
-reg add "HKLM\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Image File Execution Options\TrustedInstaller.exe\PerfOptions" /v "CpuPriorityClass" /t REG_DWORD /d "1" /f >nul 2>&1
-reg add "HKLM\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Image File Execution Options\TrustedInstaller.exe\PerfOptions" /v "IoPriority" /t REG_DWORD /d "0" /f >nul 2>&1
-reg add "HKLM\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Image File Execution Options\wuauclt.exe\PerfOptions" /v "CpuPriorityClass" /t REG_DWORD /d "1" /f >nul 2>&1
-reg add "HKLM\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Image File Execution Options\wuauclt.exe\PerfOptions" /v "IoPriority" /t REG_DWORD /d "0" /f >nul 2>&1
 reg add "HKLM\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Image File Execution Options\audiodg.exe\PerfOptions" /v "CpuPriorityClass" /t REG_DWORD /d "3" /f >nul 2>&1
-reg add "HKLM\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Image File Execution Options\MsMpEng.exe\PerfOptions" /v "CpuPriorityClass" /t REG_DWORD /d "1" /f >nul 2>&1
-reg add "HKLM\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Image File Execution Options\MsMpEngCP.exe\PerfOptions" /v "CpuPriorityClass" /t REG_DWORD /d "1" /f >nul 2>&1
 reg add "HKLM\SYSTEM\CurrentControlSet\Control\Session Manager\Memory Management" /v "ClearPageFileAtShutdown" /t REG_DWORD /d "0" /f >nul 2>&1
 reg add "HKLM\SYSTEM\CurrentControlSet\Control\Session Manager\Memory Management" /v "DisablePagingExecutive" /t REG_DWORD /d "1" /f >nul 2>&1
-reg add "HKLM\SYSTEM\CurrentControlSet\Control\Session Manager\Memory Management" /v "LargeSystemCache" /t REG_DWORD /d "1" /f >nul 2>&1
+reg add "HKLM\SYSTEM\CurrentControlSet\Control\Session Manager\Memory Management" /v "LargeSystemCache" /t REG_DWORD /d "0" /f >nul 2>&1
 
-echo %c%[12/12] Applying Intel Gaming and Multimedia Optimizations...%u%
+echo %c%Step 12/12: Applying Intel Gaming and Multimedia Optimizations%u%
 reg add "HKLM\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Multimedia\SystemProfile\Tasks\Games" /v "CPU Priority" /t REG_DWORD /d "6" /f >nul 2>&1
 reg add "HKLM\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Multimedia\SystemProfile\Tasks\Games" /v "Scheduling Category" /t REG_SZ /d "High" /f >nul 2>&1
 reg add "HKLM\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Multimedia\SystemProfile\Tasks\Games" /v "SFIO Priority" /t REG_SZ /d "High" /f >nul 2>&1
@@ -4977,10 +4984,20 @@ echo ║                       %red%RYZEN%c% OPTIMIZATION IN PROGRESS           
 echo ╚══════════════════════════════════════════════════════════════════════════════╝%u%
 
 echo.
-echo %c%[1/12] Detecting CPU Specifications...%u%
-for /f "tokens=2 delims==" %%a in ('wmic cpu get NumberOfCores /format:value 2^>nul ^| findstr "NumberOfCores"') do set /a "NumberOfCores=%%a" >nul 2>&1
-for /f "tokens=2 delims==" %%a in ('wmic cpu get MaxClockSpeed /format:value 2^>nul ^| findstr "MaxClockSpeed"') do set /a "MaxClockSpeed=%%a" >nul 2>&1
-for /f "tokens=2 delims==" %%a in ('wmic cpu get Name /format:value 2^>nul ^| findstr "Name"') do set "CPUName=%%a" >nul 2>&1
+echo %c%Step 1/12: Detecting CPU Specifications%u%
+set "NumberOfCores=4"
+set "MaxClockSpeed=3000"
+chcp 437 >nul
+for /f "tokens=2*" %%A in ('reg query "HKLM\HARDWARE\DESCRIPTION\System\CentralProcessor\0" /v "ProcessorNameString" 2^>nul ^| findstr "ProcessorNameString"') do set "CPUName=%%B"
+for /f "tokens=3" %%A in ('reg query "HKLM\HARDWARE\DESCRIPTION\System\CentralProcessor\0" /v "~MHz" 2^>nul ^| findstr "~MHz"') do (
+    set /a "temp_speed=%%A" 2>nul
+    if !temp_speed! GEQ 500 if !temp_speed! LEQ 10000 set "MaxClockSpeed=!temp_speed!"
+)
+for /f "delims=" %%a in ('powershell -NoProfile -Command "(Get-CimInstance Win32_Processor).NumberOfCores" 2^>nul') do (
+    set /a "test_cores=%%a" 2>nul
+    if !test_cores! GEQ 1 if !test_cores! LEQ 128 set "NumberOfCores=!test_cores!"
+)
+chcp 65001 >nul
 if not defined NumberOfCores set NumberOfCores=4
 if not defined MaxClockSpeed set MaxClockSpeed=3000
 set /a "CPU_SCORE=%NumberOfCores%*%MaxClockSpeed%"
@@ -5011,7 +5028,7 @@ reg add "HKLM\SYSTEM\CurrentControlSet\Control\Power\PowerThrottling" /v "PowerT
 reg add "HKLM\SYSTEM\CurrentControlSet\Control\Class\{4d36e968-e325-11ce-bfc1-08002be10318}\0000" /v "PP_ThermalAutoThrottlingEnable" /t REG_DWORD /d "0" /f >nul 2>&1
 
 echo %c%[7/12] Optimizing System Responsiveness...%u%
-reg add "HKLM\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Multimedia\SystemProfile" /v "SystemResponsiveness" /t REG_DWORD /d "10" /f >nul 2>&1
+reg add "HKLM\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Multimedia\SystemProfile" /v "SystemResponsiveness" /t REG_DWORD /d 10 /f >nul 2>&1
 
 echo %c%[8/12] Configuring CPU-Based Timer Resolution...%u%
 if %CPU_SCORE% LEQ 8000 (
@@ -5042,7 +5059,7 @@ echo %c%[11/12] Optimizing Memory Controller for Boost Performance...%u%
 reg add "HKLM\SYSTEM\CurrentControlSet\Control\Session Manager\Memory Management" /v "DisablePagingExecutive" /t REG_DWORD /d "1" /f >nul 2>&1
 reg add "HKLM\SYSTEM\CurrentControlSet\Control\Session Manager\Memory Management" /v "LargeSystemCache" /t REG_DWORD /d "0" /f >nul 2>&1
 reg add "HKLM\SYSTEM\CurrentControlSet\Control\Session Manager\Memory Management" /v "SecondLevelDataCache" /t REG_DWORD /d "1024" /f >nul 2>&1
-wmic cpu get name 2>nul | findstr "AMD" >nul && (
+reg query "HKLM\HARDWARE\DESCRIPTION\System\CentralProcessor\0" /v "ProcessorNameString" 2>nul | findstr /i "AMD" >nul && (
     reg add "HKLM\SYSTEM\CurrentControlSet\Control\Session Manager\Memory Management" /v "FeatureSettingsOverride" /t REG_DWORD /d "64" /f >nul 2>&1
     reg add "HKLM\SYSTEM\CurrentControlSet\Control\Session Manager\Memory Management" /v "FeatureSettingsOverrideMask" /t REG_DWORD /d "3" /f >nul 2>&1
 )
@@ -5104,9 +5121,20 @@ echo ║                     UNIVERSAL OPTIMIZATION IN PROGRESS                 
 echo ╚══════════════════════════════════════════════════════════════════════════════╝%u%
 
 echo.
-echo %c%[1/6] Detecting CPU Specifications...%u%
-for /f "tokens=2 delims==" %%a in ('wmic cpu get NumberOfCores /format:value 2^>nul ^| findstr "NumberOfCores"') do set /a "NumberOfCores=%%a" >nul 2>&1
-for /f "tokens=2 delims==" %%a in ('wmic cpu get MaxClockSpeed /format:value 2^>nul ^| findstr "MaxClockSpeed"') do set /a "MaxClockSpeed=%%a" >nul 2>&1
+echo %c%Step 1/6: Detecting CPU Specifications%u%
+set "NumberOfCores=4"
+set "MaxClockSpeed=3000"
+chcp 437 >nul
+for /f "tokens=2*" %%A in ('reg query "HKLM\HARDWARE\DESCRIPTION\System\CentralProcessor\0" /v "ProcessorNameString" 2^>nul ^| findstr "ProcessorNameString"') do set "CPUName=%%B"
+for /f "tokens=3" %%A in ('reg query "HKLM\HARDWARE\DESCRIPTION\System\CentralProcessor\0" /v "~MHz" 2^>nul ^| findstr "~MHz"') do (
+    set /a "temp_speed=%%A" 2>nul
+    if !temp_speed! GEQ 500 if !temp_speed! LEQ 10000 set "MaxClockSpeed=!temp_speed!"
+)
+for /f "delims=" %%a in ('powershell -NoProfile -Command "(Get-CimInstance Win32_Processor).NumberOfCores" 2^>nul') do (
+    set /a "test_cores=%%a" 2>nul
+    if !test_cores! GEQ 1 if !test_cores! LEQ 128 set "NumberOfCores=!test_cores!"
+)
+chcp 65001 >nul
 if not defined NumberOfCores set NumberOfCores=4
 if not defined MaxClockSpeed set MaxClockSpeed=3000
 set /a "CPU_SCORE=%NumberOfCores%*%MaxClockSpeed%"
@@ -5114,7 +5142,7 @@ set /a "CPU_SCORE=%NumberOfCores%*%MaxClockSpeed%"
 echo %c%[2/6] Configuring General Power Management...%u%
 reg add "HKLM\SYSTEM\CurrentControlSet\Control\Power\PowerSettings\54533251-82be-4824-96c1-47b60b740d00\893dee8e-2bef-41e0-89c6-b55d0929964c" /v "ValueMax" /t REG_DWORD /d "100" /f >nul 2>&1
 reg add "HKLM\SYSTEM\CurrentControlSet\Control\Power\PowerSettings\54533251-82be-4824-96c1-47b60b740d00\0cc5b647-c1df-4637-891a-dec35c318583" /v "ValueMax" /t REG_DWORD /d "0" /f >nul 2>&1
-reg add "HKLM\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Multimedia\SystemProfile" /v "SystemResponsiveness" /t REG_DWORD /d "10" /f >nul 2>&1
+reg add "HKLM\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Multimedia\SystemProfile" /v "SystemResponsiveness" /t REG_DWORD /d 10 /f >nul 2>&1
 
 echo %c%[3/6] Optimizing CPU Scheduling and Priorities...%u%
 reg add "HKLM\SYSTEM\CurrentControlSet\Control\PriorityControl" /v "Win32PrioritySeparation" /t REG_DWORD /d "38" /f >nul 2>&1
@@ -5230,47 +5258,44 @@ if "!RAM_GB_IS_VALID!"=="1" (
 )
 echo %c%System Total RAM (for display): !TotalRAM! MB. RAM Profile set to: !RAM_PROFILE!%u%
 
-echo %c%[2/6] Optimizing Critical System Service Priorities...%u%
-set "CRITICAL_SERVICES=DsSvc Dhcp DPS Dnscache WinHttpAutoProxySvc DcpSvc WlanSvc LSM Spooler vds RpcSs PlugPlay AudioSrv WIA"
+echo %c%Step 2/6: Optimizing Critical System Service Priorities%u%
+set "CRITICAL_SERVICES=DsSvc Dhcp DPS Dnscache WinHttpAutoProxySvc DcpSvc WlanSvc LSM AudioSrv"
+chcp 437 >nul
 for %%s in (%CRITICAL_SERVICES%) do (
-    for /f "tokens=3" %%a in ('sc queryex "%%s" 2^>nul ^| findstr "PID"') do (
-        if not "%%a"=="" if not "%%a"=="0" (
-            wmic process where ProcessId=%%a CALL setpriority "realtime" >nul 2>&1
-        )
-    )
+    powershell -NoProfile -Command "$s = Get-WmiObject -Class Win32_Service -Filter "Name='%%s'" -ErrorAction SilentlyContinue; if ($s.ProcessId -and $s.ProcessId -gt 0) { (Get-Process -Id $s.ProcessId -ErrorAction SilentlyContinue).PriorityClass = 'High' }" >nul 2>&1
 )
+chcp 65001 >nul
 
-echo %c%[3/6] Deprioritizing Non-Essential Services...%u%
+echo %c%Step 3/6: Deprioritizing Non-Essential Services%u%
 set "LOW_PRIORITY_SERVICES=BITS smphost PNRPsvc SensrSvc Wcmsvc Wersvc wuauserv AVCTP DiagTrack MapsBroker IrMonSvc wisvc MixedRealityOpenXR RetailDemo lfsvc"
+chcp 437 >nul
 for %%s in (%LOW_PRIORITY_SERVICES%) do (
-    for /f "tokens=3" %%a in ('sc queryex "%%s" 2^>nul ^| findstr "PID"') do (
-        if not "%%a"=="" if not "%%a"=="0" (
-            wmic process where ProcessId=%%a CALL setpriority "low" >nul 2>&1
-        )
-    )
+    powershell -NoProfile -Command "$s = Get-WmiObject -Class Win32_Service -Filter "Name='%%s'" -ErrorAction SilentlyContinue; if ($s.ProcessId -and $s.ProcessId -gt 0) { (Get-Process -Id $s.ProcessId -ErrorAction SilentlyContinue).PriorityClass = 'BelowNormal' }" >nul 2>&1
 )
+chcp 65001 >nul
 
 echo %c%[4/6] Configuring Memory Management Settings...%u%
-reg add "HKLM\SYSTEM\CurrentControlSet\Control\Session Manager\Memory Management" /v "ClearPageFileAtShutdown"      /t REG_DWORD /d "0"      /f >nul 2>&1
-reg add "HKLM\SYSTEM\CurrentControlSet\Control\Session Manager\Memory Management" /v "DisablePagingExecutive"        /t REG_DWORD /d "1"      /f >nul 2>&1
-reg add "HKLM\SYSTEM\CurrentControlSet\Control\Session Manager\Memory Management" /v "IoPageLockLimit"             /t REG_DWORD /d "1048576" /f >nul 2>&1
+reg add "HKLM\SYSTEM\CurrentControlSet\Control\Session Manager\Memory Management" /v "ClearPageFileAtShutdown" /t REG_DWORD /d "0" /f >nul 2>&1
+reg add "HKLM\SYSTEM\CurrentControlSet\Control\Session Manager\Memory Management" /v "DisablePagingExecutive" /t REG_DWORD /d "1" /f >nul 2>&1
+reg add "HKLM\SYSTEM\CurrentControlSet\Control\Session Manager\Memory Management" /v "IoPageLockLimit" /t REG_DWORD /d "1048576" /f >nul 2>&1
 
 if "!RAM_PROFILE!"=="MAXIMUM" (
-    reg add "HKLM\SYSTEM\CurrentControlSet\Control\Session Manager\Memory Management" /v "LargeSystemCache" /t REG_DWORD /d "1"           /f >nul 2>&1
-    reg add "HKLM\SYSTEM\CurrentControlSet\Control\Session Manager\Memory Management" /v "SystemPages"      /t REG_DWORD /d "0" /f >nul 2>&1
+    reg add "HKLM\SYSTEM\CurrentControlSet\Control\Session Manager\Memory Management" /v "LargeSystemCache" /t REG_DWORD /d "1" /f >nul 2>&1
+    reg add "HKLM\SYSTEM\CurrentControlSet\Control\Session Manager\Memory Management" /v "SystemPages" /t REG_DWORD /d "0" /f >nul 2>&1
 ) else (
-    reg add "HKLM\SYSTEM\CurrentControlSet\Control\Session Manager\Memory Management" /v "LargeSystemCache" /t REG_DWORD /d "0"           /f >nul 2>&1
+    reg add "HKLM\SYSTEM\CurrentControlSet\Control\Session Manager\Memory Management" /v "LargeSystemCache" /t REG_DWORD /d "0" /f >nul 2>&1
 )
 
 echo %c%[5/6] Optimizing Virtual Memory and Paging...%u%
-reg add "HKLM\SYSTEM\CurrentControlSet\Control\Session Manager\Memory Management" /v "SecondLevelDataCache"   /t REG_DWORD /d "1024"   /f >nul 2>&1
-reg add "HKLM\SYSTEM\CurrentControlSet\Control\Session Manager\Memory Management" /v "ThirdLevelDataCache"    /t REG_DWORD /d "8192"   /f >nul 2>&1
-reg add "HKLM\SYSTEM\CurrentControlSet\Control\Session Manager\Memory Management" /v "DisablePageCombining"   /t REG_DWORD /d "1"      /f >nul 2>&1
-reg add "HKLM\SYSTEM\CurrentControlSet\Control\Session Manager\Memory Management" /v "FeatureSettings"       /t REG_DWORD /d "1"      /f >nul 2>&1
+reg add "HKLM\SYSTEM\CurrentControlSet\Control\Session Manager\Memory Management" /v "SecondLevelDataCache" /t REG_DWORD /d "1024" /f >nul 2>&1
+reg add "HKLM\SYSTEM\CurrentControlSet\Control\Session Manager\Memory Management" /v "ThirdLevelDataCache" /t REG_DWORD /d "8192" /f >nul 2>&1
+reg add "HKLM\SYSTEM\CurrentControlSet\Control\Session Manager\Memory Management" /v "DisablePageCombining" /t REG_DWORD /d "1" /f >nul 2>&1
+reg add "HKLM\SYSTEM\CurrentControlSet\Control\Session Manager\Memory Management" /v "FeatureSettings" /t REG_DWORD /d "1" /f >nul 2>&1
 
 echo %c%[6/6] Applying Advanced Memory Optimizations...%u%
-reg add "HKLM\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Multimedia\SystemProfile" /v "SystemResponsiveness"                           /t REG_DWORD /d "10" /f >nul 2>&1
-reg add "HKLM\SYSTEM\CurrentControlSet\Control\PriorityControl"     /v "Win32PrioritySeparation"     /t REG_DWORD /d "38"                     /f >nul 2>&1
+reg add "HKLM\SOFTWARE\Microsoft\FTH" /v "Enabled" /t REG_DWORD /d "0" /f >nul 2>&1
+reg add "HKLM\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Multimedia\SystemProfile" /v "SystemResponsiveness" /t REG_DWORD /d 10 /f >nul 2>&1
+reg add "HKLM\SYSTEM\CurrentControlSet\Control\PriorityControl" /v "Win32PrioritySeparation" /t REG_DWORD /d "38" /f >nul 2>&1
 if !RAM_GB! GEQ 16 (
     powershell -NoProfile -Command "Disable-MMAgent -MemoryCompression" >nul 2>&1
 ) else (
@@ -5278,14 +5303,14 @@ if !RAM_GB! GEQ 16 (
 )
 
 if "!RAM_PROFILE!"=="MAXIMUM" (
-    reg add "HKLM\SYSTEM\CurrentControlSet\Services\lanmanserver\parameters" /v "Size"            /t REG_DWORD /d "3"    /f >nul 2>&1
-    reg add "HKLM\SYSTEM\CurrentControlSet\Control\FileSystem"                   /v "ContigFileAllocSize" /t REG_DWORD /d "1536" /f >nul 2>&1
+    reg add "HKLM\SYSTEM\CurrentControlSet\Services\lanmanserver\parameters" /v "Size" /t REG_DWORD /d "3" /f >nul 2>&1
+    reg add "HKLM\SYSTEM\CurrentControlSet\Control\FileSystem" /v "ContigFileAllocSize" /t REG_DWORD /d "1536" /f >nul 2>&1
 ) else if "!RAM_PROFILE!"=="MEDIUM" (
-    reg add "HKLM\SYSTEM\CurrentControlSet\Services\lanmanserver\parameters" /v "Size"            /t REG_DWORD /d "2"    /f >nul 2>&1
-    reg add "HKLM\SYSTEM\CurrentControlSet\Control\FileSystem"                   /v "ContigFileAllocSize" /t REG_DWORD /d "512"  /f >nul 2>&1
+    reg add "HKLM\SYSTEM\CurrentControlSet\Services\lanmanserver\parameters" /v "Size" /t REG_DWORD /d "2" /f >nul 2>&1
+    reg add "HKLM\SYSTEM\CurrentControlSet\Control\FileSystem" /v "ContigFileAllocSize" /t REG_DWORD /d "512"  /f >nul 2>&1
 ) else ( 
-    reg add "HKLM\SYSTEM\CurrentControlSet\Services\lanmanserver\parameters" /v "Size"            /t REG_DWORD /d "1"    /f >nul 2>&1
-    reg add "HKLM\SYSTEM\CurrentControlSet\Control\FileSystem"                   /v "ContigFileAllocSize" /t REG_DWORD /d "64"   /f >nul 2>&1
+    reg add "HKLM\SYSTEM\CurrentControlSet\Services\lanmanserver\parameters" /v "Size" /t REG_DWORD /d "1" /f >nul 2>&1
+    reg add "HKLM\SYSTEM\CurrentControlSet\Control\FileSystem" /v "ContigFileAllocSize" /t REG_DWORD /d "64" /f >nul 2>&1
 )
 
 echo.
@@ -5498,6 +5523,8 @@ echo.
 echo %red%%underline%Network Notice:%u%
 echo %c%This optimization will temporarily interrupt network connectivity.%u%
 echo %c%Active downloads and streaming may be affected during the process.%u%
+echo %red%Order Notice:%u% %c%Run this BEFORE other network tweaks (e.g., Option D), not after.%u%
+echo %c%The component resets will wipe any custom network configuration previously applied.%u%
 echo.
 echo.
 choice /C YN /M "%c%Apply network connectivity optimizations? Press Y to proceed, N to cancel.%u%"
@@ -5526,6 +5553,7 @@ ipconfig /renew     >nul 2>&1
 ipconfig /registerdns >nul 2>&1
 chcp 437 >nul
 echo %c%[4/10] Resetting Network Components (Winsock/IP/TCP/UDP)...%u%
+echo %red%  Warning: This resets ALL prior network tweaks (including from Network Optimizer).%u%
 netsh winsock reset >nul 2>&1
 netsh int ip reset  >nul 2>&1
 netsh int tcp reset >nul 2>&1
@@ -5534,8 +5562,6 @@ chcp 437 >nul
 echo %c%[5/10] Applying Advanced Network Registry Settings...%u%
 reg add "HKLM\SYSTEM\CurrentControlSet\Services\Tcpip\Parameters" /v EnableICMPRedirect   /t REG_DWORD /d 0      /f >nul 2>&1
 reg add "HKLM\SYSTEM\CurrentControlSet\Services\Tcpip\Parameters" /v EnablePMTUDiscovery /t REG_DWORD /d 1      /f >nul 2>&1
-reg add "HKLM\SYSTEM\CurrentControlSet\Services\Tcpip\Parameters" /v GlobalMaxTcpWindowSize /t REG_DWORD /d 65535  /f >nul 2>&1
-reg add "HKLM\SYSTEM\CurrentControlSet\Services\Tcpip\Parameters" /v TcpWindowSize         /t REG_DWORD /d 65535  /f >nul 2>&1
 reg add "HKLM\SYSTEM\CurrentControlSet\Services\Tcpip\Parameters" /v DefaultTTL             /t REG_DWORD /d 64     /f >nul 2>&1
 chcp 437 >nul
 echo %c%[6/10] Configuring High-Performance DNS Servers for All Connected Adapters...%u%
@@ -5561,11 +5587,11 @@ chcp 437 >nul
 chcp 65001 >nul
 echo %c%[7/10] Optimizing Network Stack Settings...%u%
 netsh int tcp set global autotuninglevel=normal  >nul 2>&1
-netsh int tcp set global chimney=enabled         >nul 2>&1
 netsh int tcp set global rss=enabled             >nul 2>&1
-netsh int tcp set global netdma=enabled          >nul 2>&1
 netsh int tcp set global ecncapability=enabled   >nul 2>&1
 netsh int tcp set global timestamps=disabled      >nul 2>&1
+netsh int tcp set supplemental Template=Internet CongestionProvider=ctcp >nul 2>&1
+netsh int tcp set supplemental Template=Datacenter CongestionProvider=ctcp >nul 2>&1
 chcp 437 >nul
 echo %c%[8/10] Restarting Network Adapters...%u%
 powershell -Command ^
@@ -5598,9 +5624,9 @@ echo %c%• DNS cache flushed and refreshed%u%
 echo %c%• Cloudflare IPv4/IPv6 DNS set on all connected adapters%u%
 echo %c%• Winsock/IP/TCP/UDP stack reset and reconfigured%u%
 echo %c%• Network throttling disabled for gaming%u%
-echo %c%• Advanced registry settings optimized (PMTU, TTL, window size)%u%
+echo %c%• Advanced registry settings optimized (PMTU, TTL)%u%
 echo %c%• Network adapter settings restarted and optimized%u%
-echo %c%• TCP/IP stack autotuning, chimney, and RSS enabled%u%
+echo %c%• TCP/IP stack autotuning, CTCP, and RSS enabled%u%
 echo %c%• Connection stability and speed improved%u%
 echo.
 echo %red%Performance Notes:%u%
@@ -5626,11 +5652,12 @@ call :SetupConsole
 echo.
 echo.
 echo %c%╔══════════════════════════════════════════════════════════════════════════════╗
-echo ║                           WINDOWS SERVICE OPTIMIZER                          ║
+echo ║                           WINDOWS SERVICE DECREASER                          ║
 echo ╚══════════════════════════════════════════════════════════════════════════════╝%u%
 echo.
-echo %c%This comprehensive service optimizer includes:%u%
+echo %c%This comprehensive service decreaser includes:%u%
 echo %c%• Telemetry and data collection service management%u%
+
 echo %c%• OEM manufacturer service optimization (HP, Intel, NVIDIA, etc.)%u%
 echo %c%• Network and sharing service configuration%u%
 echo %c%• Gaming and Xbox service management%u%
@@ -5657,7 +5684,7 @@ echo %c%╔═══════════════════════
 echo ║                          SELECT OPTIMIZATION MODE                            ║
 echo ╚══════════════════════════════════════════════════════════════════════════════╝%u%
 echo.
-echo %c%   [1] Quick Mode    - 10 category prompts (fast, group-based)%u%
+echo %c%   [1] Quick Mode    - 13 category prompts (fast, group-based)%u%
 echo %c%   [2] Advanced Mode - Individual per-service control%u%
 echo %c%   [0] Return to Menu%u%
 echo.
@@ -5679,7 +5706,7 @@ echo ║                       SERVICE OPTIMIZATION CONFIGURATION               
 echo ╚══════════════════════════════════════════════════════════════════════════════╝%u%
 echo.
 
-echo %c%[1/10] Windows Telemetry and Data Collection%u%
+echo %c%Category 1/13: Windows Telemetry and Data Collection%u%
 echo.
 echo %c%This disables Windows diagnostic data, usage tracking, and error reporting.%u%
 echo %c%Recommended: DISABLE for better privacy and performance.%u%
@@ -5694,7 +5721,7 @@ if errorlevel 2 (
 )
 
 echo.
-echo %c%[2/10] OEM Manufacturer Services%u%
+echo %c%Category 2/13: OEM Manufacturer Services%u%
 echo.
 echo %c%This disables background services from HP, Intel, NVIDIA, Dell, ASUS, etc.%u%
 echo %c%Recommended: DISABLE unless you need specific OEM functionality.%u%
@@ -5709,7 +5736,7 @@ if errorlevel 2 (
 )
 
 echo.
-echo %c%[3/10] Network and Sharing Services%u%
+echo %c%Category 3/13: Network and Sharing Services%u%
 echo.
 echo %c%This disables unused network services like remote access, file sharing, etc.%u%
 echo %c%Recommended: DISABLE unless you use file sharing or remote desktop.%u%
@@ -5724,7 +5751,7 @@ if errorlevel 2 (
 )
 
 echo.
-echo %c%[4/10] Microsoft Store and Xbox Services%u%
+echo %c%Category 4/13: Microsoft Store and Xbox Services%u%
 echo.
 echo %c%This controls Xbox Live, Microsoft Store, Game Bar, and Minecraft online functionality.%u%
 echo %c%Recommended: ENABLE if you use Xbox App, Microsoft Store, or play Minecraft.%u%
@@ -5739,7 +5766,7 @@ if errorlevel 2 (
 )
 
 echo.
-echo %c%[5/10] Third-Party Application Telemetry%u%
+echo %c%Category 5/13: Third-Party Application Telemetry%u%
 echo.
 echo %c%This disables data collection from NVIDIA, Adobe, Google, Office, and other apps.%u%
 echo %c%Recommended: DISABLE for better privacy and reduced background activity.%u%
@@ -5754,7 +5781,7 @@ if errorlevel 2 (
 )
 
 echo.
-echo %c%[6/10] Gaming Hardware Services%u%
+echo %c%Category 6/13: Gaming Hardware Services%u%
 echo.
 echo %c%This disables background services from Razer, Logitech, Corsair, etc.%u%
 echo %c%Note: May affect RGB lighting and macro functionality.%u%
@@ -5769,7 +5796,7 @@ if errorlevel 2 (
 )
 
 echo.
-echo %c%[7/10] Automatic Update Services%u%
+echo %c%Category 7/13: Automatic Update Services%u%
 echo.
 echo %c%This disables automatic updates for Google, Adobe, and other third-party apps.%u%
 echo %c%Recommended: DISABLE to reduce background activity and control updates manually.%u%
@@ -5784,7 +5811,7 @@ if errorlevel 2 (
 )
 
 echo.
-echo %c%[8/10] Performance Services%u%
+echo %c%Category 8/13: Performance Services%u%
 echo.
 echo %c%This disables Windows services that may impact gaming performance.%u%
 echo %c%Includes: Superfetch, Windows Search, Font Cache, etc.%u%
@@ -5800,7 +5827,7 @@ if errorlevel 2 (
 )
 
 echo.
-echo %c%[9/10] Security and Backup Services%u%
+echo %c%Category 9/13: Security and Backup Services%u%
 echo.
 echo %c%This disables optional security services like biometrics, smart cards, backup.%u%
 echo %c%Note: Core Windows security (Defender) remains unaffected.%u%
@@ -5815,7 +5842,7 @@ if errorlevel 2 (
 )
 
 echo.
-echo %c%[10/10] Bluetooth Services%u%
+echo %c%Category 10/13: Bluetooth Services%u%
 echo.
 echo %c%This disables Bluetooth-related services.%u%
 echo %c%Only disable if you don't use Bluetooth devices.%u%
@@ -5830,7 +5857,7 @@ if errorlevel 2 (
 )
 
 echo.
-echo %c%[11/13] Print and Imaging Services%u%
+echo %c%Category 11/13: Print and Imaging Services%u%
 echo.
 echo %c%This disables Windows print and imaging services: Print Spooler, scanner,%u%
 echo %c%WIA acquisition, and camera frame server.%u%
@@ -5846,7 +5873,7 @@ if errorlevel 2 (
 )
 
 echo.
-echo %c%[12/13] Hyper-V and Virtual Machine Services%u%
+echo %c%Category 12/13: Hyper-V and Virtual Machine Services%u%
 echo.
 echo %c%This disables Hyper-V guest integration services (vmicXxx, HvHost).%u%
 echo %c%Safe to disable if you are NOT running inside a Hyper-V virtual machine.%u%
@@ -5861,7 +5888,7 @@ if errorlevel 2 (
 )
 
 echo.
-echo %c%[13/13] Windows Features and App Services%u%
+echo %c%Category 13/13: Windows Features and App Services%u%
 echo.
 echo %c%This disables a large set of Windows app-platform and feature services:%u%
 echo %c%Phone Link, Timeline, Connected Devices, Push Notifications, Maps, Wallet,%u%
@@ -5884,101 +5911,101 @@ echo ╚════════════════════════
 echo.
 
 if "%DISABLE_TELEMETRY%"=="true" (
-    echo %c%[1/15] Disabling Windows Telemetry and Data Collection...%u%
+    echo %c%Step 1/15: Disabling Windows Telemetry and Data Collection%u%
     call :DisableTelemetryServices
 ) else (
-    echo %c%[1/15] Preserving Windows Telemetry Services...%u%
+    echo %c%Step 1/15: Preserving Windows Telemetry Services%u%
 )
 
 if "%DISABLE_OEM%"=="true" (
-    echo %c%[2/15] Disabling OEM Manufacturer Services...%u%
+    echo %c%Step 2/15: Disabling OEM Manufacturer Services%u%
     call :DisableOEMServices
 ) else (
-    echo %c%[2/15] Preserving OEM Manufacturer Services...%u%
+    echo %c%Step 2/15: Preserving OEM Manufacturer Services%u%
 )
 
 if "%DISABLE_NETWORK%"=="true" (
-    echo %c%[3/15] Disabling Unused Network Services...%u%
+    echo %c%Step 3/15: Disabling Unused Network Services%u%
     call :DisableUnusedNetworkServices
 ) else (
-    echo %c%[3/15] Preserving Network Services...%u%
+    echo %c%Step 3/15: Preserving Network Services%u%
 )
 
 if "%ENABLE_XBOX%"=="true" (
-    echo %c%[4/15] Enabling Microsoft Store and Xbox Services...%u%
+    echo %c%Step 4/15: Enabling Microsoft Store and Xbox Services%u%
     call :EnableXboxServices
 ) else (
-    echo %c%[4/15] Disabling Microsoft Store and Xbox Services...%u%
+    echo %c%Step 4/15: Disabling Microsoft Store and Xbox Services%u%
     call :DisableXboxServices
 )
 
 if "%DISABLE_3RD_PARTY%"=="true" (
-    echo %c%[5/15] Disabling Third-Party Application Telemetry...%u%
+    echo %c%Step 5/15: Disabling Third-Party Application Telemetry%u%
     call :DisableThirdPartyTelemetry
 ) else (
-    echo %c%[5/15] Preserving Third-Party Application Telemetry...%u%
+    echo %c%Step 5/15: Preserving Third-Party Application Telemetry%u%
 )
 
 if "%DISABLE_GAMING_HW%"=="true" (
-    echo %c%[6/15] Disabling Gaming Hardware Background Services...%u%
+    echo %c%Step 6/15: Disabling Gaming Hardware Background Services%u%
     call :DisableGamingHardwareServices
 ) else (
-    echo %c%[6/15] Preserving Gaming Hardware Services...%u%
+    echo %c%Step 6/15: Preserving Gaming Hardware Services%u%
 )
 
 if "%DISABLE_UPDATES%"=="true" (
-    echo %c%[7/15] Disabling Automatic Update Services...%u%
+    echo %c%Step 7/15: Disabling Automatic Update Services%u%
     call :DisableAutomaticUpdateServices
 ) else (
-    echo %c%[7/15] Preserving Automatic Update Services...%u%
+    echo %c%Step 7/15: Preserving Automatic Update Services%u%
 )
 
 if "%DISABLE_PERFORMANCE%"=="true" (
-    echo %c%[8/15] Disabling Performance-Impacting Services...%u%
+    echo %c%Step 8/15: Disabling Performance-Impacting Services%u%
     call :DisablePerformanceServices
 ) else (
-    echo %c%[8/15] Preserving Performance Services...%u%
+    echo %c%Step 8/15: Preserving Performance Services%u%
 )
 
 if "%DISABLE_SECURITY%"=="true" (
-    echo %c%[9/15] Disabling Optional Security and Backup Services...%u%
+    echo %c%Step 9/15: Disabling Optional Security and Backup Services%u%
     call :DisableSecurityServices
 ) else (
-    echo %c%[9/15] Preserving Security and Backup Services...%u%
+    echo %c%Step 9/15: Preserving Security and Backup Services%u%
 )
 
 if "%DISABLE_BLUETOOTH%"=="true" (
-    echo %c%[10/15] Disabling Bluetooth Services...%u%
+    echo %c%Step 10/15: Disabling Bluetooth Services%u%
     call :DisableBluetoothServices
 ) else (
-    echo %c%[10/15] Preserving Bluetooth Services...%u%
+    echo %c%Step 10/15: Preserving Bluetooth Services%u%
 )
 
 if "%DISABLE_PRINT%"=="true" (
-    echo %c%[11/15] Disabling Print and Imaging Services...%u%
+    echo %c%Step 11/15: Disabling Print and Imaging Services%u%
     call :DisablePrintServices
 ) else (
-    echo %c%[11/15] Preserving Print and Imaging Services...%u%
+    echo %c%Step 11/15: Preserving Print and Imaging Services%u%
 )
 
 if "%DISABLE_HYPERV%"=="true" (
-    echo %c%[12/15] Disabling Hyper-V and VM Services...%u%
+    echo %c%Step 12/15: Disabling Hyper-V and VM Services%u%
     call :DisableHyperVServices
 ) else (
-    echo %c%[12/15] Preserving Hyper-V and VM Services...%u%
+    echo %c%Step 12/15: Preserving Hyper-V and VM Services%u%
 )
 
 if "%DISABLE_WINFEATURES%"=="true" (
-    echo %c%[13/15] Disabling Windows Features and App Services...%u%
+    echo %c%Step 13/15: Disabling Windows Features and App Services%u%
     call :DisableWindowsFeaturesServices
 ) else (
-    echo %c%[13/15] Preserving Windows Features and App Services...%u%
+    echo %c%Step 13/15: Preserving Windows Features and App Services%u%
 )
 
-echo %c%[14/15] Ensuring Critical System Services Remain Enabled...%u%
+echo %c%Step 14/15: Ensuring Critical System Services Remain Enabled%u%
 call :EnableCriticalServices
 
-echo %c%[15/15] Applying Final Configurations...%u%
+echo %c%Step 15/15: Applying Final Configurations%u%
 call :ApplyFinalServiceConfigurations
 
 echo.
@@ -6157,31 +6184,31 @@ echo %c%╔═══════════════════════
 echo ║                    DISABLING ALL OPTIONAL SERVICES                            ║
 echo ╚══════════════════════════════════════════════════════════════════════════════╝%u%
 echo.
-echo %c%  [ 1/13]  Telemetry ^& Data Collection...%u%
+echo %c%  Step 1/13: Telemetry and Data Collection%u%
 call :DisableTelemetryServices
-echo %c%  [ 2/13]  OEM Manufacturer services...%u%
+echo %c%  Step 2/13: OEM Manufacturer Services%u%
 call :DisableOEMServices
-echo %c%  [ 3/13]  Network ^& Sharing services...%u%
+echo %c%  Step 3/13: Network and Sharing Services%u%
 call :DisableUnusedNetworkServices
-echo %c%  [ 4/13]  Xbox ^& Store services...%u%
+echo %c%  Step 4/13: Xbox and Store Services%u%
 call :DisableXboxServices
-echo %c%  [ 5/13]  Third-party telemetry registry tweaks...%u%
+echo %c%  Step 5/13: Third-party Telemetry Registry Tweaks%u%
 call :DisableThirdPartyTelemetry
-echo %c%  [ 6/13]  Gaming Hardware services...%u%
+echo %c%  Step 6/13: Gaming Hardware Services%u%
 call :DisableGamingHardwareServices
-echo %c%  [ 7/13]  Automatic Update services...%u%
+echo %c%  Step 7/13: Automatic Update Services%u%
 call :DisableAutomaticUpdateServices
-echo %c%  [ 8/13]  Performance services...%u%
+echo %c%  Step 8/13: Performance Services%u%
 call :DisablePerformanceServices
-echo %c%  [ 9/13]  Security ^& Backup services...%u%
+echo %c%  Step 9/13: Security and Backup Services%u%
 call :DisableSecurityServices
-echo %c%  [10/13]  Bluetooth services...%u%
+echo %c%  Step 10/13: Bluetooth Services%u%
 call :DisableBluetoothServices
-echo %c%  [11/13]  Print ^& Imaging services...%u%
+echo %c%  Step 11/13: Print and Imaging Services%u%
 call :DisablePrintServices
-echo %c%  [12/13]  Hyper-V ^& VM services...%u%
+echo %c%  Step 12/13: Hyper-V and VM Services%u%
 call :DisableHyperVServices
-echo %c%  [13/13]  Windows Features ^& App services...%u%
+echo %c%  Step 13/13: Windows Features and App Services%u%
 call :DisableWindowsFeaturesServices
 echo.
 echo %c%  Protecting critical services...%u%
@@ -6227,6 +6254,7 @@ if /i "!G1!"=="D" call :DisableTelemetryServices
 if /i "!G1!"=="M" (
     for %%s in (DiagTrack dmwappushservice diagsvc DPS WerSvc wercplsupport WdiServiceHost WdiSystemHost PcaSvc wisvc RetailDemo lfsvc MapsBroker GraphicsPerfSvc Sense SensorDataService SensorService SensrSvc DisplayEnhancementService) do sc config %%s start= demand >nul 2>&1
     sc config "diagnosticshub.standardcollector.service" start= demand >nul 2>&1
+	sc config "UCPD" start= disabled >nul 2>&1
 )
 
 cls
@@ -6309,6 +6337,9 @@ if /i "!G5!"=="D" call :DisableGamingHardwareServices
 if /i "!G5!"=="M" (
     for %%s in (RzActionSvc LogiRegistryService LGHUBUpdaterService CorsairService MSI_Central_Service ASUSOptimization logi_lamparray_service) do sc config %%s start= demand >nul 2>&1
     sc config "Razer Game Scanner Service" start= demand >nul 2>&1
+	sc config "EpicGamesUpdater" start= disabled >nul 2>&1
+	sc config "EpicOnlineServices" start= disabled >nul 2>&1
+	sc config "Rockstar Service" start= disabled >nul 2>&1
 )
 
 cls
@@ -6442,6 +6473,8 @@ if /i "!G11!"=="M" (
 
 echo.
 echo %c%  Applying third-party telemetry registry settings...%u%
+reg add "HKLM\SYSTEM\CurrentControlSet\Services\TermService" /v "Start" /t REG_DWORD /d "4" /f >nul 2>&1
+reg add "HKLM\SYSTEM\CurrentControlSet\Services\WslService" /v "Start" /t REG_DWORD /d "4" /f >nul 2>&1
 call :DisableThirdPartyTelemetry
 
 echo %c%  Protecting critical services...%u%
@@ -6637,15 +6670,21 @@ reg add "HKLM\SOFTWARE\NVIDIA Corporation\Global\FTS" /v EnableRID66610 /t REG_D
 
 reg add "HKCU\SOFTWARE\Microsoft\VSCode" /v telemetry.enableTelemetry /t REG_DWORD /d 0 /f >nul 2>&1
 reg add "HKCU\SOFTWARE\Microsoft\VSCode" /v telemetry.enableCrashReporter /t REG_DWORD /d 0 /f >nul 2>&1
-
+chcp 437 >nul
 PowerShell -NoProfile -Command "$f='%APPDATA%\Code\User\settings.json'; if(!(Test-Path $f)){exit 0}; try{$c=Get-Content $f -Raw -ErrorAction Stop}catch{exit 1}; if([string]::IsNullOrWhiteSpace($c)){$c='{}'}; try{$j=$c|ConvertFrom-Json}catch{exit 1}; $j|Add-Member NoteProperty 'telemetry.enableTelemetry' $false -Force; $j|Add-Member NoteProperty 'telemetry.enableCrashReporter' $false -Force; $j|Add-Member NoteProperty 'workbench.enableExperiments' $false -Force; $j|Add-Member NoteProperty 'update.mode' 'manual' -Force; $j|Add-Member NoteProperty 'update.showReleaseNotes' $false -Force; $j|Add-Member NoteProperty 'extensions.autoCheckUpdates' $false -Force; $j|Add-Member NoteProperty 'extensions.showRecommendationsOnlyOnDemand' $true -Force; $j|Add-Member NoteProperty 'git.autofetch' $false -Force; $j|Add-Member NoteProperty 'npm.fetchOnlinePackageInfo' $false -Force; $j|ConvertTo-Json|Set-Content $f" >nul 2>&1
-
+chcp 65001 >nul
 reg add "HKCU\SOFTWARE\Microsoft\Office\Common\ClientTelemetry" /v DisableTelemetry /t REG_DWORD /d 1 /f >nul 2>&1
 reg add "HKCU\SOFTWARE\Microsoft\Office\16.0\Common\ClientTelemetry" /v DisableTelemetry /t REG_DWORD /d 1 /f >nul 2>&1
 reg add "HKLM\SOFTWARE\Policies\Microsoft\Office\16.0\Common\ClientTelemetry" /v DisableTelemetry /t REG_DWORD /d 1 /f >nul 2>&1
-
 reg add "HKLM\SOFTWARE\Adobe\Adobe Desktop Common\ADS" /v OptOut /t REG_DWORD /d 1 /f >nul 2>&1
 reg add "HKLM\SOFTWARE\Adobe\Adobe Desktop Common\RemoteUpdateManager" /v RemoteUpdateManagerOptin /t REG_DWORD /d 0 /f >nul 2>&1
+chcp 437 >nul
+PowerShell -NoProfile -Command "$f='%LOCALAPPDATA%\AccessibilityInsights\V1\Configurations\Configuration.json'; if(!(Test-Path $f)){exit 0}; try{$c=Get-Content $f -Raw -ErrorAction Stop}catch{exit 1}; if([string]::IsNullOrWhiteSpace($c)){$c='{}'}; try{$j=$c|ConvertFrom-Json}catch{exit 1}; $j|Add-Member NoteProperty 'EnableTelemetry' $false -Force; $j|ConvertTo-Json|Set-Content $f" >nul 2>&1
+chcp 65001 >nul
+reg add "HKLM\SOFTWARE\Policies\Microsoft\Internet Explorer\Safety\PrivacIE" /v "DisableLogging" /t REG_DWORD /d "1" /f >nul 2>&1
+reg add "HKLM\SOFTWARE\Policies\Microsoft\Windows\CurrentVersion\Internet Settings" /v "CallLegacyWCMPolicies" /t REG_DWORD /d "0" /f >nul 2>&1
+reg add "HKLM\SOFTWARE\Policies\Microsoft\Windows\CurrentVersion\Internet Settings" /v "EnableSSL3Fallback" /t REG_DWORD /d "0" /f >nul 2>&1
+reg add "HKLM\SOFTWARE\Policies\Microsoft\Windows\CurrentVersion\Internet Settings" /v "PreventIgnoreCertErrors" /t REG_DWORD /d "1" /f >nul 2>&1
 
 setx DOTNET_CLI_TELEMETRY_OPTOUT 1 >nul 2>&1
 setx POWERSHELL_TELEMETRY_OPTOUT 1 >nul 2>&1
@@ -6673,6 +6712,21 @@ call :DisableService "gupdatem"
 call :DisableService "NvTelemetryContainer"
 
 reg add "HKCU\Software\Microsoft\VisualStudio\Telemetry" /v TurnOffSwitch /t REG_DWORD /d 1 /f >nul 2>&1
+reg add "HKLM\Software\Policies\Microsoft\VisualStudio\SQM" /v "OptIn" /t REG_DWORD /d 0 /f >nul 2>&1
+reg add "HKLM\SOFTWARE\Microsoft\VSCommon\14.0\SQM" /v "OptIn" /t REG_DWORD /d 0 /f >nul 2>&1
+reg add "HKLM\SOFTWARE\Wow6432Node\Microsoft\VSCommon\14.0\SQM" /v "OptIn" /t REG_DWORD /d 0 /f >nul 2>&1
+reg add "HKLM\SOFTWARE\Microsoft\VSCommon\15.0\SQM" /v "OptIn" /t REG_DWORD /d 0 /f >nul 2>&1
+reg add "HKLM\SOFTWARE\Wow6432Node\Microsoft\VSCommon\15.0\SQM" /v "OptIn" /t REG_DWORD /d 0 /f >nul 2>&1
+reg add "HKLM\SOFTWARE\Microsoft\VSCommon\16.0\SQM" /v "OptIn" /t REG_DWORD /d 0 /f >nul 2>&1
+reg add "HKLM\SOFTWARE\Wow6432Node\Microsoft\VSCommon\16.0\SQM" /v "OptIn" /t REG_DWORD /d 0 /f >nul 2>&1
+reg add "HKLM\SOFTWARE\Wow6432Node\Microsoft\VSCommon\17.0\SQM" /v "OptIn" /t REG_DWORD /d 0 /f >nul 2>&1
+reg add "HKLM\SOFTWARE\Policies\Microsoft\VisualStudio\Feedback" /v "DisableFeedbackDialog" /t REG_DWORD /d 1 /f >nul 2>&1
+reg add "HKLM\SOFTWARE\Policies\Microsoft\VisualStudio\Feedback" /v "DisableEmailInput" /t REG_DWORD /d 1 /f >nul 2>&1
+reg add "HKLM\SOFTWARE\Policies\Microsoft\VisualStudio\Feedback" /v "DisableScreenshotCapture" /t REG_DWORD /d 1 /f >nul 2>&1
+reg add "HKLM\SOFTWARE\Policies\Microsoft\VisualStudio\IntelliCode" /v "DisableRemoteAnalysis" /t REG_DWORD /d 1 /f >nul 2>&1
+reg add "HKCU\SOFTWARE\Microsoft\VSCommon\16.0\IntelliCode" /v "DisableRemoteAnalysis" /t REG_DWORD /d 1 /f >nul 2>&1
+reg add "HKCU\SOFTWARE\Microsoft\VSCommon\17.0\IntelliCode" /v "DisableRemoteAnalysis" /t REG_DWORD /d 1 /f >nul 2>&1
+call :DisableService "VSStandardCollectorService150"
 
 echo %green%    → Third-party telemetry disabled (privacy.sexy integrated)%u%
 exit /b
@@ -6725,6 +6779,7 @@ call :DisableService "tzautoupdate"
 call :DisableService "spectrum"
 call :DisableService "NcaSvc"
 call :DisableService "MapsBroker"
+reg add "HKLM\SYSTEM\CurrentControlSet\Services\MapsBroker" /v "Start" /t REG_DWORD /d "4" /f >nul 2>&1
 call :DisableService "lfsvc"
 call :DisableService "GraphicsPerfSvc"
 call :DisableService "DoSvc"
@@ -6747,8 +6802,8 @@ call :DisableService "WbioSrvc"
 call :DisableService "SCardSvr"
 call :DisableService "ScDeviceEnum"
 call :DisableService "SCPolicySvc"
-call :DisableService "NgcCtnrSvc"
-call :DisableService "NgcSvc"
+sc config NgcCtnrSvc start= demand >nul 2>&1
+sc config NgcSvc start= demand >nul 2>&1
 call :DisableService "NaturalAuthentication"
 call :DisableService "SEMgrSvc"
 call :DisableService "WpcMonSvc"
@@ -6951,7 +7006,7 @@ reg add "HKLM\System\CurrentControlSet\Services\WaaSMedicSvc" /v "Start" /t REG_
 reg add "HKLM\System\CurrentControlSet\Services\WdNisSvc" /v "Start" /t REG_DWORD /d "4" /f >nul 2>&1
 reg add "HKLM\System\CurrentControlSet\Services\WinHttpAutoProxySvc" /v "Start" /t REG_DWORD /d "4" /f >nul 2>&1
 
-reg add "HKLM\SYSTEM\CurrentControlSet\Control" /v "SvcHostSplitThresholdInKB" /t REG_DWORD /d "4294967295" /f >nul 2>&1
+
 
 echo %green%    → Final configurations applied%u%
 exit /b
@@ -7000,7 +7055,7 @@ echo ║                       DEBLOATING CONFIGURATION PROMPTS                 
 echo ╚══════════════════════════════════════════════════════════════════════════════╝%u%
 echo.
 
-echo %c%[1/12] Microsoft Store and Gaming%u%
+echo %c%Category 1/16: Microsoft Store and Gaming%u%
 echo.
 echo %c%Microsoft Store is required for Xbox App, Game Pass, and UWP apps.%u%
 echo %c%Removing it will prevent installing Microsoft Store apps.%u%
@@ -7016,7 +7071,7 @@ if errorlevel 2 (
 )
 
 echo.
-echo %c%[2/12] Xbox Services and Gaming%u%
+echo %c%Category 2/16: Xbox Services and Gaming%u%
 echo.
 echo %c%Xbox services power Xbox Live, Game Bar, and Minecraft online.%u%
 echo %c%Removing them will disable Xbox Live features and online gaming.%u%
@@ -7032,7 +7087,7 @@ if errorlevel 2 (
 )
 
 echo.
-echo %c%[3/12] Microsoft Edge Browser%u%
+echo %c%Category 3/16: Microsoft Edge Browser%u%
 echo.
 echo %c%Microsoft Edge is integrated with Windows and some system functions.%u%
 echo %c%Removing it may affect Windows Update and certain system features.%u%
@@ -7048,7 +7103,7 @@ if errorlevel 2 (
 )
 
 echo.
-echo %c%[4/12] OneDrive Cloud Storage%u%
+echo %c%Category 4/16: OneDrive Cloud Storage%u%
 echo.
 echo %c%OneDrive provides cloud storage and sync functionality.%u%
 echo %c%Removing it will disable cloud backup and sync features.%u%
@@ -7064,7 +7119,7 @@ if errorlevel 2 (
 )
 
 echo.
-echo %c%[5/12] Microsoft Copilot AI%u%
+echo %c%Category 5/16: Microsoft Copilot AI%u%
 echo.
 echo %c%Microsoft Copilot is the AI assistant integrated into Windows.%u%
 echo %c%Removing it will disable AI features and suggestions.%u%
@@ -7080,7 +7135,7 @@ if errorlevel 2 (
 )
 
 echo.
-echo %c%[6/12] Cortana and Windows Search Integration%u%
+echo %c%Category 6/16: Cortana and Windows Search Integration%u%
 echo.
 echo %c%Cortana/Search is built into Windows 11 and can consume memory/CPU.%u%
 echo %c%Removing it will disable the Search bar, voice assistant, and some functions.%u%
@@ -7096,7 +7151,7 @@ if errorlevel 2 (
 )
 
 echo.
-echo %c%[7/12] Skype and Microsoft Teams%u%
+echo %c%Category 7/16: Skype and Microsoft Teams%u%
 echo.
 echo %c%Skype/Teams often run in the background with auto-start.%u%
 echo %c%Removing them frees RAM but disables built-in chat/video features.%u%
@@ -7112,7 +7167,7 @@ if errorlevel 2 (
 )
 
 echo.
-echo %c%[8/12] Windows WebView2 Runtime%u%
+echo %c%Category 8/16: Windows WebView2 Runtime%u%
 echo.
 echo %c%WebView2 is required for many UWP/Win32 apps to render HTML content.%u%
 echo %c%Removing it may break apps (e.g., Teams, Edge-based apps).%u%
@@ -7128,7 +7183,7 @@ if errorlevel 2 (
 )
 
 echo.
-echo %c%[9/12] Windows Security Center Notifications%u%
+echo %c%Category 9/16: Windows Security Center Notifications%u%
 echo.
 echo %c%Windows Security Center (Defender alerts, update alerts) can be noisy.%u%
 echo %c%Disabling notifications prevents pop-ups but does NOT disable Defender itself.%u%
@@ -7144,7 +7199,7 @@ if errorlevel 2 (
 )
 
 echo.
-echo %c%[10/12] OEM Manufacturer Bloatware%u%
+echo %c%Category 10/16: OEM Manufacturer Bloatware%u%
 choice /C YN /M "%c%Remove OEM manufacturer bloatware? (Y/N)%u%"
 if errorlevel 2 (
     set "REMOVE_OEM=false" 
@@ -7155,7 +7210,7 @@ if errorlevel 2 (
 )
 
 echo.
-echo %c%[11/12] System Apps (Wallet, Web Extensions…)%u%
+echo %c%Category 11/16: System Apps - Wallet and Web Extensions%u%
 choice /C YN /M "%c%Remove System apps? (Y/N)%u%"
 if errorlevel 2 (
     set "REMOVE_SYSTEM=false" 
@@ -7166,7 +7221,7 @@ if errorlevel 2 (
 )
 
 echo.
-echo %c%[12/16] Windows Services and Startup Programs%u%
+echo %c%Category 12/16: Windows Services and Startup Programs%u%
 choice /C YN /M "%c%Disable unnecessary services & startup programs? (Y/N)%u%"
 if errorlevel 2 (
     set "DISABLE_SERVICES=false" 
@@ -7177,7 +7232,7 @@ if errorlevel 2 (
 )
 
 echo.
-echo %c%[13/16] Microsoft Photos (Default Image Viewer)%u%
+echo %c%Category 13/16: Microsoft Photos - Default Image Viewer%u%
 echo.
 echo %c%Microsoft Photos is the default app for viewing images and videos.%u%
 echo %c%Removing it means image files will have no default viewer until another app is installed.%u%
@@ -7193,7 +7248,7 @@ if errorlevel 2 (
 )
 
 echo.
-echo %c%[14/16] Microsoft Paint and Windows Camera%u%
+echo %c%Category 14/16: Microsoft Paint and Windows Camera%u%
 echo.
 echo %c%Microsoft Paint is the classic built-in image editor (commonly used for quick edits).%u%
 echo %c%Windows Camera is the built-in webcam app — required if no other camera app is installed.%u%
@@ -7209,7 +7264,7 @@ if errorlevel 2 (
 )
 
 echo.
-echo %c%[15/16] Snipping Tool and PrintScreen Hotkey%u%
+echo %c%Category 15/16: Snipping Tool and PrintScreen Hotkey%u%
 echo.
 echo %c%Snipping Tool is the built-in screenshot utility (Win+Shift+S / PrintScreen).%u%
 echo %c%Removing it also disables the PrintScreen key shortcut for Snipping.%u%
@@ -7225,7 +7280,7 @@ if errorlevel 2 (
 )
 
 echo.
-echo %c%[16/16] App Installer (winget) and OpenSSH Client%u%
+echo %c%Category 16/16: App Installer winget and OpenSSH Client%u%
 echo.
 echo %c%App Installer provides the "winget" package manager for command-line installs.%u%
 echo %c%OpenSSH Client enables the "ssh" command from PowerShell/CMD.%u%
@@ -7246,94 +7301,94 @@ echo ║                         DEBLOATING IN PROGRESS                         
 echo ╚══════════════════════════════════════════════════════════════════════════════╝%u%
 echo.
 
-echo %c%[1/18] Removing Third-Party Bloatware and Games…%u%
+echo %c%Step 1/18: Removing Third-Party Bloatware and Games%u%
 call :RemoveThirdPartyBloatware
 
 if "%REMOVE_OEM%"=="true" (
-    echo %c%[2/18] Removing OEM Manufacturer Bloatware…%u%
+    echo %c%Step 2/18: Removing OEM Manufacturer Bloatware%u%
     call :RemoveOEMBloatware
 ) else (
-    echo %c%[2/18] Skipping OEM Manufacturer bloatware…%u%
+    echo %c%Step 2/18: Skipping OEM Manufacturer Bloatware%u%
 )
 
 if "%REMOVE_SYSTEM%"=="true" (
-    echo %c%[3/18] Removing System Apps…%u%
+    echo %c%Step 3/18: Removing System Apps%u%
     call :RemoveSystemApps
 ) else (
-    echo %c%[3/18] Skipping System apps…%u%
+    echo %c%Step 3/18: Skipping System Apps%u%
 )
 
-echo %c%[4/18] Removing Microsoft Apps and Unnecessary Features…%u%
+echo %c%Step 4/18: Removing Microsoft Apps and Unnecessary Features%u%
 call :RemoveMicrosoftApps
 
-echo %c%[5/18] Removing Communication and Social Apps…%u%
+echo %c%Step 5/18: Removing Communication and Social Apps%u%
 if "%REMOVE_COMM%"=="true" (
     call :RemoveCommunicationApps
 ) else (
     echo %c%• Communication apps preserved%u%
 )
 
-echo %c%[6/18] Removing Media and Creative Apps…%u%
+echo %c%Step 6/18: Removing Media and Creative Apps%u%
 call :RemoveMediaApps
 
-echo %c%[7/18] Removing Advanced System Apps…%u%
+echo %c%Step 7/18: Removing Advanced System Apps%u%
 call :RemoveAdvancedSystemApps
 
 if "%REMOVE_COPILOT%"=="true" (
-    echo %c%[8/18] Removing Microsoft Copilot…%u%
+    echo %c%Step 8/18: Removing Microsoft Copilot%u%
     call :RemoveCopilot
 ) else (
-    echo %c%[8/18] Preserving Microsoft Copilot…%u%
+    echo %c%Step 8/18: Preserving Microsoft Copilot%u%
 )
 
-echo %c%[9/18] Removing Widgets and Taskbar Bloat…%u%
+echo %c%Step 9/18: Removing Widgets and Taskbar Bloat%u%
 call :RemoveTaskbarBloat
 
 if "%REMOVE_XBOX%"=="true" (
-    echo %c%[10/18] Removing Xbox Services and Apps…%u%
+    echo %c%Step 10/18: Removing Xbox Services and Apps%u%
     call :RemoveXboxServices
 ) else (
-    echo %c%[10/18] Preserving Xbox Services…%u%
+    echo %c%Step 10/18: Preserving Xbox Services%u%
 )
 
 if "%REMOVE_STORE%"=="true" (
-    echo %c%[11/18] Removing Microsoft Store…%u%
+    echo %c%Step 11/18: Removing Microsoft Store%u%
     call :RemoveMicrosoftStore
 ) else (
-    echo %c%[11/18] Preserving Microsoft Store…%u%
+    echo %c%Step 11/18: Preserving Microsoft Store%u%
 )
 
 if "%REMOVE_EDGE%"=="true" (
-    echo %c%[12/18] Removing Microsoft Edge…%u%
+    echo %c%Step 12/18: Removing Microsoft Edge%u%
     call :RemoveMicrosoftEdge
 ) else (
-    echo %c%[12/18] Preserving Microsoft Edge…%u%
+    echo %c%Step 12/18: Preserving Microsoft Edge%u%
 )
 
 if "%REMOVE_ONEDRIVE%"=="true" (
-    echo %c%[13/18] Removing OneDrive…%u%
+    echo %c%Step 13/18: Removing OneDrive%u%
     call :RemoveOneDrive
 ) else (
-    echo %c%[13/18] Preserving OneDrive…%u%
+    echo %c%Step 13/18: Preserving OneDrive%u%
 )
 
-echo %c%[14/18] Removing Unnecessary Windows Features and Capabilities…%u%
+echo %c%Step 14/18: Removing Unnecessary Windows Features and Capabilities%u%
 call :RemoveWindowsFeatures
 
-echo %c%[15/18] Removing Network Speed Test and Feedback Hub…%u%
+echo %c%Step 15/18: Removing Network Speed Test and Feedback Hub%u%
 call :RemoveNetworkSpeedTestAndFeedback
 
-echo %c%[16/18] Removing Mixed Reality and Holographic Apps…%u%
+echo %c%Step 16/18: Removing Mixed Reality and Holographic Apps%u%
 call :RemoveMixedReality
 
-echo %c%[17/18] Applying Final System Optimizations…%u%
+echo %c%Step 17/18: Applying Final System Optimizations%u%
 call :ApplyFinalOptimizations
 
 if "%DISABLE_SERVICES%"=="true" (
-    echo %c%[18/18] Disabling Unnecessary Services…%u%
+    echo %c%Step 18/18: Disabling Unnecessary Services%u%
     call :DisableUnnecessaryServices
 ) else (
-    echo %c%[18/18] Preserving Services…%u%
+    echo %c%Step 18/18: Preserving Services%u%
 )
 
 echo.
@@ -7483,7 +7538,7 @@ chcp 65001 >nul
 exit /b
 
 :RemoveThirdPartyBloatware
-set "BLOAT_APPS=*2FE3CB00.PicsArt-PhotoStudio* *4DF9E0F8.Netflix* *9E2F88E3.Twitter* *Facebook* *SpotifyAB.SpotifyMusic* *BytedancePte.Ltd.TikTok* *king.com* *GAMELOFTSA.Asphalt8Airborne* *Playtika.CaesarsSlotsFreeCasino* *ClearChannelRadioDigital.iHeartRadio* *TuneIn.TuneInRadio* *PandoraMediaInc* *ShazamEntertainmentLtd.Shazam* *AdobeSystemsIncorporated.AdobePhotoshopExpress* *Expedia.ExpediaHotelsFlightsCarsActivities* *Flipboard.Flipboard* *Duolingo-LearnLanguagesforFree* *CandyCrush* *FarmVille* *MarchofEmpires* *DisneyMagicKingdoms* *ActiproSoftware* *Clipchamp* *46928bounde.EclipseManager*"
+set "BLOAT_APPS=*2FE3CB00.PicsArt-PhotoStudio* *Duolingo-LearnLanguagesforFree* *PandoraMediaInc* *ActiproSoftwareLLC* *4DF9E0F8.Netflix* *9E2F88E3.Twitter* *Facebook* *SpotifyAB.SpotifyMusic* *BytedancePte.Ltd.TikTok* *king.com* *GAMELOFTSA.Asphalt8Airborne* *Playtika.CaesarsSlotsFreeCasino* *ClearChannelRadioDigital.iHeartRadio* *TuneIn.TuneInRadio* *PandoraMediaInc* *ShazamEntertainmentLtd.Shazam* *AdobeSystemsIncorporated.AdobePhotoshopExpress* *Expedia.ExpediaHotelsFlightsCarsActivities* *Flipboard.Flipboard* *Duolingo-LearnLanguagesforFree* *CandyCrush* *FarmVille* *MarchofEmpires* *DisneyMagicKingdoms* *ActiproSoftware* *Clipchamp* *46928bounde.EclipseManager*"
 
 for %%a in (%BLOAT_APPS%) do (
     chcp 437 >nul
@@ -7531,12 +7586,18 @@ set "COMM_APPS=*Microsoft.SkypeApp* *Microsoft.Teams* *Microsoft.YourPhone* *Mic
 for %%a in (%COMM_APPS%) do (
     call :RemoveAppCompletely "%%a" "%%a"
 )
-
 call :RemoveAppCompletely "Microsoft.WindowsPhone" "Microsoft.WindowsPhone_8wekyb3d8bbwe"
 call :RemoveAppCompletely "Microsoft.CommsPhone" "Microsoft.CommsPhone_8wekyb3d8bbwe"
 call :RemoveAdvancedSystemApp "Microsoft.Windows.CallingShellApp" "Microsoft.Windows.CallingShellApp_cw5n1h2txyewy"
 call :RemoveAppCompletely "Microsoft.GroupMe10" "Microsoft.GroupMe10_kzf8qxf38zg5c"
 call :RemoveAppCompletely "microsoft.windowscommunicationsapps" "microsoft.windowscommunicationsapps_8wekyb3d8bbwe"
+call :RemoveAppCompletely "Microsoft.OutlookForWindows" "Microsoft.OutlookForWindows_8wekyb3d8bbwe"
+reg add "HKCU\Software\Microsoft\Office\16.0\Outlook\Options\General" /v "DoNewOutlookAutoMigration" /t REG_DWORD /d "0" /f >nul 2>&1
+reg add "HKCU\Software\Policies\Microsoft\office\16.0\outlook\preferences" /v "NewOutlookMigrationUserSetting" /t REG_DWORD /d "0" /f >nul 2>&1
+reg add "HKCU\Software\Microsoft\Office\16.0\Outlook\Preferences" /v "UseNewOutlook" /t REG_DWORD /d "0" /f >nul 2>&1
+reg add "HKCU\Software\Microsoft\Office\16.0\Outlook\Options\General" /v "HideNewOutlookToggle" /t REG_DWORD /d "1" /f >nul 2>&1
+reg add "HKCU\Software\Policies\Microsoft\Office\16.0\Outlook\Options" /v "HideNewOutlookToggle" /t REG_DWORD /d "1" /f >nul 2>&1
+reg add "HKLM\SOFTWARE\Microsoft\WindowsUpdate\Orchestrator\UScheduler_Oobe" /v "BlockedOobeUpdaters" /t REG_SZ /d "[\"MS_Outlook\"]" /f >nul 2>&1
 exit /b
 
 :RemoveMediaApps
@@ -7563,12 +7624,27 @@ exit /b
 
 :RemoveAdvancedSystemApps
 call :RemoveAppCompletely "Microsoft.549981C3F5F10" "Microsoft.549981C3F5F10_8wekyb3d8bbwe"
-
 call :RemoveAppCompletely "Microsoft.NetworkSpeedTest" "Microsoft.NetworkSpeedTest_8wekyb3d8bbwe"
 call :RemoveAppCompletely "Microsoft.RemoteDesktop" "Microsoft.RemoteDesktop_8wekyb3d8bbwe"
 
 call :RemoveAdvancedSystemApp "Microsoft.Windows.ParentalControls" "Microsoft.Windows.ParentalControls_cw5n1h2txyewy"
-
+call :RemoveAdvancedSystemApp "Microsoft.Windows.Apprep.ChxApp" "Microsoft.Windows.Apprep.ChxApp_cw5n1h2txyewy"
+call :RemoveAdvancedSystemApp "Microsoft.Windows.AssignedAccessLockApp" "Microsoft.Windows.AssignedAccessLockApp_cw5n1h2txyewy"
+call :RemoveAdvancedSystemApp "Microsoft.Windows.CapturePicker" "Microsoft.Windows.CapturePicker_cw5n1h2txyewy"
+call :RemoveAdvancedSystemApp "Microsoft.Windows.PeopleExperienceHost" "Microsoft.Windows.PeopleExperienceHost_cw5n1h2txyewy"
+call :RemoveAdvancedSystemApp "Microsoft.Windows.PinningConfirmationDialog" "Microsoft.Windows.PinningConfirmationDialog_cw5n1h2txyewy"
+call :RemoveAdvancedSystemApp "Microsoft.Windows.SecondaryTileExperience" "Microsoft.Windows.SecondaryTileExperience_cw5n1h2txyewy"
+call :RemoveAdvancedSystemApp "Microsoft.Windows.PrintQueueActionCenter" "Microsoft.Windows.PrintQueueActionCenter_cw5n1h2txyewy"
+call :RemoveAdvancedSystemApp "Microsoft.Windows.ContentDeliveryManager" "Microsoft.Windows.ContentDeliveryManager_cw5n1h2txyewy"
+call :RemoveAdvancedSystemApp "Microsoft.Windows.NarratorQuickStart" "Microsoft.Windows.NarratorQuickStart_cw5n1h2txyewy"
+call :RemoveAdvancedSystemApp "Microsoft.Windows.XGpuEjectDialog" "Microsoft.Windows.XGpuEjectDialog_cw5n1h2txyewy"
+call :RemoveAdvancedSystemApp "Microsoft.Windows.SecureAssessmentBrowser" "Microsoft.Windows.SecureAssessmentBrowser_cw5n1h2txyewy"
+call :RemoveAdvancedSystemApp "Microsoft.Win32WebViewHost" "Microsoft.Win32WebViewHost_cw5n1h2txyewy"
+call :RemoveAdvancedSystemApp "Microsoft.PPIProjection" "Microsoft.PPIProjection_cw5n1h2txyewy"
+call :RemoveAdvancedSystemApp "MicrosoftWindows.CrossDevice" "MicrosoftWindows.CrossDevice_cw5n1h2txyewy"
+call :RemoveAdvancedSystemApp "MicrosoftWindows.UndockedDevKit" "MicrosoftWindows.UndockedDevKit_8wekyb3d8bbwe"
+call :RemoveAppCompletely "Windows.ContactSupport" "Windows.ContactSupport_cw5n1h2txyewy"
+call :RemoveAppCompletely "Windows.PrintDialog" "Windows.PrintDialog_cw5n1h2txyewy"
 call :RemoveAdvancedSystemApp "Windows.CBSPreview" "Windows.CBSPreview_cw5n1h2txyewy"
 if not "%REMOVE_DEVTOOLS%"=="false" call :RemoveAppCompletely "Microsoft.DesktopAppInstaller" "Microsoft.DesktopAppInstaller_8wekyb3d8bbwe"
 exit /b
@@ -7748,6 +7824,9 @@ dism /online /disable-feature /featurename:MediaPlayback /Quiet /NoRestart >nul 
 dism /online /disable-feature /featurename:Internet-Explorer-Optional-amd64 /Quiet /NoRestart >nul 2>&1
 dism /online /disable-feature /featurename:Printing-XPSServices-Features /Quiet /NoRestart >nul 2>&1
 dism /online /disable-feature /featurename:WorkFolders-Client /Quiet /NoRestart >nul 2>&1
+dism /online /disable-feature /featurename:Internet-Explorer-Optional-x86 /norestart >nul 2>&1
+dism /online /disable-feature /featurename:Microsoft-Hyper-V-Management-Clients /norestart >nul 2>&1
+dism /online /disable-feature /featurename:Microsoft-Hyper-V-Management-PowerShell /norestart >nul 2>&1
 
 if not "%REMOVE_SNIPPING%"=="false" (
     chcp 437 >nul
@@ -7826,8 +7905,19 @@ exit /b
 reg add "HKCU\Software\Microsoft\Windows\CurrentVersion\ContentDeliveryManager" /v "RotatingLockScreenEnabled" /t REG_DWORD /d "0" /f >nul 2>&1
 reg add "HKCU\Software\Microsoft\Windows\CurrentVersion\ContentDeliveryManager" /v "RotatingLockScreenOverlayEnabled" /t REG_DWORD /d "0" /f >nul 2>&1
 reg add "HKLM\SOFTWARE\Policies\Microsoft\Windows\CloudContent" /v "DisableWindowsConsumerFeatures" /t REG_DWORD /d "1" /f >nul 2>&1
+reg add "HKCU\Software\Microsoft\Windows\CurrentVersion\ContentDeliveryManager" /v "ContentDeliveryAllowed" /t REG_DWORD /d "0" /f >nul 2>&1
 reg add "HKCU\Software\Microsoft\Windows\CurrentVersion\ContentDeliveryManager" /v "SystemPaneSuggestionsEnabled" /t REG_DWORD /d "0" /f >nul 2>&1
 reg add "HKCU\Software\Microsoft\Windows\CurrentVersion\ContentDeliveryManager" /v "SilentInstalledAppsEnabled" /t REG_DWORD /d "0" /f >nul 2>&1
+reg add "HKCU\Software\Microsoft\Windows\CurrentVersion\ContentDeliveryManager" /v "OemPreInstalledAppsEnabled" /t REG_DWORD /d "0" /f >nul 2>&1
+reg add "HKCU\Software\Microsoft\Windows\CurrentVersion\ContentDeliveryManager" /v "PreInstalledAppsEnabled" /t REG_DWORD /d "0" /f >nul 2>&1
+reg add "HKCU\Software\Microsoft\Windows\CurrentVersion\ContentDeliveryManager" /v "PreInstalledAppsEverEnabled" /t REG_DWORD /d "0" /f >nul 2>&1
+reg add "HKCU\Software\Microsoft\Windows\CurrentVersion\ContentDeliveryManager" /v "RotatingLockScreenEnabled" /t REG_DWORD /d "0" /f >nul 2>&1
+reg add "HKCU\Software\Microsoft\Windows\CurrentVersion\ContentDeliveryManager" /v "RotatingLockScreenOverlayEnabled" /t REG_DWORD /d "0" /f >nul 2>&1
+reg add "HKCU\Software\Microsoft\Windows\CurrentVersion\ContentDeliveryManager" /v "SoftLandingEnabled" /t REG_DWORD /d "0" /f >nul 2>&1
+reg add "HKCU\Software\Microsoft\Windows\CurrentVersion\ContentDeliveryManager" /v "SystemPaneSuggestionsEnabled" /t REG_DWORD /d "0" /f >nul 2>&1
+reg add "HKCU\Software\Microsoft\Windows\CurrentVersion\ContentDeliveryManager" /v "SubscribedContent-310093Enabled" /t REG_DWORD /d "0" /f >nul 2>&1
+reg add "HKCU\Software\Microsoft\Windows\CurrentVersion\ContentDeliveryManager" /v "SubscribedContent-338388Enabled" /t REG_DWORD /d "0" /f >nul 2>&1
+reg add "HKCU\Software\Microsoft\Windows\CurrentVersion\ContentDeliveryManager" /v "SubscribedContent-338389Enabled" /t REG_DWORD /d "0" /f >nul 2>&1
 reg add "HKCU\Software\Microsoft\Windows\CurrentVersion\ContentDeliveryManager" /v SubscribedContent-338388Enabled /t REG_DWORD /d 0 /f >nul 2>&1
 
 if "%REMOVE_CORTANA%"=="true" (
@@ -7846,6 +7936,7 @@ sc config DiagTrack start=disabled >nul 2>&1
 sc config dmwappushservice start=disabled >nul 2>&1
 sc config RetailDemo start=disabled >nul 2>&1
 sc config MapsBroker start=disabled >nul 2>&1
+reg add "HKLM\SYSTEM\CurrentControlSet\Services\MapsBroker" /v "Start" /t REG_DWORD /d "4" /f >nul 2>&1
 sc stop WSearch >nul 2>&1
 sc config WSearch start=disabled >nul 2>&1   
 
@@ -8044,7 +8135,7 @@ if !errorlevel!==0 (echo %green%  [+] Done%u%) else (echo %orange%  [!] Failed%u
 
 echo %white%[2/6]%u% Disabling per-device audio enhancements...
 chcp 437 >nul
-powershell -NoProfile -Command "$r='HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\MMDevices\Audio\Render'; Get-ChildItem $r -ErrorAction SilentlyContinue | ForEach-Object { $fx=Join-Path $_.PSPath 'FxProperties'; if(-not(Test-Path $fx)){New-Item -Path $fx -Force | Out-Null}; Set-ItemProperty -Path $fx -Name '{1da5d803-d492-4edd-8c23-e0c0ffee7f0e},5' -Value 1 -Type DWord -Force -ErrorAction SilentlyContinue }" >nul 2>&1
+powershell -NoProfile -Command "$r=@('HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\MMDevices\Audio\Render','HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\MMDevices\Audio\Capture'); foreach($k in $r){Get-ChildItem $k -ErrorAction SilentlyContinue | ForEach-Object { $fx=Join-Path $_.PSPath 'FxProperties'; if(-not(Test-Path $fx)){New-Item -Path $fx -Force | Out-Null}; Set-ItemProperty -Path $fx -Name '{1da5d803-d492-4edd-8c23-e0c0ffee7f0e},5' -Value 1 -Type DWord -Force -ErrorAction SilentlyContinue }}" >nul 2>&1
 chcp 65001 >nul
 if !errorlevel!==0 (echo %green%  [+] Done%u%) else (echo %orange%  [!] Partial - may need specific device selected%u%)
 
@@ -8207,24 +8298,110 @@ echo.
 echo %c%Analyzing hardware security configuration...%u%
 echo.
 
-for /f "tokens=1,* delims==" %%a in ('wmic baseboard get manufacturer /value ^| find "="') do for /f "delims=" %%i in ("%%b") do set "mobo_manufacturer=%%i"
-for /f "tokens=1,* delims==" %%a in ('wmic baseboard get product /value ^| find "="') do for /f "delims=" %%i in ("%%b") do set "mobo_model=%%i"
-for /f "tokens=1,* delims==" %%a in ('wmic bios get smbiosbiosversion /value ^| find "="') do for /f "delims=" %%i in ("%%b") do set "bios_version=%%i"
-for /f "tokens=1,* delims==" %%a in ('wmic cpu get name /value ^| find "="') do for /f "delims=" %%i in ("%%b") do set "cpu_name=%%i"
+for /f "tokens=2*" %%a in ('reg query "HKLM\HARDWARE\DESCRIPTION\System\BIOS" /v BaseBoardManufacturer 2^>nul ^| findstr "BaseBoardManufacturer"') do set "mobo_manufacturer=%%b"
+for /f "tokens=2*" %%a in ('reg query "HKLM\HARDWARE\DESCRIPTION\System\BIOS" /v BaseBoardProduct 2^>nul ^| findstr "BaseBoardProduct"') do set "mobo_model=%%b"
+for /f "tokens=2*" %%a in ('reg query "HKLM\HARDWARE\DESCRIPTION\System\BIOS" /v BIOSVersion 2^>nul ^| findstr "BIOSVersion"') do set "bios_version=%%b"
+for /f "tokens=2*" %%a in ('reg query "HKLM\HARDWARE\DESCRIPTION\System\CentralProcessor\0" /v ProcessorNameString 2^>nul ^| findstr "ProcessorNameString"') do set "cpu_name=%%b"
 
-chcp 437 >nul
-powershell -Command "try { $tpm = Get-Tpm -ErrorAction SilentlyContinue; if ($tpm) { if ($tpm.TpmPresent) { Write-Host 'TPM_PRESENT' } else { Write-Host 'TPM_ABSENT' } } else { Write-Host 'TPM_UNKNOWN' } } catch { Write-Host 'TPM_UNKNOWN' }" > "%temp%\tpm_status.txt"
-set /p tpm_status=<"%temp%\tpm_status.txt"
+if not defined mobo_manufacturer set "mobo_manufacturer=Unknown"
+if not defined mobo_model set "mobo_model=Motherboard"
+if not defined bios_version set "bios_version=Unknown"
+if not defined cpu_name set "cpu_name=Unknown Processor"
 
-powershell -Command "try { $sb = Confirm-SecureBootUEFI -ErrorAction SilentlyContinue; if ($sb) { Write-Host 'SECUREBOOT_ENABLED' } else { Write-Host 'SECUREBOOT_DISABLED' } } catch { Write-Host 'SECUREBOOT_UNSUPPORTED' }" > "%temp%\sb_status.txt"
-set /p secureboot_status=<"%temp%\sb_status.txt"
+set "tpm_status=TPM_ABSENT"
+set "secureboot_status=SECUREBOOT_UNSUPPORTED"
+set "virt_status=VIRT_DISABLED"
+set "hvci_status=HVCI_DISABLED"
+set "bitlocker_status=BITLOCKER_UNAVAILABLE"
 
-powershell -Command "if ((Get-WmiObject -Class Win32_Processor).VirtualizationFirmwareEnabled -eq $true) { Write-Host 'VIRT_ENABLED' } else { Write-Host 'VIRT_DISABLED' }" > "%temp%\virt_status.txt"
-set /p virt_status=<"%temp%\virt_status.txt"
+reg query "HKLM\SYSTEM\CurrentControlSet\Enum\ACPI\MSFT0101" >nul 2>&1 && set "tpm_status=TPM_PRESENT"
+if "!tpm_status!"=="TPM_ABSENT" reg query "HKLM\SYSTEM\CurrentControlSet\Enum\ACPI\PNP0C31" >nul 2>&1 && set "tpm_status=TPM_PRESENT"
+if "!tpm_status!"=="TPM_ABSENT" reg query "HKLM\SYSTEM\CurrentControlSet\Services\TPM" /v Start 2>nul | findstr /i "0x3" >nul && set "tpm_status=TPM_PRESENT"
 
-powershell -Command "if (Get-BitLockerVolume -ErrorAction SilentlyContinue) { Write-Host 'BITLOCKER_AVAILABLE' } else { Write-Host 'BITLOCKER_UNAVAILABLE' }" > "%temp%\bitlocker_status.txt"
-set /p bitlocker_status=<"%temp%\bitlocker_status.txt"
-chcp 65001 >nul
+for /f "tokens=3" %%a in ('reg query "HKLM\SYSTEM\CurrentControlSet\Control\SecureBoot\State" /v UEFISecureBootEnabled 2^>nul ^| findstr /i "UEFISecureBootEnabled"') do (
+    if "%%a"=="0x1" set "secureboot_status=SECUREBOOT_ENABLED"
+    if "%%a"=="0x0" set "secureboot_status=SECUREBOOT_DISABLED"
+)
+
+for /f "tokens=3" %%a in ('reg query "HKLM\SYSTEM\CurrentControlSet\Control\DeviceGuard\Scenarios\HypervisorEnforcedCodeIntegrity" /v Enabled 2^>nul ^| findstr /i "Enabled"') do (
+    if "%%a"=="0x1" set "hvci_status=HVCI_ENABLED"
+    if "%%a"=="0x0" set "hvci_status=HVCI_DISABLED"
+)
+
+for /f "tokens=1,2 delims==" %%A in ('powershell -NoProfile -Command "try { if ((Get-CimInstance Win32_Processor -ErrorAction SilentlyContinue).VirtualizationFirmwareEnabled) { 'VIRT=VIRT_ENABLED' } else { 'VIRT=VIRT_DISABLED' } } catch { 'VIRT=VIRT_DISABLED' }; try { if ((Get-Service -Name BDESVC -ErrorAction SilentlyContinue).Status -eq 'Running') { 'BIT=BITLOCKER_AVAILABLE' } else { 'BIT=BITLOCKER_UNAVAILABLE' } } catch { 'BIT=BITLOCKER_UNAVAILABLE' }" 2^>nul') do (
+    if "%%A"=="VIRT" set "virt_status=%%B"
+    if "%%A"=="BIT" set "bitlocker_status=%%B"
+)
+
+if "!tpm_status!"=="TPM_ABSENT" (
+    powershell -NoProfile -Command "if ((Get-CimInstance Win32_PnPEntity -Filter \"PNPClass = 'SecurityDevices'\" -ErrorAction SilentlyContinue) | Where-Object { $_.Name -like '*Trusted Platform Module*' }) { exit 0 } else { exit 1 }" >nul 2>&1
+    if !errorlevel! equ 0 set "tpm_status=TPM_PRESENT"
+)
+
+if /i "!tpm_status!"=="TPM_PRESENT" (
+    set "tpm_label=2.0 Active [OK]"
+) else (
+    set "tpm_label=Not Detected [Action Needed]"
+)
+
+if /i "!secureboot_status!"=="SECUREBOOT_ENABLED" (
+    set "sb_label=Enabled [OK]"
+) else if /i "!secureboot_status!"=="SECUREBOOT_DISABLED" (
+    set "sb_label=Disabled in BIOS"
+) else (
+    set "sb_label=Unsupported / Legacy"
+)
+
+if /i "!bitlocker_status!"=="BITLOCKER_AVAILABLE" (
+    set "enc_label=Active / Ready [OK]"
+) else (
+    set "enc_label=Not Configured"
+)
+
+if /i "!virt_status!"=="VIRT_ENABLED" (
+    set "virt_label=Enabled [OK]"
+) else (
+    set "virt_label=Disabled in BIOS"
+)
+
+if /i "!hvci_status!"=="HVCI_ENABLED" (
+    set "hvci_label=Enabled (HVCI) [OK]"
+) else (
+    set "hvci_label=Disabled"
+)
+
+set "cpu_sec_label=Virtualization [OK]"
+echo !cpu_name! | findstr /i "Intel" >nul && set "cpu_sec_label=Intel VT-x [OK]"
+echo !cpu_name! | findstr /i "AMD" >nul && set "cpu_sec_label=AMD SVM [OK]"
+if /i "!virt_status!"=="VIRT_DISABLED" (
+    echo !cpu_name! | findstr /i "Intel" >nul && set "cpu_sec_label=Intel VT-x [Disabled]"
+    echo !cpu_name! | findstr /i "AMD" >nul && set "cpu_sec_label=AMD SVM [Disabled]"
+)
+
+set "_PAD79=                                                                               "
+set "_PAD39=                                       "
+
+set "_s1=  Motherboard: !mobo_manufacturer! !mobo_model!"
+set "_s1=!_s1!!_PAD79!"
+set "_s2=  BIOS Version: !bios_version!"
+set "_s2=!_s2!!_PAD79!"
+set "_s3=  CPU: !cpu_name!"
+set "_s3=!_s3!!_PAD79!"
+
+set "_col1_1=  TPM Status: !tpm_label!"
+set "_col1_1=!_col1_1!!_PAD39!"
+set "_col2_1=  Secure Boot: !sb_label!"
+set "_col2_1=!_col2_1!!_PAD39!"
+
+set "_col1_2=  Hardware Encryption: !enc_label!"
+set "_col1_2=!_col1_2!!_PAD39!"
+set "_col2_2=  Virtualization: !virt_label!"
+set "_col2_2=!_col2_2!!_PAD39!"
+
+set "_col1_3=  Memory Integrity (HVCI): !hvci_label!"
+set "_col1_3=!_col1_3!!_PAD39!"
+set "_col2_3=  CPU Security: !cpu_sec_label!"
+set "_col2_3=!_col2_3!!_PAD39!"
 
 cls
 call :SetupConsole
@@ -8232,126 +8409,85 @@ echo.
 echo %c%╔═══════════════════════════════════════════════════════════════════════════════╗
 echo ║                           HARDWARE SECURITY STATUS                            ║
 echo ╠═══════════════════════════════════════════════════════════════════════════════╣%u%
-echo %c%║ Motherboard   %mobo_manufacturer% %mobo_model%
-echo ║ BIOS Version   %bios_version%
-echo ║ CPU   %cpu_name%
+echo %c%║!_s1:~0,79!║%u%
+echo %c%║!_s2:~0,79!║%u%
+echo %c%║!_s3:~0,79!║%u%
 echo %c%║                                                                               ║%u%
-
-set "line="
-if /i "%tpm_status%"=="TPM_PRESENT" (
-    set "line=%c%║ TPM Status   2.0 Enabled %green%✓%c%        │ "
-) else (
-    if /i "%tpm_status%"=="TPM_ABSENT" (
-        set "line=%c%║ TPM Status   Not Found %red%✗%c%          │ "
-    ) else (
-        set "line=%c%║ TPM Status   Unknown %yellow%?%c%            │ "
-    )
-)
-
-if /i "%secureboot_status%"=="SECUREBOOT_ENABLED" (
-    set "line=%line%Secure Boot   Enabled %green%✓%u%"
-) else (
-    if /i "%secureboot_status%"=="SECUREBOOT_DISABLED" (
-        set "line=%line%Secure Boot   Disabled %red%⚠️%u%"
-    ) else (
-        set "line=%line%Secure Boot   Unsupported %yellow%?%u%"
-    )
-)
-echo %line%
-
-echo %c%║                                                                               ║%u%
-
-set "line="
-if /i "%bitlocker_status%"=="BITLOCKER_AVAILABLE" (
-    set "line=%c%║ Hardware Encryption   Available %green%✓%c%  │ "
-) else (
-    set "line=%c%║ Hardware Encryption   Unavailable %red%✗%c% │ "
-)
-if /i "%virt_status%"=="VIRT_ENABLED" (
-    set "line=%line%Virtualization   Enabled %green%✓%u%"
-) else (
-    set "line=%line%Virtualization   Disabled %red%✗%u%"
-)
-echo %line%
-
-echo %c%║                                                                               ║
-echo ║ Memory Protection   Checking...     │ Intel TXT/AMD SVM   Checking...          ║
-echo ╚═══════════════════════════════════════════════════════════════════════════════╝%u%
-echo.
-echo %c%╔═══════════════════════════════════════════════════════════════════════════════╗
-echo ║                        ANTI-CHEAT COMPATIBILITY ANALYSIS                     ║
-echo ╠═══════════════════════════════════════════════════════════════════════════════╣%u%
-
-set "valorant_status="
-if /i "%tpm_status%"=="TPM_PRESENT" (
-    if /i "%secureboot_status%"=="SECUREBOOT_ENABLED" (
-        set "valorant_status=%c%║ • Valorant (Vanguard)   Compatible %green%✓%c%                                       ║%u%"
-    ) else (
-        set "valorant_status=%c%║ • Valorant (Vanguard)   TPM %green%✓%c% Secure Boot %red%⚠️ NEEDS ENABLING%c%        ║%u%"
-    )
-) else (
-    set "valorant_status=%c%║ • Valorant (Vanguard)   TPM %red%✗%c% Secure Boot %red%✗%c% HARDWARE SETUP REQUIRED%c% ║%u%"
-)
-echo %valorant_status%
-
-set "cod_status="
-if /i "%tpm_status%"=="TPM_PRESENT" (
-    if /i "%secureboot_status%"=="SECUREBOOT_ENABLED" (
-        set "cod_status=%c%║ • Call of Duty (Ricochet)   Compatible %green%✓%c%                                   ║%u%"
-    ) else (
-        set "cod_status=%c%║ • Call of Duty (Ricochet)   TPM %green%✓%c% Secure Boot %red%⚠️ NEEDS ENABLING%c%    ║%u%"
-    )
-) else (
-    set "cod_status=%c%║ • Call of Duty (Ricochet)   TPM %red%✗%c% Secure Boot %red%✗%c% SETUP REQUIRED%c%    ║%u%"
-)
-echo %cod_status%
-
-set "faceit_status="
-if /i "%tpm_status%"=="TPM_PRESENT" (
-    if /i "%secureboot_status%"=="SECUREBOOT_ENABLED" (
-        set "faceit_status=%c%║ • FACEIT Anti-Cheat   Compatible %green%✓%c%                                         ║%u%"
-    ) else (
-        set "faceit_status=%c%║ • FACEIT Anti-Cheat   TPM %green%✓%c% Secure Boot %red%⚠️ NEEDS ENABLING%c%          ║%u%"
-    )
-) else (
-    set "faceit_status=%c%║ • FACEIT Anti-Cheat   TPM %red%✗%c% Secure Boot %red%✗%c% HARDWARE SETUP REQUIRED%c% ║%u%"
-)
-echo %faceit_status%
-
-echo %c%║ • Easy Anti-Cheat   Compatible %green%✓%c%                                           ║%u%
-
-echo %c%║ • BattlEye   Compatible %green%✓%c%                                                  ║%u%
-
+echo %c%║!_col1_1:~0,39!│!_col2_1:~0,39!║%u%
+echo %c%║!_col1_2:~0,39!│!_col2_2:~0,39!║%u%
+echo %c%║!_col1_3:~0,39!│!_col2_3:~0,39!║%u%
 echo %c%╚═══════════════════════════════════════════════════════════════════════════════╝%u%
 echo.
-echo %c%╔═══════════════════════════════════════════════════════════════════════════════╗%u%
+echo %c%╔═══════════════════════════════════════════════════════════════════════════════╗
+echo ║                        ANTI-CHEAT COMPATIBILITY ANALYSIS                      ║
+echo ╠═══════════════════════════════════════════════════════════════════════════════╣%u%
 
-if /i "%mobo_manufacturer%"=="ASUSTeK COMPUTER INC." (
-    echo %c%║                        ASUS BIOS CONFIGURATION GUIDE                         ║%u%
-    call :ShowASUSGuide
-) else if /i "%mobo_manufacturer%"=="MSI" (
-    echo %c%║                          MSI BIOS CONFIGURATION GUIDE                         ║%u%
-    call :ShowMSIGuide
-) else if /i "%mobo_manufacturer%"=="Gigabyte Technology Co., Ltd." (
-    echo %c%║                      GIGABYTE BIOS CONFIGURATION GUIDE                       ║%u%
-    call :ShowGigabyteGuide
-) else if /i "%mobo_manufacturer%"=="ASRock" (
-    echo %c%║                       ASROCK BIOS CONFIGURATION GUIDE                       ║%u%
-    call :ShowASRockGuide
+if /i "!tpm_status!"=="TPM_PRESENT" (
+    if /i "!secureboot_status!"=="SECUREBOOT_ENABLED" (
+        set "_ac_vanguard=  • Valorant (Vanguard): Fully Compatible [OK]"
+        set "_ac_ricochet=  • Call of Duty (Ricochet): Fully Compatible [OK]"
+        set "_ac_faceit=  • FACEIT Anti-Cheat: Fully Compatible [OK]"
+    ) else (
+        set "_ac_vanguard=  • Valorant (Vanguard): TPM [OK] | Secure Boot [Action Needed]"
+        set "_ac_ricochet=  • Call of Duty (Ricochet): TPM [OK] | Secure Boot [Action Needed]"
+        set "_ac_faceit=  • FACEIT Anti-Cheat: TPM [OK] | Secure Boot [Action Needed]"
+    )
 ) else (
-    echo %c%║                       GENERIC BIOS CONFIGURATION GUIDE                       ║%u%
-    call :ShowGenericGuide
+    if /i "!secureboot_status!"=="SECUREBOOT_ENABLED" (
+        set "_ac_vanguard=  • Valorant (Vanguard): TPM 2.0 [Action Needed] | Secure Boot [OK]"
+        set "_ac_ricochet=  • Call of Duty (Ricochet): TPM 2.0 [Action Needed] | Secure Boot [OK]"
+        set "_ac_faceit=  • FACEIT Anti-Cheat: TPM 2.0 [Action Needed] | Secure Boot [OK]"
+    ) else (
+        set "_ac_vanguard=  • Valorant (Vanguard): TPM 2.0 & Secure Boot [Hardware Setup Needed]"
+        set "_ac_ricochet=  • Call of Duty (Ricochet): TPM 2.0 & Secure Boot [Setup Needed]"
+        set "_ac_faceit=  • FACEIT Anti-Cheat: TPM 2.0 & Secure Boot [Hardware Setup Needed]"
+    )
+)
+set "_ac_eac=  • Easy Anti-Cheat: Fully Compatible [OK]"
+set "_ac_be=  • BattlEye: Fully Compatible [OK]"
+
+set "_ac_vanguard=!_ac_vanguard!!_PAD79!"
+set "_ac_ricochet=!_ac_ricochet!!_PAD79!"
+set "_ac_faceit=!_ac_faceit!!_PAD79!"
+set "_ac_eac=!_ac_eac!!_PAD79!"
+set "_ac_be=!_ac_be!!_PAD79!"
+
+echo %c%║!_ac_vanguard:~0,79!║%u%
+echo %c%║!_ac_ricochet:~0,79!║%u%
+echo %c%║!_ac_faceit:~0,79!║%u%
+echo %c%║!_ac_eac:~0,79!║%u%
+echo %c%║!_ac_be:~0,79!║%u%
+echo %c%╚═══════════════════════════════════════════════════════════════════════════════╝%u%
+echo.
+
+if /i "!tpm_status!"=="TPM_PRESENT" (
+    if /i "!secureboot_status!"=="SECUREBOOT_ENABLED" (
+        echo %c%╔═══════════════════════════════════════════════════════════════════════════════╗
+        echo ║                      ANTI-CHEAT HARDWARE STATUS: READY                        ║
+        echo ╠═══════════════════════════════════════════════════════════════════════════════╣
+        echo ║  • TPM 2.0 is active and recognized by Windows                                ║
+        echo ║  • UEFI Secure Boot is active and enforcing kernel integrity                  ║
+        echo ║  • Vanguard, Ricochet, and FACEIT anti-cheat prerequisites are fully met      ║
+        echo ║  • No BIOS changes are required on this system                                ║
+        echo ╚═══════════════════════════════════════════════════════════════════════════════╝%u%
+    ) else (
+        echo %c%╔═══════════════════════════════════════════════════════════════════════════════╗%u%
+        call :DispatchBIOSGuide
+    )
+) else (
+    echo %c%╔═══════════════════════════════════════════════════════════════════════════════╗%u%
+    call :DispatchBIOSGuide
 )
 
 echo.
 echo %c%╔═══════════════════════════════════════════════════════════════════════════════╗
-echo ║                         ADVANCED SECURITY OPTIONS                            ║
+echo ║                         ADVANCED SECURITY OPTIONS                             ║
 echo ╠═══════════════════════════════════════════════════════════════════════════════╣
-echo ║ [1] Enable Windows Hello PIN/Biometrics    [2] Configure BitLocker Encryption║
-echo ║ [3] Enable Windows Credential Guard        [4] Configure Device Guard        ║
-echo ║ [5] Enable Core Isolation Memory Integrity [6] Windows Defender System Guard ║
-echo ║ [7] Enable Hypervisor Code Integrity       [8] Smart Card Authentication     ║
-echo ║ [9] Security Compliance Report             [0] Automated Security Setup      ║
+echo ║ [1] Enable Windows Hello PIN/Biometrics    [2] Configure BitLocker Encryption ║
+echo ║ [3] Enable Windows Credential Guard        [4] Configure Device Guard         ║
+echo ║ [5] Enable Core Isolation Memory Integrity [6] Windows Defender System Guard  ║
+echo ║ [7] Enable Hypervisor Code Integrity       [8] Smart Card Authentication      ║
+echo ║ [9] Security Compliance Report             [0] Automated Security Setup       ║
 echo ╚═══════════════════════════════════════════════════════════════════════════════╝%u%
 echo.
 echo %c%              [R] Refresh Status   [B] Back to Hardware Menu   [X] Exit%u%
@@ -8415,10 +8551,10 @@ if /i "%tpm_status%"=="TPM_PRESENT" (
         echo %c%BitLocker status%u%
         manage-bde -status
     ) else if "%bl_choice%"=="5" (
-        echo %c%Backing up recovery key (displaying protector info)...%u%
+        echo %c%Backing up recovery key - displaying protector info%u%
         manage-bde -protectors -get C:
     ) else (
-        echo %yellow%Invalid choice (BitLocker menu).%u%
+        echo %yellow%Invalid choice - BitLocker menu%u%
     )
 ) else (
     echo %red%✗ TPM not detected - BitLocker requires TPM 2.0%u%
@@ -8438,29 +8574,69 @@ echo %c%╔═══════════════════════
 echo ║                            WINDOWS HELLO SETUP                               ║
 echo ╚═══════════════════════════════════════════════════════════════════════════════╝%u%
 echo.
-echo %c%Configuring Windows Hello PIN and biometric authentication...%u%
+echo %c%Configuring and restoring Windows Hello PIN and biometric authentication...%u%
 echo.
 
+net session >nul 2>&1
+if %errorlevel% neq 0 (
+    echo %yellow%[NOTE] Running without Administrator privileges.%u%
+    echo %yellow%For full policy and service restoration, run Batlez Tweaks as Administrator.%u%
+    echo.
+)
+
+echo %c%• Restoring Windows Hello & PIN Credential Providers...%u%
+reg delete "HKLM\SOFTWARE\Microsoft\Windows\CurrentVersion\Authentication\Credential Providers\{cb82ea12-9f71-446d-89e1-8d0924e1256e}" /v "Disabled" /f >nul 2>&1
+reg add "HKLM\SOFTWARE\Microsoft\Windows\CurrentVersion\Authentication\Credential Providers\{cb82ea12-9f71-446d-89e1-8d0924e1256e}" /v "Disabled" /t REG_DWORD /d 0 /f >nul 2>&1
+reg delete "HKLM\SOFTWARE\Microsoft\Windows\CurrentVersion\Authentication\Credential Providers\{D6886603-9D2F-4EB2-B667-1971041FA96B}" /v "Disabled" /f >nul 2>&1
+reg delete "HKLM\SOFTWARE\Microsoft\Windows\CurrentVersion\Authentication\Credential Providers\{BEC09223-B018-416D-A0AC-523971B639F5}" /v "Disabled" /f >nul 2>&1
+reg delete "HKLM\SOFTWARE\Microsoft\Windows\CurrentVersion\Authentication\Credential Providers\{8AF662BF-65A0-4D0A-A540-A338A999D36F}" /v "Disabled" /f >nul 2>&1
+echo %c%  * PIN and biometric credential providers enabled%u%
+
+echo.
+echo %c%• Restoring Windows Hello & Sign-in Policies...%u%
+reg add "HKLM\SOFTWARE\Policies\Microsoft\Biometrics" /v "Enabled" /t REG_DWORD /d 1 /f >nul 2>&1
+reg add "HKLM\SOFTWARE\Policies\Microsoft\Biometrics\Credential Provider" /v "Enabled" /t REG_DWORD /d 1 /f >nul 2>&1
+reg add "HKLM\SOFTWARE\Policies\Microsoft\Windows\System" /v "AllowDomainPINLogon" /t REG_DWORD /d 1 /f >nul 2>&1
+reg add "HKLM\SOFTWARE\Policies\Microsoft\PassportForWork" /v "Enabled" /t REG_DWORD /d 1 /f >nul 2>&1
+reg add "HKLM\SOFTWARE\Policies\Microsoft\PassportForWork" /v "DisablePostLogonProvisioning" /t REG_DWORD /d 0 /f >nul 2>&1
+reg add "HKLM\SOFTWARE\Microsoft\PolicyManager\default\Settings\AllowSignInOptions" /v "value" /t REG_DWORD /d 1 /f >nul 2>&1
+echo %c%  * Sign-in options and biometric policies restored%u%
+
+echo.
+echo %c%• Configuring Windows Hello Services...%u%
+sc config NgcSvc start= demand >nul 2>&1
+sc config NgcCtnrSvc start= demand >nul 2>&1
+sc config WbioSrvc start= demand >nul 2>&1
+sc config VaultSvc start= demand >nul 2>&1
+sc config KeyIso start= demand >nul 2>&1
+net start NgcSvc >nul 2>&1
+net start NgcCtnrSvc >nul 2>&1
+echo %c%  * Windows Hello and credential services running%u%
+
+echo.
+echo %c%• Checking Biometric Hardware...%u%
 chcp 437 >nul
-powershell -Command "if (Get-WmiObject -Class Win32_BiometricDevice) { Write-Host 'BIOMETRIC_AVAILABLE' } else { Write-Host 'BIOMETRIC_UNAVAILABLE' }" > "%temp%\bio_status.txt"
+powershell -NoProfile -Command "if (Get-CimInstance Win32_BiometricDevice -ErrorAction SilentlyContinue) { Write-Host 'BIOMETRIC_AVAILABLE' } else { Write-Host 'BIOMETRIC_UNAVAILABLE' }" > "%temp%\bio_status.txt"
 chcp 65001 >nul
 set /p bio_status=<"%temp%\bio_status.txt"
 
 if "%bio_status%"=="BIOMETRIC_AVAILABLE" (
-    echo %c%✓ Biometric devices detected%u%
+    echo %c%  * Biometric device detected ^(Fingerprint / IR Camera^)%u%
+    echo %c%  * Opening Sign-in Options in Windows Settings...%u%
+    start ms-settings:signinoptions
 ) else (
-    echo %yellow%⚠️ No biometric devices detected - PIN setup only%u%
+    echo %yellow%  * No biometric sensor detected - Windows Hello PIN setup ready%u%
+    echo %c%  * Opening Sign-in Options in Windows Settings...%u%
+    start ms-settings:signinoptions
 )
 
 echo.
-echo %c%Opening Windows Hello setup...%u%
-start ms-settings:signinoptions-launchfaceenrollment
-timeout /t 3 >nul
-start ms-settings:signinoptions
-
+echo %c%╔═══════════════════════════════════════════════════════════════════════════════╗
+echo ║ Windows Hello and PIN options have been restored and opened in Settings.     ║
+echo ╚═══════════════════════════════════════════════════════════════════════════════╝%u%
 echo.
-echo %c%Windows Hello setup opened in Settings app.%u%
-echo %c%Follow the on-screen instructions to configure PIN and biometrics.%u%
+echo %c%Follow the on-screen instructions in Settings to configure PIN / Sign-in.%u%
+echo %c%(Note: Local accounts require a Windows password before adding a PIN).%u%
 echo.
 echo %c%Press any key to return to Hardware Security Center...%u%
 pause >nul
@@ -8569,36 +8745,36 @@ echo ╠════════════════════════
 
 if /i "%tpm_status%"=="TPM_PRESENT" (
     if /i "%secureboot_status%"=="SECUREBOOT_ENABLED" (
-        echo %c%║ • Windows 11 Ready %green%✓%c% (TPM 2.0 + Secure Boot + UEFI)                       ║%u%
+        echo %c%║ • Windows 11 Ready %green%✓%c% - TPM 2.0 + Secure Boot + UEFI                       ║%u%
     ) else (
-        echo %c%║ • Windows 11 Ready %yellow%⚠️%c% (TPM ✓, Secure Boot needed)                        ║%u%
+        echo %c%║ • Windows 11 Ready %yellow%⚠️%c% - TPM ✓, Secure Boot needed                        ║%u%
     )
 ) else (
-    echo %c%║ • Windows 11 Ready %red%✗%c% (TPM and Secure Boot needed)                         ║%u%
+    echo %c%║ • Windows 11 Ready %red%✗%c% - TPM and Secure Boot needed                         ║%u%
 )
 
-echo %c%║ • Enterprise Ready %yellow%⚠️%c% (Additional configuration recommended)               ║%u%
+echo %c%║ • Enterprise Ready %yellow%⚠️%c% - Additional configuration recommended               ║%u%
 
 if /i "%tpm_status%"=="TPM_PRESENT" (
     if /i "%secureboot_status%"=="SECUREBOOT_ENABLED" (
-        echo %c%║ • Gaming Anti-Cheat Ready %green%✓%c% (Modern anti-cheat compatible)              ║%u%
+        echo %c%║ • Gaming Anti-Cheat Ready %green%✓%c% - Modern anti-cheat compatible              ║%u%
     ) else (
-        echo %c%║ • Gaming Anti-Cheat Ready %yellow%⚠️%c% (Secure Boot needed for some games)       ║%u%
+        echo %c%║ • Gaming Anti-Cheat Ready %yellow%⚠️%c% - Secure Boot needed for some games       ║%u%
     )
 ) else (
-    echo %c%║ • Gaming Anti-Cheat Ready %red%✗%c% (TPM and Secure Boot required)               ║%u%
+    echo %c%║ • Gaming Anti-Cheat Ready %red%✗%c% - TPM and Secure Boot required               ║%u%
 )
 
 if /i "%tpm_status%"=="TPM_PRESENT" (
-    echo %c%║ • BitLocker Ready %green%✓%c% (TPM 2.0 available)                                    ║%u%
+    echo %c%║ • BitLocker Ready %green%✓%c% - TPM 2.0 available                                    ║%u%
 ) else (
-    echo %c%║ • BitLocker Ready %red%✗%c% (TPM 2.0 required)                                   ║%u%
+    echo %c%║ • BitLocker Ready %red%✗%c% - TPM 2.0 required                                   ║%u%
 )
 
 if /i "%virt_status%"=="VIRT_ENABLED" (
-    echo %c%║ • VBS Ready %green%✓%c% (Virtualization enabled)                                     ║%u%
+    echo %c%║ • VBS Ready %green%✓%c% - Virtualization enabled                                     ║%u%
 ) else (
-    echo %c%║ • VBS Ready %red%✗%c% (Virtualization support needed)                            ║%u%
+    echo %c%║ • VBS Ready %red%✗%c% - Virtualization support needed                            ║%u%
 )
 
 echo %c%╚═══════════════════════════════════════════════════════════════════════════════╝%u%
@@ -8694,6 +8870,77 @@ echo ║ To Enable Secure Boot (Generic)                                        
 echo ║ 1. Look for Boot, Security, or Authentication sections                      ║
 echo ║ 2. Find "Secure Boot" option                                                ║
 echo ║ 3. Set to "Enabled" and ensure UEFI boot mode                              ║
+echo ╚═══════════════════════════════════════════════════════════════════════════════╝%u%
+goto :eof
+
+:DispatchBIOSGuide
+echo !mobo_manufacturer! | findstr /i "ASUS" >nul 2>&1 && (
+    echo %c%║                        ASUS BIOS CONFIGURATION GUIDE                         ║%u%
+    call :ShowASUSGuide
+) || echo !mobo_manufacturer! | findstr /i "MSI" >nul 2>&1 && (
+    echo %c%║                          MSI BIOS CONFIGURATION GUIDE                         ║%u%
+    call :ShowMSIGuide
+) || echo !mobo_manufacturer! | findstr /i "Gigabyte" >nul 2>&1 && (
+    echo %c%║                      GIGABYTE BIOS CONFIGURATION GUIDE                       ║%u%
+    call :ShowGigabyteGuide
+) || echo !mobo_manufacturer! | findstr /i "ASRock" >nul 2>&1 && (
+    echo %c%║                       ASROCK BIOS CONFIGURATION GUIDE                       ║%u%
+    call :ShowASRockGuide
+) || echo !mobo_manufacturer! | findstr /i "HP Hewlett" >nul 2>&1 && (
+    echo %c%║                         HP BIOS CONFIGURATION GUIDE                          ║%u%
+    call :ShowHPGuide
+) || echo !mobo_manufacturer! | findstr /i "Dell" >nul 2>&1 && (
+    echo %c%║                        DELL BIOS CONFIGURATION GUIDE                         ║%u%
+    call :ShowDellGuide
+) || echo !mobo_manufacturer! | findstr /i "Lenovo" >nul 2>&1 && (
+    echo %c%║                       LENOVO BIOS CONFIGURATION GUIDE                        ║%u%
+    call :ShowLenovoGuide
+) || (
+    echo %c%║                       GENERIC BIOS CONFIGURATION GUIDE                       ║%u%
+    call :ShowGenericGuide
+)
+goto :eof
+
+:ShowHPGuide
+echo %c%╠═══════════════════════════════════════════════════════════════════════════════╣
+echo ║ To Enable TPM 2.0 on HP                                                      ║
+echo ║ 1. Restart and tap ESC repeatedly on power on to open Startup Menu          ║
+echo ║ 2. Press F10 to enter BIOS Setup                                             ║
+echo ║ 3. Go to Security → TPM Device: set to "Available"                          ║
+echo ║ 4. Set TPM State to "Enabled" (or enable Intel PTT / AMD fTPM)               ║
+echo ║                                                                               ║
+echo ║ To Enable Secure Boot on HP                                                  ║
+echo ║ 1. In BIOS Setup, go to Advanced or Boot Options                             ║
+echo ║ 2. Set "Secure Boot" to "Enabled" and "Legacy Support" to "Disabled"         ║
+echo ║ 3. Press F10 to Save and Exit, then confirm 4-digit code if prompted         ║
+echo ╚═══════════════════════════════════════════════════════════════════════════════╝%u%
+goto :eof
+
+:ShowDellGuide
+echo %c%╠═══════════════════════════════════════════════════════════════════════════════╣
+echo ║ To Enable TPM 2.0 on Dell                                                    ║
+echo ║ 1. Restart and tap F2 repeatedly on power on to enter BIOS Setup              ║
+echo ║ 2. Expand Security → TPM 2.0 Security (or Intel Platform Trust / PTT)        ║
+echo ║ 3. Check "TPM On" and "Enabled"                                              ║
+echo ║                                                                               ║
+echo ║ To Enable Secure Boot on Dell                                                ║
+echo ║ 1. Go to Secure Boot → Secure Boot Enable                                    ║
+echo ║ 2. Check "Enabled" and ensure Boot List Option is set to "UEFI"              ║
+echo ║ 3. Click Apply and Exit                                                      ║
+echo ╚═══════════════════════════════════════════════════════════════════════════════╝%u%
+goto :eof
+
+:ShowLenovoGuide
+echo %c%╠═══════════════════════════════════════════════════════════════════════════════╣
+echo ║ To Enable TPM 2.0 on Lenovo                                                  ║
+echo ║ 1. Restart and tap F1 (or Enter then F1) to enter BIOS Setup                 ║
+echo ║ 2. Go to Security → Security Chip                                            ║
+echo ║ 3. Set "Security Chip" to "Enabled" and Type to "Intel PTT" or "AMD fTPM"    ║
+echo ║                                                                               ║
+echo ║ To Enable Secure Boot on Lenovo                                              ║
+echo ║ 1. Go to Security → Secure Boot                                              ║
+echo ║ 2. Set "Secure Boot" to "Enabled"                                            ║
+echo ║ 3. Press F10 to Save and Exit                                                ║
 echo ╚═══════════════════════════════════════════════════════════════════════════════╝%u%
 goto :eof
 
@@ -9201,6 +9448,10 @@ echo %c%• Configure power management for performance%u%
 echo %c%• Block AMD telemetry domains%u%
 echo %c%• Safe registry optimizations only%u%
 echo.
+echo %red%Note:%u% %c%This wizard provides interactive driver debloating (services, telemetry,%u%
+echo %c%scheduled tasks, domain blocking). Low-level GPU registry tweaks (ReBAR, DXVA,%u%
+echo %c%amdkmdag) are in GPU Performance Menu → Option 2 (AMD Radeon).%u%
+echo.
 echo %red%%underline%AMD Notice:%u%
 echo %c%This script uses safe optimization methods only.%u%
 echo %c%For complete software removal, use AMD Cleanup Utility.%u%
@@ -9314,10 +9565,10 @@ pause >nul
 goto HardwareMenu
 
 :AMD_Step1_DetectGPU
-echo %c%[1/7] Detecting AMD GPU...%u%
+echo %c%Step 1/7: Detecting AMD GPU%u%
 set "AMD_GPU_FOUND=false"
-for /f "tokens=2 delims==" %%i in ('wmic path win32_VideoController where "Name like '%%AMD%%' or Name like '%%Radeon%%' or Name like '%%RX %%'" get Name /value 2^>nul') do (
-    if not "%%i"=="" (
+for /f "tokens=*" %%a in ('reg query "HKLM\SYSTEM\CurrentControlSet\Control\Class\{4d36e968-e325-11ce-bfc1-08002be10318}" 2^>nul ^| findstr /r "\\00[0-9][0-9]$"') do (
+    for /f "tokens=2*" %%h in ('reg query "%%a" /v DriverDesc 2^>nul ^| findstr /i "AMD Radeon RX"') do (
         echo %c%  → Found: %%i%u%
         set "AMD_GPU_FOUND=true"
     )
@@ -9330,7 +9581,7 @@ goto :eof
 :AMD_Step2_DisableServices
 echo %c%[2/7] Managing AMD services...%u%
 if "%DISABLE_AMD_SERVICES%"=="true" (
-    set "AMD_SERVICES=AMD Crash Defender Service,AMD External Events Utility,AMD Log Utility"
+    set "AMD_SERVICES=AMD Crash Defender Service,AMD External Events Utility,AMD Log Utility,amdfendr,amdfendrmgr,amdlog"
     for %%s in (%AMD_SERVICES%) do (
         sc query "%%s" >nul 2>&1
         if !errorlevel! equ 0 (
@@ -9452,6 +9703,10 @@ echo %c%• Remove bloatware components and scheduled tasks%u%
 echo %c%• Configure power management for performance%u%
 echo %c%• Apply advanced driver optimizations%u%
 echo.
+echo %red%Note:%u% %c%This wizard provides interactive driver debloating (NVIDIA App, overlay,%u%
+echo %c%services, telemetry, tasks). Low-level GPU registry tweaks (Profile Inspector,%u%
+echo %c%preemption, DPC) are in GPU Performance Menu → Option 1 (NVIDIA).%u%
+echo.
 echo %red%%underline%NVIDIA Notice:%u%
 echo %c%You can choose what to keep and what to disable.%u%
 echo %c%Core optimizations will always be applied for better performance.%u%
@@ -9459,6 +9714,15 @@ echo.
 echo.
 choice /C YN /M "%c%Apply NVIDIA driver optimizations? (Y/N)%u%"
 if errorlevel 2 goto HardwareMenu
+
+net session >nul 2>&1
+if !errorlevel! neq 0 (
+    echo.
+    echo %orange%  NOTICE: Administrator privileges not detected.%u%
+    echo %orange%  Driver services, HKLM registry keys, and hosts file tweaks%u%
+    echo %orange%  require Administrator rights. Please run Batlez Tweaks as Admin.%u%
+    echo.
+)
 
 echo.
 echo %c%╔══════════════════════════════════════════════════════════════════════════════╗
@@ -9565,9 +9829,10 @@ goto HardwareMenu
 echo.
 echo %c%[1/12] Detecting NVIDIA Graphics Hardware...%u%
 set "NVIDIA_FOUND=false"
-wmic path Win32_VideoController get Name | findstr /i "NVIDIA" >nul 2>&1
-if %errorlevel%==0 (
-    set "NVIDIA_FOUND=true"
+for /f "tokens=*" %%a in ('reg query "HKLM\SYSTEM\CurrentControlSet\Control\Class\{4d36e968-e325-11ce-bfc1-08002be10318}" 2^>nul ^| findstr /r "\\00[0-9][0-9]$"') do (
+    reg query "%%a" /v DriverDesc 2>nul | findstr /i "NVIDIA" >nul && set "NVIDIA_FOUND=true"
+)
+if "%NVIDIA_FOUND%"=="true" (
     echo %c%  * NVIDIA GPU detected%u%
 ) else (
     echo %c%  * No NVIDIA GPU found%u%
@@ -9585,15 +9850,18 @@ set "servicesFound=false"
 
 echo %c%  * Checking for known NVIDIA services...%u%
 for %%S in (
-    nvcontainer
-    NVDisplay.Container
-    NvContainerLocalSystem
     NVDisplay.ContainerLocalSystem
-    NvTelemetryContainer
+    NVDisplay.Container
     nvdisplay.container
+    NvContainerLocalSystem
+    nvcontainer
+    NvTelemetryContainer
+    NvTmMon
+    NvTmRep
     GfExperienceService
     NVIDIAAppService
     NVIDIA.GeForceExperience.Service
+    FvSvc
     NvStreamSvc
     NVSvc
 ) do (
@@ -9601,39 +9869,51 @@ for %%S in (
         set "servicesFound=true"
         echo %c%    → Found service: %%S%u%
         
-        if /i "%%S"=="nvcontainer" set "TELEMETRY_SERVICES=!TELEMETRY_SERVICES! %%S" & echo %c%      * Categorized as: Telemetry/Container%u%
-        if /i "%%S"=="NVDisplay.Container" set "TELEMETRY_SERVICES=!TELEMETRY_SERVICES! %%S" & echo %c%      * Categorized as: Telemetry/Container%u%
-        if /i "%%S"=="NvContainerLocalSystem" set "TELEMETRY_SERVICES=!TELEMETRY_SERVICES! %%S" & echo %c%      * Categorized as: Telemetry/Container%u%
-        if /i "%%S"=="NVDisplay.ContainerLocalSystem" set "TELEMETRY_SERVICES=!TELEMETRY_SERVICES! %%S" & echo %c%      * Categorized as: Telemetry/Container%u%
-        if /i "%%S"=="NvTelemetryContainer" set "TELEMETRY_SERVICES=!TELEMETRY_SERVICES! %%S" & echo %c%      * Categorized as: Telemetry/Container%u%
-        if /i "%%S"=="nvdisplay.container" set "TELEMETRY_SERVICES=!TELEMETRY_SERVICES! %%S" & echo %c%      * Categorized as: Telemetry/Container%u%
+        if /i "%%S"=="NVDisplay.ContainerLocalSystem" set "ESSENTIAL_SERVICES=!ESSENTIAL_SERVICES! %%S" & echo %c%      * Categorized as: Essential Driver Service%u%
+        if /i "%%S"=="NVDisplay.Container" set "ESSENTIAL_SERVICES=!ESSENTIAL_SERVICES! %%S" & echo %c%      * Categorized as: Essential Driver Service%u%
+        if /i "%%S"=="nvdisplay.container" set "ESSENTIAL_SERVICES=!ESSENTIAL_SERVICES! %%S" & echo %c%      * Categorized as: Essential Driver Service%u%
+        if /i "%%S"=="NVSvc" set "ESSENTIAL_SERVICES=!ESSENTIAL_SERVICES! %%S" & echo %c%      * Categorized as: Essential Driver Service%u%
         
-        if /i "%%S"=="GfExperienceService" set "NVIDIA_APP_SERVICES=!NVIDIA_APP_SERVICES! %%S" & echo %c%      * Categorized as: NVIDIA App%u%
-        if /i "%%S"=="NVIDIAAppService" set "NVIDIA_APP_SERVICES=!NVIDIA_APP_SERVICES! %%S" & echo %c%      * Categorized as: NVIDIA App%u%
-        if /i "%%S"=="NVIDIA.GeForceExperience.Service" set "NVIDIA_APP_SERVICES=!NVIDIA_APP_SERVICES! %%S" & echo %c%      * Categorized as: NVIDIA App%u%
+        if /i "%%S"=="NvContainerLocalSystem" set "NVIDIA_APP_SERVICES=!NVIDIA_APP_SERVICES! %%S" & echo %c%      * Categorized as: NVIDIA App Service%u%
+        if /i "%%S"=="nvcontainer" set "NVIDIA_APP_SERVICES=!NVIDIA_APP_SERVICES! %%S" & echo %c%      * Categorized as: NVIDIA App Service%u%
+        if /i "%%S"=="GfExperienceService" set "NVIDIA_APP_SERVICES=!NVIDIA_APP_SERVICES! %%S" & echo %c%      * Categorized as: NVIDIA App Service%u%
+        if /i "%%S"=="NVIDIAAppService" set "NVIDIA_APP_SERVICES=!NVIDIA_APP_SERVICES! %%S" & echo %c%      * Categorized as: NVIDIA App Service%u%
+        if /i "%%S"=="NVIDIA.GeForceExperience.Service" set "NVIDIA_APP_SERVICES=!NVIDIA_APP_SERVICES! %%S" & echo %c%      * Categorized as: NVIDIA App Service%u%
+        if /i "%%S"=="FvSvc" set "NVIDIA_APP_SERVICES=!NVIDIA_APP_SERVICES! %%S" & echo %c%      * Categorized as: NVIDIA FrameView Service%u%
+        if /i "%%S"=="NvStreamSvc" set "NVIDIA_APP_SERVICES=!NVIDIA_APP_SERVICES! %%S" & echo %c%      * Categorized as: NVIDIA Streamer Service%u%
         
-        if /i "%%S"=="NVSvc" set "ESSENTIAL_SERVICES=!ESSENTIAL_SERVICES! %%S" & echo %c%      * Categorized as: Essential%u%
-        if /i "%%S"=="NvStreamSvc" set "ESSENTIAL_SERVICES=!ESSENTIAL_SERVICES! %%S" & echo %c%      * Categorized as: Essential%u%
+        if /i "%%S"=="NvTelemetryContainer" set "TELEMETRY_SERVICES=!TELEMETRY_SERVICES! %%S" & echo %c%      * Categorized as: Telemetry%u%
+        if /i "%%S"=="NvTmMon" set "TELEMETRY_SERVICES=!TELEMETRY_SERVICES! %%S" & echo %c%      * Categorized as: Telemetry%u%
+        if /i "%%S"=="NvTmRep" set "TELEMETRY_SERVICES=!TELEMETRY_SERVICES! %%S" & echo %c%      * Categorized as: Telemetry%u%
     )
 )
 
 echo %c%  * Scanning all services for NVIDIA references...%u%
-for /f "skip=1 tokens=2" %%S in ('sc query type= service state= all ^| findstr "SERVICE_NAME"') do (
-    echo %%S | findstr /i "nvidia\|nvcontainer\|nvdisplay\|geforce" >nul && (
-        set "servicesFound=true"
-        
-        echo !TELEMETRY_SERVICES! !NVIDIA_APP_SERVICES! !ESSENTIAL_SERVICES! | findstr /i "%%S" >nul || (
+for /f "skip=1 tokens=2" %%S in ('sc query type= service state= all 2^>nul ^| findstr "SERVICE_NAME"') do (
+    echo %%S | findstr /i "nvidia nvcontainer nvdisplay geforce" >nul 2>&1 && (
+        set "_isKnown=false"
+        for %%K in (!ESSENTIAL_SERVICES! !NVIDIA_APP_SERVICES! !TELEMETRY_SERVICES!) do (
+            if /i "%%S"=="%%K" set "_isKnown=true"
+        )
+        if "!_isKnown!"=="false" (
+            set "servicesFound=true"
             echo %c%    → Found additional NVIDIA service: %%S%u%
-            echo %%S | findstr /i "container\|telemetry\|local" >nul && (
+            echo %%S | findstr /i "telemetry" >nul 2>&1 && (
                 set "TELEMETRY_SERVICES=!TELEMETRY_SERVICES! %%S"
-                echo %c%      * Auto-categorized as: Telemetry/Container%u%
+                echo %c%      * Auto-categorized as: Telemetry%u%
+            ) || echo %%S | findstr /i "display" >nul 2>&1 && (
+                set "ESSENTIAL_SERVICES=!ESSENTIAL_SERVICES! %%S"
+                echo %c%      * Auto-categorized as: Essential Driver Service%u%
+            ) || (
+                set "NVIDIA_APP_SERVICES=!NVIDIA_APP_SERVICES! %%S"
+                echo %c%      * Auto-categorized as: NVIDIA App Service%u%
             )
         )
     )
 )
 
 echo %c%  * Checking running NVIDIA processes...%u%
-tasklist /svc | findstr /i "nvcontainer\|nvdisplay\|nvidia" >nul 2>&1 && (
+tasklist /svc 2>nul | findstr /i "nvcontainer nvdisplay nvidia" >nul 2>&1 && (
     echo %c%    → NVIDIA processes are currently running%u%
 )
 
@@ -9644,9 +9924,9 @@ if "%servicesFound%"=="false" (
     echo %c%  * Service discovery completed%u%
 )
 
-echo %c%  → Telemetry/Container: %TELEMETRY_SERVICES%%u%
-echo %c%  → App Services:       %NVIDIA_APP_SERVICES%%u%
 echo %c%  → Essential Services: %ESSENTIAL_SERVICES%%u%
+echo %c%  → App Services:       %NVIDIA_APP_SERVICES%%u%
+echo %c%  → Telemetry:          %TELEMETRY_SERVICES%%u%
 exit /b
 
 :Step3_StopServices
@@ -9654,27 +9934,31 @@ echo %c%[3/12] Stopping NVIDIA Services...%u%
 
 set "servicesStopped=false"
 
-for %%S in (%TELEMETRY_SERVICES%) do (
-    sc query "%%S" 2>nul | findstr /i "RUNNING" >nul && (
-        net stop "%%S" >nul 2>&1
-        if !errorlevel! equ 0 (
-            echo %c%  * Stopped telemetry service: %%S%u%
-            set "servicesStopped=true"
-        ) else (
-            echo %c%  * Failed to stop: %%S%u%
+if defined TELEMETRY_SERVICES (
+    for %%S in (%TELEMETRY_SERVICES%) do (
+        sc query "%%S" 2>nul | findstr /i "RUNNING" >nul 2>&1 && (
+            net stop "%%S" >nul 2>&1
+            if !errorlevel! equ 0 (
+                echo %c%  * Stopped telemetry service: %%S%u%
+                set "servicesStopped=true"
+            ) else (
+                echo %c%  * Failed to stop: %%S ^(Requires Administrator^)%u%
+            )
         )
     )
 )
 
 if "%DISABLE_NVIDIA_APP%"=="true" (
-    for %%S in (%NVIDIA_APP_SERVICES%) do (
-        sc query "%%S" 2>nul | findstr /i "RUNNING" >nul && (
-            net stop "%%S" >nul 2>&1
-            if !errorlevel! equ 0 (
-                echo %c%  * Stopped app service: %%S%u%
-                set "servicesStopped=true"
-            ) else (
-                echo %c%  * Failed to stop: %%S%u%
+    if defined NVIDIA_APP_SERVICES (
+        for %%S in (%NVIDIA_APP_SERVICES%) do (
+            sc query "%%S" 2>nul | findstr /i "RUNNING" >nul 2>&1 && (
+                net stop "%%S" >nul 2>&1
+                if !errorlevel! equ 0 (
+                    echo %c%  * Stopped app service: %%S%u%
+                    set "servicesStopped=true"
+                ) else (
+                    echo %c%  * Failed to stop: %%S ^(Requires Administrator^)%u%
+                )
             )
         )
     )
@@ -9690,30 +9974,34 @@ echo %c%[4/12] Disabling NVIDIA Telemetry Services...%u%
 
 set "servicesDisabled=false"
 
-for %%S in (%TELEMETRY_SERVICES%) do (
-    sc query "%%S" >nul 2>&1 && (
-        sc qc "%%S" | findstr /i "START_TYPE.*DISABLED" >nul || (
-            sc config "%%S" start= disabled >nul 2>&1
-            if !errorlevel! equ 0 (
-                echo %c%  * Disabled telemetry service: %%S%u%
-                set "servicesDisabled=true"
-            ) else (
-                echo %c%  * Failed to disable: %%S%u%
+if defined TELEMETRY_SERVICES (
+    for %%S in (%TELEMETRY_SERVICES%) do (
+        sc query "%%S" >nul 2>&1 && (
+            sc qc "%%S" 2>nul | findstr /i "START_TYPE.*DISABLED" >nul 2>&1 || (
+                sc config "%%S" start= disabled >nul 2>&1
+                if !errorlevel! equ 0 (
+                    echo %c%  * Disabled telemetry service: %%S%u%
+                    set "servicesDisabled=true"
+                ) else (
+                    echo %c%  * Failed to disable: %%S ^(Requires Administrator^)%u%
+                )
             )
         )
     )
 )
 
 if "%DISABLE_NVIDIA_APP%"=="true" (
-    for %%S in (%NVIDIA_APP_SERVICES%) do (
-        sc query "%%S" >nul 2>&1 && (
-            sc qc "%%S" | findstr /i "START_TYPE.*DISABLED" >nul || (
-                sc config "%%S" start= disabled >nul 2>&1
-                if !errorlevel! equ 0 (
-                    echo %c%  * Disabled app service: %%S%u%
-                    set "servicesDisabled=true"
-                ) else (
-                    echo %c%  * Failed to disable: %%S%u%
+    if defined NVIDIA_APP_SERVICES (
+        for %%S in (%NVIDIA_APP_SERVICES%) do (
+            sc query "%%S" >nul 2>&1 && (
+                sc qc "%%S" 2>nul | findstr /i "START_TYPE.*DISABLED" >nul 2>&1 || (
+                    sc config "%%S" start= disabled >nul 2>&1
+                    if !errorlevel! equ 0 (
+                        echo %c%  * Disabled app service: %%S%u%
+                        set "servicesDisabled=true"
+                    ) else (
+                        echo %c%  * Failed to disable: %%S ^(Requires Administrator^)%u%
+                    )
                 )
             )
         )
@@ -10028,7 +10316,12 @@ if "%devicesFound%"=="false" (
         echo %c%  * Disabled memory clock slowdown for !deviceCount! NVIDIA device^(s^)%u%
         echo %c%  * Advanced driver tweaks completed%u%
     ) else (
-        echo %c%  * Advanced tweaks already applied%u%
+        net session >nul 2>&1
+        if !errorlevel! neq 0 (
+            echo %orange%  * Advanced tweaks require Administrator privileges%u%
+        ) else (
+            echo %c%  * Advanced tweaks already applied%u%
+        )
     )
 )
 exit /b
@@ -10037,18 +10330,25 @@ exit /b
 :Step10_NVIDIA3DSettings
 echo %c%[10/12] Applying NVIDIA Control Panel 3D Settings...%u%
 
-for %%P in (
-    "HKLM\SOFTWARE\NVIDIA Corporation\Global\3D Settings|ThreadedOptimization|1|Threaded Optimization enabled"
-    "HKLM\SOFTWARE\NVIDIA Corporation\Global\3D Settings|MaxPreRenderedFrames|1|Max Pre-Rendered Frames set to 1"
-) do (
-    for /f "tokens=1,2,3,4 delims=|" %%A in ("%%~P") do (
-        reg add "%%A" /v "%%B" /t REG_DWORD /d "%%C" /f >nul 2>&1
-        if !errorlevel! equ 0 (
-            echo %c%  * %%D%u%
-        ) else (
-            echo %c%  * Failed to apply: %%D%u%
-        )
-    )
+reg add "HKLM\SOFTWARE\NVIDIA Corporation\Global\NVTweak" /v "MultiThreadedOptimization" /t REG_DWORD /d "1" /f >nul 2>&1
+if !errorlevel! equ 0 (
+    echo %c%  * Threaded Optimization enabled%u%
+) else (
+    echo %c%  * Failed to apply: Threaded Optimization enabled ^(Requires Administrator^)%u%
+)
+reg add "HKLM\SOFTWARE\Microsoft\Direct3D" /v "DisableThreadedOptimization" /t REG_DWORD /d "0" /f >nul 2>&1
+reg add "HKLM\SOFTWARE\WOW6432Node\Microsoft\Direct3D" /v "DisableThreadedOptimization" /t REG_DWORD /d "0" /f >nul 2>&1
+
+reg add "HKLM\SOFTWARE\Microsoft\Direct3D" /v "MaxFrameLatency" /t REG_DWORD /d "1" /f >nul 2>&1
+if !errorlevel! equ 0 (
+    echo %c%  * Max Pre-Rendered Frames set to 1%u%
+) else (
+    echo %c%  * Failed to apply: Max Pre-Rendered Frames set to 1 ^(Requires Administrator^)%u%
+)
+reg add "HKLM\SOFTWARE\WOW6432Node\Microsoft\Direct3D" /v "MaxFrameLatency" /t REG_DWORD /d "1" /f >nul 2>&1
+
+for /f %%a in ('reg query "HKLM\System\CurrentControlSet\Control\Class\{4d36e968-e325-11ce-bfc1-08002be10318}" /t REG_SZ /s /e /f "NVIDIA" 2^>nul ^| findstr "HKEY"') do (
+    reg add "%%a" /v "PrerenderLimit" /t REG_DWORD /d "1" /f >nul 2>&1
 )
 
 exit /b
@@ -10056,39 +10356,80 @@ exit /b
 :Step11_BlockTelemetry
 echo %c%[11/12] Blocking Telemetry Hosts...%u%
 
+net session >nul 2>&1
+if !errorlevel! neq 0 (
+    echo %orange%  * Administrator privileges required to modify hosts file%u%
+    exit /b
+)
+
 setlocal
 set "HOSTS=%windir%\System32\drivers\etc\hosts"
 set "TMPHOSTS=%TEMP%\hosts.tmp"
 set "blockedAny=false"
 
+attrib -r "%HOSTS%" >nul 2>&1
+
 if exist "%HOSTS%" (
     copy /Y "%HOSTS%" "%TMPHOSTS%" >nul 2>&1
 ) else (
-    type NUL > "%HOSTS%"
+    type NUL > "%HOSTS%" 2>nul
     copy /Y "%HOSTS%" "%TMPHOSTS%" >nul 2>&1
 )
 
 for %%H in (
     telemetry.gfe.nvidia.com
-    gfwsl.geforce.com
-    services.gfe.nvidia.com
-    accounts.nvgs.nvidia.com
     events.gfe.nvidia.com
     telemetry-web.gfe.nvidia.com
-    ota-downloads.nvidia.com
     rds-assets.nvidia.com
 ) do (
     findstr /IX "127.0.0.1 %%H" "%TMPHOSTS%" >nul 2>&1 || (
-        >>"%HOSTS%" echo 127.0.0.1 %%H
-        echo %c%  * Blocked telemetry host: %%H%u%
-        set "blockedAny=true"
+        >>"%HOSTS%" echo 127.0.0.1 %%H 2>nul
+        if !errorlevel! equ 0 (
+            echo %c%  * Blocked telemetry host: %%H%u%
+            set "blockedAny=true"
+        )
     )
+)
+
+if "%DISABLE_NVIDIA_APP%"=="true" (
+    for %%H in (
+        gfwsl.geforce.com
+        services.gfe.nvidia.com
+        accounts.nvgs.nvidia.com
+    ) do (
+        findstr /IX "127.0.0.1 %%H" "%TMPHOSTS%" >nul 2>&1 || (
+            >>"%HOSTS%" echo 127.0.0.1 %%H 2>nul
+            if !errorlevel! equ 0 (
+                echo %c%  * Blocked app host: %%H%u%
+                set "blockedAny=true"
+            )
+        )
+    )
+) else (
+    echo %c%  * NVIDIA App and account hosts preserved%u%
+)
+
+if "%DISABLE_UPDATES%"=="true" (
+    for %%H in (
+        ota-downloads.nvidia.com
+    ) do (
+        findstr /IX "127.0.0.1 %%H" "%TMPHOSTS%" >nul 2>&1 || (
+            >>"%HOSTS%" echo 127.0.0.1 %%H 2>nul
+            if !errorlevel! equ 0 (
+                echo %c%  * Blocked update host: %%H%u%
+                set "blockedAny=true"
+            )
+        )
+    )
+) else (
+    echo %c%  * NVIDIA driver update hosts preserved%u%
 )
 
 if "%blockedAny%"=="true" (
     echo %c%  * Telemetry hosts successfully blocked%u%
+    ipconfig /flushdns >nul 2>&1
 ) else (
-    echo %c%  * Telemetry hosts already blocked%u%
+    echo %c%  * Telemetry hosts already configured%u%
 )
 
 del "%TMPHOSTS%" 2>nul
@@ -10100,14 +10441,16 @@ echo %c%[12/12] Restarting Essential Services...%u%
 
 set "servicesRestarted=false"
 
-for %%S in (%ESSENTIAL_SERVICES%) do (
-    sc query "%%S" 2>nul | findstr /i "STOPPED" >nul && (
-        net start "%%S" >nul 2>&1
-        if !errorlevel! equ 0 (
-            echo %c%  * Started essential service: %%S%u%
-            set "servicesRestarted=true"
-        ) else (
-            echo %c%  * Failed to start: %%S%u%
+if defined ESSENTIAL_SERVICES (
+    for %%S in (%ESSENTIAL_SERVICES%) do (
+        sc query "%%S" 2>nul | findstr /i "STOPPED" >nul && (
+            net start "%%S" >nul 2>&1
+            if !errorlevel! equ 0 (
+                echo %c%  * Started essential service: %%S%u%
+                set "servicesRestarted=true"
+            ) else (
+                echo %c%  * Failed to start: %%S%u%
+            )
         )
     )
 )
@@ -10115,32 +10458,17 @@ for %%S in (%ESSENTIAL_SERVICES%) do (
 if "%DISABLE_NVIDIA_APP%"=="false" (
     for %%S in (
         "NvContainerLocalSystem"
-        "NVDisplay.ContainerLocalSystem"
+        "GfExperienceService"
+        "NVIDIAAppService"
+        "NVIDIA.GeForceExperience.Service"
     ) do (
-        sc query "%%S" >nul 2>&1 && (
-            sc config "%%S" start= auto >nul 2>&1
-            sc query "%%S" 2>nul | findstr /i "STOPPED" >nul && (
-                net start "%%S" >nul 2>&1
+        sc query "%%~S" >nul 2>&1 && (
+            sc config "%%~S" start= auto >nul 2>&1
+            sc query "%%~S" 2>nul | findstr /i "STOPPED" >nul && (
+                net start "%%~S" >nul 2>&1
                 if !errorlevel! equ 0 (
-                    echo %c%  * Restarted NVIDIA container service: %%S%u%
+                    echo %c%  * Restarted NVIDIA App service: %%~S%u%
                     set "servicesRestarted=true"
-                ) else (
-                    echo %c%  * Failed to restart: %%S%u%
-                )
-            )
-        )
-    )
-    
-    for %%S in (%NVIDIA_APP_SERVICES%) do (
-        sc query "%%S" >nul 2>&1 && (
-            sc config "%%S" start= auto >nul 2>&1
-            sc query "%%S" 2>nul | findstr /i "STOPPED" >nul && (
-                net start "%%S" >nul 2>&1
-                if !errorlevel! equ 0 (
-                    echo %c%  * Restarted app service: %%S%u%
-                    set "servicesRestarted=true"
-                ) else (
-                    echo %c%  * Failed to restart: %%S%u%
                 )
             )
         )
@@ -10180,17 +10508,17 @@ echo ║                      STORAGE OPTIMIZATION IN PROGRESS                  
 echo ╚══════════════════════════════════════════════════════════════════════════════╝%u%
 
 echo.
-echo %c%[1/8] Detecting Storage Devices...%u%
+echo %c%[1/9] Detecting Storage Devices...%u%
 echo %c%• Scanning for SSD and NVMe drives...%u%
 chcp 437 >nul
 
 set "SSD_FOUND=false"
 set "NVME_FOUND=false"
 
-powershell -noprofile -command "Get-WmiObject -Class MSFT_PhysicalDisk -Namespace root\Microsoft\Windows\Storage | Where-Object {$_.MediaType -eq 4} | Select-Object -First 1" >nul 2>&1
+powershell -noprofile -command "Get-CimInstance -ClassName MSFT_PhysicalDisk -Namespace root\Microsoft\Windows\Storage | Where-Object {$_.MediaType -eq 4} | Select-Object -First 1" >nul 2>&1
 if %errorlevel%==0 set "SSD_FOUND=true"
 
-powershell -noprofile -command "Get-WmiObject -Class MSFT_PhysicalDisk -Namespace root\Microsoft\Windows\Storage | Where-Object {$_.FriendlyName -like '*NVMe*'} | Select-Object -First 1" >nul 2>&1
+powershell -noprofile -command "Get-CimInstance -ClassName MSFT_PhysicalDisk -Namespace root\Microsoft\Windows\Storage | Where-Object {$_.FriendlyName -like '*NVMe*'} | Select-Object -First 1" >nul 2>&1
 if %errorlevel%==0 (
     set "SSD_FOUND=true"
     set "NVME_FOUND=true"
@@ -10201,8 +10529,8 @@ if "%NVME_FOUND%"=="true" echo %c%  ✓ NVMe drives detected%u%
 if "%SSD_FOUND%"=="false" echo %c%  • Traditional hard drives detected%u%
 
 
-echo %c%[2/8] Optimizing TRIM and SSD Settings...%u%
-fsutil behavior set DisableDeleteNotify 0 >nul 2>&1
+echo %c%[2/9] Optimizing TRIM and SSD Settings...%u%
+fsutil behavior set disabledeletenotify 0 >nul 2>&1
 echo %c%  ✓ TRIM enabled for SSDs%u%
 
 schtasks /change /tn "\Microsoft\Windows\Defrag\ScheduledDefrag" /disable >nul 2>&1
@@ -10211,27 +10539,27 @@ echo %c%  ✓ Automatic defragmentation disabled for SSDs%u%
 reg add "HKLM\SYSTEM\CurrentControlSet\Control\StorageDevicePolicies" /v "WriteProtectPolicy" /t REG_DWORD /d "0" /f >nul 2>&1
 echo %c%  ✓ SSD write caching optimized%u%
 
-echo %c%[3/8] Configuring File System Performance...%u%
+echo %c%[3/9] Configuring File System Performance...%u%
 fsutil behavior set Disable8dot3 1 >nul 2>&1
 echo %c%  ✓ 8.3 filename creation disabled%u%
 fsutil behavior set memoryusage 2 >nul 2>&1
 fsutil behavior set mftzone 4 >nul 2>&1
 fsutil behavior set disablelastaccess 1 >nul 2>&1
 fsutil behavior set encryptpagingfile 0 >nul 2>&1
+reg add "HKLM\SYSTEM\CurrentControlSet\Control\FileSystem" /v "LongPathsEnabled" /t REG_DWORD /d "1" /f >nul 2>&1
 echo %c%  ✓ NTFS memory pool, MFT zone, last-access timestamps, pagefile encryption optimized%u%
 
 reg add "HKLM\SYSTEM\CurrentControlSet\Control\FileSystem" /v "NtfsDisableLastAccessUpdate" /t REG_DWORD /d "1" /f >nul 2>&1
 reg add "HKLM\SYSTEM\CurrentControlSet\Control\FileSystem" /v "NtfsDisable8dot3NameCreation" /t REG_DWORD /d "1" /f >nul 2>&1
 echo %c%  ✓ NTFS performance optimizations applied%u%
 
-echo %c%[4/8] Optimizing Disk Write Caching...%u%
-for /f "tokens=1" %%d in ('wmic logicaldisk get size^,deviceid /format:table ^| findstr /r "[A-Z]:"') do (
-    fsutil dirty set %%d >nul 2>&1
-	chcp 65001>nul
+echo %c%[4/9] Optimizing Disk Write Caching...%u%
+powershell -NoProfile -Command "Get-Disk | ForEach-Object { try { Set-Disk -Number $_.Number -IsWriteCacheEnabled $true -ErrorAction SilentlyContinue } catch {} }" >nul 2>&1
+for /f "delims=" %%d in ('powershell -NoProfile -Command "(Get-CimInstance Win32_LogicalDisk | Where-Object DriveType -eq 3).DeviceID" 2^>nul') do (
     echo %c%  ✓ Write caching enabled for drive %%d%u%
 )
 
-echo %c%[5/8] Configuring Prefetch and Superfetch...%u%
+echo %c%[5/9] Configuring Prefetch and Superfetch...%u%
 if "%SSD_FOUND%"=="true" (
     reg add "HKLM\SYSTEM\CurrentControlSet\Control\Session Manager\Memory Management\PrefetchParameters" /v "EnableSuperfetch" /t REG_DWORD /d "0" /f >nul 2>&1
     echo %c%  ✓ Superfetch disabled for SSD optimization%u%
@@ -10244,23 +10572,19 @@ if "%SSD_FOUND%"=="true" (
     echo %c%  ✓ Prefetch and Superfetch enabled for HDD optimization%u%
 )
 
-echo %c%[6/8] Optimizing Storage Controllers...%u%
+echo %c%[6/9] Optimizing Storage Controllers...%u%
 
-for /f "tokens=*" %%i in ('wmic path Win32_SCSIController get PNPDeviceID /format:value 2^>nul ^| find "PNPDeviceID=" ^| find "PCI\VEN_"') do (
-    for /f "tokens=2 delims==" %%j in ("%%i") do (
-        reg add "HKLM\SYSTEM\CurrentControlSet\Enum\%%j\Device Parameters\Interrupt Management\MessageSignaledInterruptProperties" /v "MSISupported" /t REG_DWORD /d "1" /f >nul 2>&1
-        reg add "HKLM\SYSTEM\CurrentControlSet\Enum\%%j\Device Parameters" /v "ForceFifo" /t REG_DWORD /d "0" /f >nul 2>&1
-    )
-) >nul 2>&1
-
-chcp 437>nul
+chcp 437 >nul
+for /f "delims=" %%j in ('powershell -NoProfile -Command "(Get-CimInstance Win32_SCSIController -ErrorAction SilentlyContinue).PNPDeviceID | Where-Object { $_ -like 'PCI\VEN_*' }" 2^>nul') do (
+    reg add "HKLM\SYSTEM\CurrentControlSet\Enum\%%j\Device Parameters\Interrupt Management\MessageSignaledInterruptProperties" /v "MSISupported" /t REG_DWORD /d "1" /f >nul 2>&1
+    reg add "HKLM\SYSTEM\CurrentControlSet\Enum\%%j\Device Parameters" /v "ForceFifo" /t REG_DWORD /d "0" /f >nul 2>&1
+)
 powershell.exe -NoProfile -Command "Get-PnpDevice | Where-Object {$_.FriendlyName -like '*NVMe*' -and $_.InstanceId -like 'PCI*'} | ForEach-Object {try{New-ItemProperty -Path \"HKLM:\SYSTEM\CurrentControlSet\Enum\$($_.InstanceId)\Device Parameters\Interrupt Management\MessageSignaledInterruptProperties\" -Name 'MSISupported' -Value 1 -PropertyType DWord -Force -ErrorAction SilentlyContinue}catch{}}" >nul 2>&1
-chcp 65001>nul
-
-for /f %%i in ('wmic path Win32_IDEController get PNPDeviceID 2^>nul ^| findstr /l "PCI\VEN_"') do (
+for /f "delims=" %%i in ('powershell -NoProfile -Command "(Get-CimInstance Win32_IDEController -ErrorAction SilentlyContinue).PNPDeviceID | Where-Object { $_ -like 'PCI\VEN_*' }" 2^>nul') do (
     reg add "HKLM\SYSTEM\CurrentControlSet\Enum\%%i\Device Parameters\Interrupt Management\MessageSignaledInterruptProperties" /v "MSISupported" /t REG_DWORD /d "1" /f >nul 2>&1
     reg add "HKLM\SYSTEM\CurrentControlSet\Enum\%%i\Device Parameters" /v "ForceFifo" /t REG_DWORD /d "0" /f >nul 2>&1
-) >nul 2>&1
+)
+chcp 65001 >nul
 
 echo %c%  ✓ Storage controller interrupts optimized%u%
 
@@ -10273,21 +10597,19 @@ reg add "HKLM\SYSTEM\CurrentControlSet\Services\stornvme\Parameters\Device" /v "
 reg add "HKLM\SYSTEM\CurrentControlSet\Services\stornvme\Parameters" /v "EnableLogging" /t REG_DWORD /d "0" /f >nul 2>&1
 echo %c%  ✓ NVMe controller settings optimized%u%
 
-echo %c%[7/8] Configuring Storage Power Management...%u%
-chcp 437>nul
-for /f "tokens=*" %%a in ('wmic diskdrive get PNPDeviceID /format:value ^| find "PNPDeviceID"') do (
-    for /f "tokens=2 delims==" %%b in ("%%a") do (
-        reg add "HKLM\SYSTEM\CurrentControlSet\Enum\%%b\Device Parameters" /v "StorageDevicePolicies" /t REG_DWORD /d "0" /f >nul 2>&1
-    )
+echo %c%[7/9] Configuring Storage Power Management...%u%
+chcp 437 >nul
+for /f "delims=" %%b in ('powershell -NoProfile -Command "(Get-CimInstance Win32_DiskDrive -ErrorAction SilentlyContinue).PNPDeviceID" 2^>nul') do (
+    reg add "HKLM\SYSTEM\CurrentControlSet\Enum\%%b\Device Parameters" /v "StorageDevicePolicies" /t REG_DWORD /d "0" /f >nul 2>&1
 )
-chcp 65001>nul
+chcp 65001 >nul
 
 powercfg -setacvalueindex SCHEME_CURRENT 0012ee47-9041-4b5d-9b77-535fba8b1442 6738e2c4-e8a5-4a42-b16a-e040e769756e 0 >nul 2>&1
 powercfg -setdcvalueindex SCHEME_CURRENT 0012ee47-9041-4b5d-9b77-535fba8b1442 6738e2c4-e8a5-4a42-b16a-e040e769756e 0 >nul 2>&1
 powercfg -setactive SCHEME_CURRENT >nul 2>&1
 echo %c%  ✓ Storage power management disabled%u%
 
-echo %c%[8/8] Running Storage Maintenance...%u%
+echo %c%[8/9] Running Storage Maintenance...%u%
 del /f /s /q "%temp%\*" >nul 2>&1
 del /f /s /q "C:\Windows\Temp\*" >nul 2>&1
 echo %c%  ✓ Temporary files cleaned%u%
@@ -10300,12 +10622,12 @@ if "%SSD_FOUND%"=="false" (
     echo %c%  ✓ SSD optimization completed ^(defrag skipped^)%u%
 )
 
-echo %c%[9/9] Disabling Windows reserved storage for updates...%u%
+echo %c%[9/9] Disabling Windows Reserved Storage for Updates...%u%
 dism /online /Set-ReservedStorageState /State:Disabled /NoRestart >nul 2>&1
 reg add "HKLM\SOFTWARE\Microsoft\Windows\CurrentVersion\ReserveManager" /v "ShippedWithReserves" /t REG_DWORD /d "0" /f >nul 2>&1
 reg add "HKLM\SOFTWARE\Microsoft\Windows\CurrentVersion\ReserveManager" /v "PassedPolicy" /t REG_DWORD /d "0" /f >nul 2>&1
 reg add "HKLM\SOFTWARE\Microsoft\Windows\CurrentVersion\ReserveManager" /v "MiscPolicyInfo" /t REG_DWORD /d "2" /f >nul 2>&1
-echo %c%  ✓ Reserved storage disabled (reclaims ~1 GB disk space)%u%
+echo %c%  ✓ Reserved storage disabled ^(reclaims ~1 GB disk space^)%u%
 
 echo.
 echo %c%╔══════════════════════════════════════════════════════════════════════════════╗
@@ -10392,41 +10714,27 @@ set "comp_user=Unknown"
 set "win_version=Unknown"
 set "win_build=Unknown"
 
-echo %c%• Reading computer model...%u%
-for /f "tokens=2 delims==" %%i in ('wmic computersystem get model /value 2^>nul ^| find "=" 2^>nul') do (
-    set "comp_model=%%i"
-    if "!comp_model!"=="" set "comp_model=Unknown"
-)
+echo %c%• Reading computer model%u%
+for /f "tokens=2*" %%a in ('reg query "HKLM\HARDWARE\DESCRIPTION\System\BIOS" /v SystemProductName 2^>nul ^| findstr "SystemProductName"') do set "comp_model=%%b"
+if not defined comp_model set "comp_model=Unknown"
 
-echo %c%• Reading manufacturer...%u%
-for /f "tokens=2 delims==" %%i in ('wmic computersystem get manufacturer /value 2^>nul ^| find "=" 2^>nul') do (
-    set "comp_manufacturer=%%i"
-    if "!comp_manufacturer!"=="" set "comp_manufacturer=Unknown"
-)
+echo %c%• Reading manufacturer%u%
+for /f "tokens=2*" %%a in ('reg query "HKLM\HARDWARE\DESCRIPTION\System\BIOS" /v SystemManufacturer 2^>nul ^| findstr "SystemManufacturer"') do set "comp_manufacturer=%%b"
+if not defined comp_manufacturer set "comp_manufacturer=Unknown"
 
-echo %c%• Reading computer name...%u%
-for /f "tokens=2 delims==" %%i in ('wmic computersystem get name /value 2^>nul ^| find "=" 2^>nul') do (
-    set "comp_name=%%i"
-    if "!comp_name!"=="" set "comp_name=Unknown"
-)
+echo %c%• Reading computer name%u%
+set "comp_name=%COMPUTERNAME%"
 
-echo %c%• Reading current user...%u%
-for /f "tokens=2 delims==" %%i in ('wmic computersystem get username /value 2^>nul ^| find "=" 2^>nul') do (
-    set "comp_user=%%i"
-    if "!comp_user!"=="" set "comp_user=%username%"
-)
+echo %c%• Reading current user%u%
+set "comp_user=%USERNAME%"
 
-echo %c%• Reading Windows version...%u%
-for /f "tokens=2 delims==" %%i in ('wmic os get version /value 2^>nul ^| find "=" 2^>nul') do (
-    set "win_version=%%i"
-    if "!win_version!"=="" set "win_version=Unknown"
-)
+echo %c%• Reading Windows version%u%
+for /f "tokens=2*" %%a in ('reg query "HKLM\SOFTWARE\Microsoft\Windows NT\CurrentVersion" /v DisplayVersion 2^>nul ^| findstr "DisplayVersion"') do set "win_version=%%b"
+if not defined win_version set "win_version=Unknown"
 
-echo %c%• Reading build number...%u%
-for /f "tokens=2 delims==" %%i in ('wmic os get buildnumber /value 2^>nul ^| find "=" 2^>nul') do (
-    set "win_build=%%i"
-    if "!win_build!"=="" set "win_build=Unknown"
-)
+echo %c%• Reading build number%u%
+for /f "tokens=3" %%a in ('reg query "HKLM\SOFTWARE\Microsoft\Windows NT\CurrentVersion" /v CurrentBuildNumber 2^>nul ^| findstr "CurrentBuildNumber"') do set "win_build=%%a"
+if not defined win_build set "win_build=Unknown"
 
 echo.
 echo %c%Computer Model: !comp_model!%u%
@@ -10451,39 +10759,15 @@ set "bios_manufacturer=Unknown"
 set "bios_version=Unknown"
 set "bios_date=Unknown"
 
-echo %c%• Reading motherboard info...%u%
-for /f "tokens=2 delims==" %%i in ('wmic baseboard get manufacturer /value 2^>nul ^| find "=" 2^>nul') do (
-    set "mb_manufacturer=%%i"
-    if "!mb_manufacturer!"=="" set "mb_manufacturer=Unknown"
-)
+echo %c%• Reading motherboard info%u%
+for /f "tokens=2*" %%a in ('reg query "HKLM\HARDWARE\DESCRIPTION\System\BIOS" /v BaseBoardManufacturer 2^>nul ^| findstr "BaseBoardManufacturer"') do set "mb_manufacturer=%%b"
+for /f "tokens=2*" %%a in ('reg query "HKLM\HARDWARE\DESCRIPTION\System\BIOS" /v BaseBoardProduct 2^>nul ^| findstr "BaseBoardProduct"') do set "mb_product=%%b"
+for /f "tokens=2*" %%a in ('reg query "HKLM\HARDWARE\DESCRIPTION\System\BIOS" /v BaseBoardVersion 2^>nul ^| findstr "BaseBoardVersion"') do set "mb_version=%%b"
 
-for /f "tokens=2 delims==" %%i in ('wmic baseboard get product /value 2^>nul ^| find "=" 2^>nul') do (
-    set "mb_product=%%i"
-    if "!mb_product!"=="" set "mb_product=Unknown"
-)
-
-for /f "tokens=2 delims==" %%i in ('wmic baseboard get version /value 2^>nul ^| find "=" 2^>nul') do (
-    set "mb_version=%%i"
-    if "!mb_version!"=="" set "mb_version=Unknown"
-)
-
-echo %c%• Reading BIOS info...%u%
-for /f "tokens=2 delims==" %%i in ('wmic bios get manufacturer /value 2^>nul ^| find "=" 2^>nul') do (
-    set "bios_manufacturer=%%i"
-    if "!bios_manufacturer!"=="" set "bios_manufacturer=Unknown"
-)
-
-for /f "tokens=2 delims==" %%i in ('wmic bios get smbiosversion /value 2^>nul ^| find "=" 2^>nul') do (
-    set "bios_version=%%i"
-    if "!bios_version!"=="" set "bios_version=Unknown"
-)
-
-for /f "tokens=2 delims==" %%i in ('wmic bios get releasedate /value 2^>nul ^| find "=" 2^>nul') do (
-    set "rawdate=%%i"
-    if not "!rawdate!"=="" if not "!rawdate!"=="Unknown" (
-        set "bios_date=!rawdate:~0,4!-!rawdate:~4,2!-!rawdate:~6,2!"
-    )
-)
+echo %c%• Reading BIOS info%u%
+for /f "tokens=2*" %%a in ('reg query "HKLM\HARDWARE\DESCRIPTION\System\BIOS" /v BIOSVendor 2^>nul ^| findstr "BIOSVendor"') do set "bios_manufacturer=%%b"
+for /f "tokens=2*" %%a in ('reg query "HKLM\HARDWARE\DESCRIPTION\System\BIOS" /v BIOSVersion 2^>nul ^| findstr "BIOSVersion"') do set "bios_version=%%b"
+for /f "tokens=2*" %%a in ('reg query "HKLM\HARDWARE\DESCRIPTION\System\BIOS" /v BIOSReleaseDate 2^>nul ^| findstr "BIOSReleaseDate"') do set "bios_date=%%b"
 
 echo %c%Motherboard: !mb_manufacturer!%u%
 echo %c%Model: !mb_product!%u%
@@ -10508,34 +10792,18 @@ set "cpu_speed=0"
 set "cpu_cache=Unknown"
 set "cpu_arch=Unknown"
 
-echo %c%• Reading CPU name...%u%
-for /f "tokens=2 delims==" %%i in ('wmic cpu get name /value 2^>nul ^| find "=" 2^>nul') do (
-    set "cpu_name=%%i"
-    if "!cpu_name!"=="" set "cpu_name=Unknown"
-    goto :cpu_name_done
-)
-:cpu_name_done
+echo %c%• Reading CPU name%u%
+for /f "tokens=2*" %%a in ('reg query "HKLM\HARDWARE\DESCRIPTION\System\CentralProcessor\0" /v ProcessorNameString 2^>nul ^| findstr "ProcessorNameString"') do set "cpu_name=%%b"
 
-echo %c%• Reading CPU specifications...%u%
-for /f "tokens=2 delims==" %%i in ('wmic cpu get manufacturer /value 2^>nul ^| find "=" 2^>nul') do (
-    set "cpu_manufacturer=%%i"
-    if "!cpu_manufacturer!"=="" set "cpu_manufacturer=Unknown"
+echo %c%• Reading CPU specifications%u%
+for /f "tokens=2*" %%a in ('reg query "HKLM\HARDWARE\DESCRIPTION\System\CentralProcessor\0" /v VendorIdentifier 2^>nul ^| findstr "VendorIdentifier"') do set "cpu_manufacturer=%%b"
+chcp 437 >nul
+for /f "delims=" %%a in ('powershell -NoProfile -Command "(Get-CimInstance Win32_Processor).NumberOfCores" 2^>nul') do set "cpu_cores=%%a"
+set "cpu_threads=%NUMBER_OF_PROCESSORS%"
+for /f "tokens=3" %%A in ('reg query "HKLM\HARDWARE\DESCRIPTION\System\CentralProcessor\0" /v "~MHz" 2^>nul ^| findstr "~MHz"') do (
+    set /a "cpu_speed=%%A" 2>nul
 )
-
-for /f "tokens=2 delims==" %%i in ('wmic cpu get numberofcores /value 2^>nul ^| find "=" 2^>nul') do (
-    set "cpu_cores=%%i"
-    if "!cpu_cores!"=="" set "cpu_cores=Unknown"
-)
-
-for /f "tokens=2 delims==" %%i in ('wmic cpu get numberoflogicalprocessors /value 2^>nul ^| find "=" 2^>nul') do (
-    set "cpu_threads=%%i"
-    if "!cpu_threads!"=="" set "cpu_threads=Unknown"
-)
-
-for /f "tokens=2 delims==" %%i in ('wmic cpu get maxclockspeed /value 2^>nul ^| find "=" 2^>nul') do (
-    set "cpu_speed=%%i"
-    if "!cpu_speed!"=="" set "cpu_speed=0"
-)
+chcp 65001 >nul
 
 echo %c%Processor: !cpu_name!%u%
 echo %c%Manufacturer: !cpu_manufacturer!%u%
@@ -10635,35 +10903,36 @@ echo.
 echo %c%═══════════════════════════ GPU DETAILS ══════════════════════════%u%
 
 set "gpucount=0"
-echo %c%• Reading graphics cards...%u%
-chcp 437>nul
-for /f "tokens=2 delims==" %%i in ('wmic path win32_videocontroller get name /value 2^>nul ^| find "=" 2^>nul') do (
-chcp 65001>nul     
-	if not "%%i"=="" (
+echo %c%• Reading graphics cards%u%
+chcp 437 >nul
+for /f "tokens=*" %%a in ('reg query "HKLM\SYSTEM\CurrentControlSet\Control\Class\{4d36e968-e325-11ce-bfc1-08002be10318}" 2^>nul ^| findstr /r "\\00[0-9][0-9]$"') do (
+    for /f "tokens=2*" %%x in ('reg query "%%a" /v DriverDesc 2^>nul ^| findstr "DriverDesc"') do (
         set /a "gpucount+=1"
-        echo %c%Graphics Card !gpucount!: %%i%u%
+        chcp 65001 >nul
+        echo %c%Graphics Card !gpucount!: %%y%u%
+        chcp 437 >nul
     )
 )
+chcp 65001 >nul
 if !gpucount! equ 0 echo %c%Graphics Card: Detection failed%u%
 
-echo %c%• Reading video memory...%u%
+echo %c%• Reading video memory%u%
 set "vram_found=false"
-chcp 437>nul
-for /f "tokens=2 delims==" %%i in ('wmic path win32_videocontroller get adapterram /value 2^>nul ^| find "=" 2^>nul') do (
-chcp 65001>nul      
-	if not "%%i"=="" if not "%%i"=="4294967295" (
-	chcp 437>nul
-        for /f %%j in ('powershell -command "try { $size = [math]::round(%%i/1GB, 0); if($size -gt 0) { $size } else { 0 } } catch { 0 }"') do (
-		chcp 65001>nul
+chcp 437 >nul
+for /f "tokens=*" %%a in ('reg query "HKLM\SYSTEM\CurrentControlSet\Control\Class\{4d36e968-e325-11ce-bfc1-08002be10318}" 2^>nul ^| findstr /r "\\00[0-9][0-9]$"') do (
+    for /f "tokens=3" %%v in ('reg query "%%a" /v "HardwareInformation.qwMemorySize" 2^>nul ^| findstr "qwMemorySize"') do (
+        for /f %%j in ('powershell -NoProfile -Command "try { $size = [math]::round(%%v/1GB, 0); if($size -gt 0) { $size } else { 0 } } catch { 0 }" 2^>nul') do (
             if %%j gtr 0 (
+                chcp 65001 >nul
                 echo %c%Video Memory: %%j GB%u%
                 set "vram_found=true"
-                goto :vram_done
+                chcp 437 >nul
             )
         )
     )
 )
-if "!vram_found!"=="false" echo %c%Video Memory: Unable to detect or integrated graphics%u%
+chcp 65001 >nul
+if "!vram_found!"=="false" echo %c%Video Memory: Shared system memory or integrated graphics%u%
 :vram_done
 
 echo.
@@ -10678,57 +10947,17 @@ set "drive1_name="
 set "drive1_size="
 set "drive2_name="
 set "drive2_size="
-echo %c%• Reading storage devices...%u%
-chcp 437>nul
-for /f "skip=1 tokens=1,2" %%i in ('wmic diskdrive get model^,size /format:table 2^>nul') do (
-chcp 65001>nul  
-    if not "%%i"=="" if not "%%i"=="Model" (
-        set /a "drivecount+=1"
-        
-        if !drivecount! equ 1 (
-            set "drive1_name=%%i"
-            if not "%%j"=="" (
-			chcp 437>nul
-                for /f %%k in ('powershell -NoProfile -Command "try { [math]::round(%%j/1GB, 0) } catch { 0 }"') do (
-				chcp 65001>nul  
-                    if %%k gtr 0 set "drive1_size=%%k"
-                )
-            )
-        )
-        
-        if !drivecount! equ 2 (
-            set "drive2_name=%%i"
-            if not "%%j"=="" (
-			chcp 437>nul
-                for /f %%k in ('powershell -NoProfile -Command "try { [math]::round(%%j/1GB, 0) } catch { 0 }"') do (
-				chcp 65001>nul  
-                    if %%k gtr 0 set "drive2_size=%%k"
-                )
-            )
-        )
-        
-        echo %c%Drive !drivecount!: %%i%u%
-        if not "%%j"=="" (
-		chcp 437>nul
-            for /f %%k in ('powershell -NoProfile -Command "try { [math]::round(%%j/1GB, 0) } catch { 0 }"') do (
-			chcp 65001>nul 
-                if %%k gtr 0 echo %c%  Capacity: %%k GB%u%
-            )
-        )
-    )
+echo %c%• Reading storage devices%u%
+set "drivecount=0"
+chcp 437 >nul
+for /f "tokens=1* delims=:" %%a in ('powershell -NoProfile -Command "Get-CimInstance Win32_DiskDrive -ErrorAction SilentlyContinue | ForEach-Object { $_.Model + ':' + [math]::Round($_.Size/1GB) }" 2^>nul') do (
+    set /a "drivecount+=1"
+    chcp 65001 >nul
+    echo %c%Drive !drivecount!: %%a - Capacity: %%b GB%u%
+    chcp 437 >nul
 )
-
-if !drivecount! equ 0 (
-    echo %c%• Trying alternative storage detection...%u%
-    for /f "skip=1 tokens=*" %%i in ('wmic diskdrive get model 2^>nul') do (
-        if not "%%i"=="" if not "%%i"=="Model" (
-            set /a "drivecount+=1"
-            if !drivecount! equ 1 set "drive1_name=%%i"
-            if !drivecount! equ 2 set "drive2_name=%%i"
-            echo %c%Drive !drivecount!: %%i%u%
-        )
-    )
-)
+chcp 65001 >nul
+if !drivecount! equ 0 echo %c%Storage: Detection failed%u%
 
 if !drivecount! equ 0 (
     echo %c%Storage devices: Detection failed%u%
@@ -10797,36 +11026,41 @@ echo.
 echo %c%═══════════════════════ HARDWARE HEALTH STATUS ═══════════════════%u%
 
 echo %c%• Checking thermal status...%u%
-chcp 437>nul
-powershell -Command "try { Get-WmiObject -Namespace 'root/wmi' -Class MSAcpi_ThermalZoneTemperature -ErrorAction Stop | ForEach-Object { $temp = ($_.CurrentTemperature - 2732) / 10; Write-Host \"CPU Temperature: $temp°C\" } } catch { Write-Host 'Thermal sensors not accessible' }" 2>nul | find "CPU Temperature" >nul && (
-chcp 65001>nul
-	echo %c%Thermal monitoring available%u%
+chcp 437 >nul
+powershell -Command "try { Get-CimInstance -Namespace 'root/wmi' -ClassName MSAcpi_ThermalZoneTemperature -ErrorAction Stop | ForEach-Object { $temp = ($_.CurrentTemperature - 2732) / 10; Write-Host \"CPU Temperature: $temp°C\" } } catch { Write-Host 'Thermal sensors not accessible' }" 2>nul | find "CPU Temperature" >nul && (
+    chcp 65001 >nul
+    echo %c%Thermal monitoring available%u%
 ) || (
+    chcp 65001 >nul
     echo %c%Thermal sensors not accessible via WMI%u%
 )
+chcp 65001 >nul
 
-echo %c%• Checking system drivers...%u%
-chcp 437>nul
-for /f %%i in ('wmic path win32_systemdriver where "state='running'" get name /value 2^>nul ^| find "=" ^| find /c "=" 2^>nul') do (
-chcp 65001>nul 
+echo %c%• Checking system drivers%u%
+chcp 437 >nul
+for /f %%i in ('powershell -NoProfile -Command "(Get-CimInstance Win32_SystemDriver -ErrorAction SilentlyContinue).Count" 2^>nul') do (
+    chcp 65001 >nul
     if %%i gtr 50 (
-        echo %c%System drivers: Healthy ^(%%i active^)%u%
+        echo %c%System drivers: Healthy - %%i active%u%
     ) else (
-        echo %c%System drivers: Check needed ^(%%i active^)%u%
+        echo %c%System drivers: Check needed - %%i active%u%
     )
+    chcp 437 >nul
 )
+chcp 65001 >nul
 
-echo %c%• Checking disk health...%u%
-chcp 437>nul
-for /f "tokens=2 delims==" %%i in ('wmic diskdrive get status /value 2^>nul ^| find "=" 2^>nul') do (
-chcp 65001>nul 
-    if "%%i"=="OK" (
+echo %c%• Checking disk health%u%
+chcp 437 >nul
+for /f "delims=" %%i in ('powershell -NoProfile -Command "(Get-PhysicalDisk -ErrorAction SilentlyContinue | Select-Object -First 1).HealthStatus" 2^>nul') do (
+    chcp 65001 >nul
+    if /i "%%i"=="Healthy" (
         echo %c%Storage: Healthy%u%
     ) else (
         echo %c%Storage: %%i%u%
     )
     goto :disk_done
 )
+chcp 65001 >nul
 echo %c%✓ Storage: Status check completed%u%
 :disk_done
 
@@ -10924,18 +11158,6 @@ echo "!CPUName!" | find /i "i7-2" >nul && (set /a "cpu_score=8" & set "cpu_ratin
 echo "!CPUName!" | find /i "i5-2" >nul && (set /a "cpu_score=7" & set "cpu_rating=Mid-Range")
 echo "!CPUName!" | find /i "i3-2" >nul && (set /a "cpu_score=6" & set "cpu_rating=Entry Level")
 
-echo "!CPUName!" | find /i "i7-9" >nul && (set /a "cpu_score=7" & set "cpu_rating=High-End")
-echo "!CPUName!" | find /i "i7-8" >nul && (set /a "cpu_score=6" & set "cpu_rating=High-End")
-echo "!CPUName!" | find /i "i7-7" >nul && (set /a "cpu_score=5" & set "cpu_rating=High-End")
-echo "!CPUName!" | find /i "i7-6" >nul && (set /a "cpu_score=4" & set "cpu_rating=High-End")
-echo "!CPUName!" | find /i "i7-1" >nul && (set /a "cpu_score=4" & set "cpu_rating=High-End")
-echo "!CPUName!" | find /i "i5-7" >nul && (set /a "cpu_score=4" & set "cpu_rating=Mid-Range")
-echo "!CPUName!" | find /i "i5-6" >nul && (set /a "cpu_score=3" & set "cpu_rating=Mid-Range")
-echo "!CPUName!" | find /i "i5-1" >nul && (set /a "cpu_score=3" & set "cpu_rating=Mid-Range")
-echo "!CPUName!" | find /i "i3-7" >nul && (set /a "cpu_score=3" & set "cpu_rating=Entry Level")
-echo "!CPUName!" | find /i "i3-6" >nul && (set /a "cpu_score=2" & set "cpu_rating=Entry Level")
-echo "!CPUName!" | find /i "i3-1" >nul && (set /a "cpu_score=2" & set "cpu_rating=Entry Level")
-
 echo "!CPUName!" | find /i "Ryzen 9" >nul && (set /a "cpu_score=34" & set "cpu_rating=Flagship")
 echo "!CPUName!" | find /i "Ryzen 7" >nul && (set /a "cpu_score=29" & set "cpu_rating=High-End")
 echo "!CPUName!" | find /i "Ryzen 5" >nul && (set /a "cpu_score=23" & set "cpu_rating=Mid-Range")
@@ -10958,9 +11180,13 @@ echo %c%• Analyzing GPU performance...%u%
 set "gpu_score=0"
 set "gpu_rating=Unknown"
 
+chcp 437 >nul
+for /f "delims=" %%G in ('powershell -NoProfile -Command "$g = Get-CimInstance Win32_VideoController; $d = $g | Where-Object { $_.Name -like '*RTX*' -or $_.Name -like '*GTX*' -or $_.Name -like '*GeForce*' -or $_.Name -like '*Radeon*' -or $_.Name -like '*Arc*' } | Select-Object -First 1; if ($d) { $d.Name } else { ($g | Select-Object -First 1).Name }" 2^>nul') do set "GPUName=%%G"
+chcp 65001 >nul
+
 set "detected_vram=0"
 chcp 437>nul
-for /f %%i in ('powershell -NoProfile -Command "try { $gpu = Get-WmiObject Win32_VideoController | Where-Object {$_.Name -like '*RTX*' -or $_.Name -like '*GTX*' -or $_.Name -like '*RX*'}; [math]::Round($gpu.AdapterRAM/1GB) } catch { 4 }"') do (
+for /f %%i in ('powershell -NoProfile -Command "try { $gpu = Get-CimInstance Win32_VideoController | Where-Object {$_.Name -like '*RTX*' -or $_.Name -like '*GTX*' -or $_.Name -like '*GeForce*' -or $_.Name -like '*Radeon*' -or $_.Name -like '*Arc*'}; [math]::Round(($gpu | Select-Object -First 1).AdapterRAM/1GB) } catch { 4 }" 2^>nul') do (
 chcp 65001>nul     
 	if %%i gtr 0 set "detected_vram=%%i"
 )
@@ -11103,8 +11329,8 @@ echo "!GPUName!" | find /i "RTX 3070 Ti" >nul && (set /a "gpu_score=30" & set "g
 echo "!GPUName!" | find /i "RTX 3070" >nul && (set /a "gpu_score=28" & set "gpu_rating=Upper Mid-Range")
 echo "!GPUName!" | find /i "RTX 3060 Ti" >nul && (set /a "gpu_score=24" & set "gpu_rating=Mid-Range")
 echo "!GPUName!" | find /i "RTX 3060" >nul && (set /a "gpu_score=20" & set "gpu_rating=Entry Gaming")
-echo "!GPUName!" | find /i "RTX 3050 Ti" >nul && (set /a "gpu_score=16" & set "gpu_rating=Basic Gaming")
-echo "!GPUName!" | find /i "RTX 3050" >nul && (set /a "gpu_score=14" & set "gpu_rating=Basic Gaming")
+echo "!GPUName!" | find /i "RTX 3050 Ti" >nul && (set /a "gpu_score=18" & set "gpu_rating=Mid-Range")
+echo "!GPUName!" | find /i "RTX 3050" >nul && (set /a "gpu_score=16" & set "gpu_rating=Entry Gaming")
 
 echo "!GPUName!" | find /i "RTX 2080 Ti" >nul && (set /a "gpu_score=28" & set "gpu_rating=High-End (Old Gen)")
 echo "!GPUName!" | find /i "RTX 2080 Super" >nul && (set /a "gpu_score=26" & set "gpu_rating=Upper Mid-Range")
@@ -11210,21 +11436,26 @@ echo %c%  • GPU: !gpu_rating! ^(!detected_vram!GB VRAM^)%u%
 
 echo.
 echo %c%Gaming Performance Expectations:%u%
-if !perfscore! geq 55 (
-    echo %c%  • AAA Games: Medium-High settings ^(60+ FPS at 1080p^)%u%
-    echo %c%  • Competitive Games: High settings ^(100+ FPS^)%u%
-    echo %c%  • Minecraft: High settings ^(80+ FPS^)%u%
-    echo %c%  • Counter-Strike 2: High settings ^(120+ FPS^)%u%
+if !perfscore! geq 70 (
+    echo %c%  • AAA Games: High-Ultra settings + DLSS/FSR ^(80+ FPS at 1080p / 60+ FPS at 1440p^)%u%
+    echo %c%  • Competitive Games: Ultra settings ^(240+ FPS^)%u%
+    echo %c%  • Minecraft: High-Ultra settings with shaders ^(150+ FPS^)%u%
+    echo %c%  • Counter-Strike 2: High-Ultra settings ^(180-240+ FPS^)%u%
+) else if !perfscore! geq 55 (
+    echo %c%  • AAA Games: Medium-High settings + DLSS/FSR ^(55-75+ FPS at 1080p^)%u%
+    echo %c%  • Competitive Games: High/Competitive settings ^(140-200+ FPS^)%u%
+    echo %c%  • Minecraft: High settings ^(150-250+ FPS, 300+ with Sodium^)%u%
+    echo %c%  • Counter-Strike 2: Competitive/Medium settings ^(120-160+ FPS^)%u%
 ) else if !perfscore! geq 40 (
-    echo %c%  • AAA Games: Low-Medium settings ^(40-60 FPS at 1080p^)%u%
-    echo %c%  • Competitive Games: Medium-High settings ^(80-120 FPS^)%u%
-    echo %c%  • Minecraft: Medium-High settings ^(60-80 FPS^)%u%
-    echo %c%  • Counter-Strike 2: Medium-High settings ^(100-140 FPS^)%u%
+    echo %c%  • AAA Games: Low-Medium settings ^(45-60 FPS at 1080p^)%u%
+    echo %c%  • Competitive Games: Medium settings ^(100-140 FPS^)%u%
+    echo %c%  • Minecraft: Medium settings ^(100-150 FPS^)%u%
+    echo %c%  • Counter-Strike 2: Low-Medium settings ^(90-120 FPS^)%u%
 ) else (
-    echo %c%  • AAA Games: Low settings ^(30-40 FPS at 1080p^)%u%
-    echo %c%  • Competitive Games: Medium settings ^(60-80 FPS^)%u%
-    echo %c%  • Minecraft: Medium settings ^(50-70 FPS^)%u%
-    echo %c%  • Counter-Strike 2: Medium settings ^(80-100 FPS^)%u%
+    echo %c%  • AAA Games: 720p Low settings ^(30-45 FPS^)%u%
+    echo %c%  • Competitive Games: 1080p Low settings ^(60-90 FPS^)%u%
+    echo %c%  • Minecraft: Fast / Low settings ^(60-100 FPS^)%u%
+    echo %c%  • Counter-Strike 2: 720p / Low settings ^(45-60 FPS^)%u%
 )
 
 echo.
@@ -11363,31 +11594,31 @@ echo Gaming Performance Expectations:
 
 if !perfscore! geq 70 (
     >> "%report_file%" (
-    echo • AAA Games: High-Ultra settings ^(60+ FPS at 1440p^)
-    echo • Competitive Games: Ultra settings ^(144+ FPS^)
-    echo • Minecraft: Ultra settings with shaders ^(100+ FPS^)
-    echo • Counter-Strike 2: Ultra settings ^(200+ FPS^)
+    echo • AAA Games: High-Ultra settings + DLSS/FSR ^(80+ FPS at 1080p / 60+ FPS at 1440p^)
+    echo • Competitive Games: Ultra settings ^(240+ FPS^)
+    echo • Minecraft: High-Ultra settings with shaders ^(150+ FPS^)
+    echo • Counter-Strike 2: High-Ultra settings ^(180-240+ FPS^)
     )
 ) else if !perfscore! geq 55 (
     >> "%report_file%" (
-    echo • AAA Games: Medium-High settings ^(60+ FPS at 1080p^)
-    echo • Competitive Games: High-Ultra settings ^(100+ FPS^)
-    echo • Minecraft: High settings ^(80+ FPS^)
-    echo • Counter-Strike 2: High settings ^(120+ FPS^)
+    echo • AAA Games: Medium-High settings + DLSS/FSR ^(55-75+ FPS at 1080p^)
+    echo • Competitive Games: High/Competitive settings ^(140-200+ FPS^)
+    echo • Minecraft: High settings ^(150-250+ FPS, 300+ with Sodium^)
+    echo • Counter-Strike 2: Competitive/Medium settings ^(120-160+ FPS^)
     )
 ) else if !perfscore! geq 40 (
     >> "%report_file%" (
-    echo • AAA Games: Low-Medium settings ^(40-60 FPS at 1080p^)
-    echo • Competitive Games: Medium-High settings ^(80-120 FPS^)
-    echo • Minecraft: Medium-High settings ^(60-80 FPS^)
-    echo • Counter-Strike 2: Medium-High settings ^(100-140 FPS^)
+    echo • AAA Games: Low-Medium settings ^(45-60 FPS at 1080p^)
+    echo • Competitive Games: Medium settings ^(100-140 FPS^)
+    echo • Minecraft: Medium settings ^(100-150 FPS^)
+    echo • Counter-Strike 2: Low-Medium settings ^(90-120 FPS^)
     )
 ) else (
     >> "%report_file%" (
-    echo • AAA Games: Low settings ^(30 FPS at 1080p^)
-    echo • Competitive Games: Medium settings ^(60 FPS^)
-    echo • Minecraft: Medium settings ^(50 FPS^)
-    echo • Counter-Strike 2: Medium settings ^(80 FPS^)
+    echo • AAA Games: 720p Low settings ^(30-45 FPS^)
+    echo • Competitive Games: 1080p Low settings ^(60-90 FPS^)
+    echo • Minecraft: Fast / Low settings ^(60-100 FPS^)
+    echo • Counter-Strike 2: 720p / Low settings ^(45-60 FPS^)
     )
 )
 
@@ -11516,8 +11747,12 @@ echo ║                       DRIVER INSTALLATION IN PROGRESS                  
 echo ╚══════════════════════════════════════════════════════════════════════════════╝%u%
 
 echo.
-echo %c%[1/6] Detecting Current Driver...%u%
-for /f "tokens=2 delims==" %%i in ('wmic path win32_videocontroller where "name like '%%NVIDIA%%'" get driverversion /value ^| find "="') do set current_version=%%i
+echo %c%Step 1/6: Detecting Current Driver%u%
+for /f "tokens=*" %%a in ('reg query "HKLM\SYSTEM\CurrentControlSet\Control\Class\{4d36e968-e325-11ce-bfc1-08002be10318}" 2^>nul ^| findstr /r "\\00[0-9][0-9]$"') do (
+    reg query "%%a" /v DriverDesc 2>nul | findstr /i "NVIDIA" >nul && (
+        for /f "tokens=2*" %%v in ('reg query "%%a" /v DriverVersion 2^>nul ^| findstr "DriverVersion"') do set "current_version=%%w"
+    )
+)
 if defined current_version (
     echo %c%  ✓ Current version: %current_version%%u%
 ) else (
@@ -11808,15 +12043,13 @@ echo %c%• Disabling Windows Media Player...%u%
 dism /online /disable-feature /featurename:"WindowsMediaPlayer" /norestart >nul 2>&1
 echo %c%• Disabling Media Features...%u%
 dism /online /disable-feature /featurename:"MediaPlayback" /norestart >nul 2>&1
-echo %c%• Disabling Windows DVD Maker...%u%
-dism /online /disable-feature /featurename:"MSRDC-Infrastructure" /norestart >nul 2>&1
 echo %c%✓ Media bloat features disabled%u%
 
 echo.
 echo %c%[3/8] Disabling Legacy Browser Features...%u%
 echo %c%• Disabling Internet Explorer 11...%u%
 dism /online /disable-feature /featurename:"Internet-Explorer-Optional-amd64" /norestart >nul 2>&1
-echo %c%• Disabling Internet Explorer Legacy Features...%u%
+echo %c%• Disabling IIS Web Server Role...%u%
 dism /online /disable-feature /featurename:"IIS-WebServerRole" /norestart >nul 2>&1
 echo %c%✓ Legacy browser features disabled%u%
 
@@ -11856,8 +12089,8 @@ echo.
 echo %c%[7/8] Disabling Unnecessary Print Features...%u%
 echo %c%• Disabling XPS Services...%u%
 dism /online /disable-feature /featurename:"Printing-XPSServices-Features" /norestart >nul 2>&1
-echo %c%• Disabling Microsoft XPS Document Writer...%u%
-dism /online /disable-feature /featurename:"Printing-Foundation-Features" /norestart >nul 2>&1
+echo %c%• Disabling Microsoft XPS Viewer...%u%
+dism /online /disable-feature /featurename:"Xps-Foundation-Xps-Viewer" /norestart >nul 2>&1
 echo %c%✓ Print features optimized%u%
 
 echo.
@@ -12041,9 +12274,8 @@ echo %c%✓ Sync services disabled%u%
 echo.
 echo %c%[5/6] Removing Biometric and Security Tracking...%u%
 echo %c%• Disabling Windows Hello Face...%u%
-reg add "HKLM\SOFTWARE\Policies\Microsoft\Biometrics" /v "Enabled" /t REG_DWORD /d "0" /f >nul 2>&1
-echo %c%• Disabling Biometric logging...%u%
-reg add "HKLM\SOFTWARE\Policies\Microsoft\Biometrics\Credential Provider" /v "Enabled" /t REG_DWORD /d "0" /f >nul 2>&1
+echo %c%• Configuring Biometric security...%u%
+reg add "HKLM\SOFTWARE\Policies\Microsoft\Biometrics\Credential Provider" /v "EnhancedAntiSpoofing" /t REG_DWORD /d "1" /f >nul 2>&1
 echo %c%✓ Biometric tracking removed%u%
 
 echo.
@@ -12284,6 +12516,180 @@ if "%choice%"=="4" (
 pause
 goto CustomFeatures
 
+:ManageMedia
+cls
+echo %c%Media Feature Management%u%
+echo.
+echo %c%[1] Enable Windows Media Player%u%
+echo %c%[2] Disable Windows Media Player%u%
+echo %c%[3] Enable Media Playback (codecs)%u%
+echo %c%[4] Disable Media Playback (codecs)%u%
+echo.
+set /p choice="%c%Choose action »%u% "
+if "%choice%"=="1" (
+    dism /online /enable-feature /featurename:"WindowsMediaPlayer" /all /norestart
+    echo %c%✓ Windows Media Player enabled%u%
+)
+if "%choice%"=="2" (
+    dism /online /disable-feature /featurename:"WindowsMediaPlayer" /norestart
+    echo %c%✓ Windows Media Player disabled%u%
+)
+if "%choice%"=="3" (
+    dism /online /enable-feature /featurename:"MediaPlayback" /all /norestart
+    echo %c%✓ Media Playback enabled%u%
+)
+if "%choice%"=="4" (
+    dism /online /disable-feature /featurename:"MediaPlayback" /norestart
+    echo %c%✓ Media Playback disabled%u%
+)
+pause
+goto CustomFeatures
+
+:ManageNET
+cls
+echo %c%.NET Framework Feature Management%u%
+echo.
+echo %c%[1] Enable .NET Framework 3.5 (2.0/3.0)%u%
+echo %c%[2] Disable .NET Framework 3.5 (2.0/3.0)%u%
+echo %c%[3] Enable .NET Framework 4.x Advanced Services%u%
+echo %c%[4] Disable .NET Framework 4.x Advanced Services%u%
+echo.
+set /p choice="%c%Choose action »%u% "
+if "%choice%"=="1" (
+    dism /online /enable-feature /featurename:"NetFx3" /all /norestart
+    echo %c%✓ .NET Framework 3.5 enabled%u%
+)
+if "%choice%"=="2" (
+    dism /online /disable-feature /featurename:"NetFx3" /norestart
+    echo %c%✓ .NET Framework 3.5 disabled%u%
+)
+if "%choice%"=="3" (
+    dism /online /enable-feature /featurename:"NetFx4-AdvSrvs" /all /norestart
+    echo %c%✓ .NET Framework 4.x Advanced Services enabled%u%
+)
+if "%choice%"=="4" (
+    dism /online /disable-feature /featurename:"NetFx4-AdvSrvs" /norestart
+    echo %c%✓ .NET Framework 4.x Advanced Services disabled%u%
+)
+pause
+goto CustomFeatures
+
+:ManageIE
+cls
+echo %c%Internet Explorer Feature Management%u%
+echo.
+echo %c%[1] Enable Internet Explorer 11%u%
+echo %c%[2] Disable Internet Explorer 11%u%
+echo %c%[3] Check Internet Explorer Status%u%
+echo.
+set /p choice="%c%Choose action »%u% "
+if "%choice%"=="1" (
+    dism /online /enable-feature /featurename:"Internet-Explorer-Optional-amd64" /all /norestart
+    echo %c%✓ Internet Explorer 11 enabled%u%
+)
+if "%choice%"=="2" (
+    dism /online /disable-feature /featurename:"Internet-Explorer-Optional-amd64" /norestart
+    echo %c%✓ Internet Explorer 11 disabled%u%
+)
+if "%choice%"=="3" (
+    dism /online /get-featureinfo /featurename:"Internet-Explorer-Optional-amd64"
+)
+pause
+goto CustomFeatures
+
+:ManageContainers
+cls
+echo %c%Container Feature Management%u%
+echo.
+echo %c%[1] Enable Windows Containers%u%
+echo %c%[2] Disable Windows Containers%u%
+echo %c%[3] Enable Windows Sandbox%u%
+echo %c%[4] Disable Windows Sandbox%u%
+echo.
+set /p choice="%c%Choose action »%u% "
+if "%choice%"=="1" (
+    dism /online /enable-feature /featurename:"Containers" /all /norestart
+    echo %c%✓ Windows Containers enabled%u%
+)
+if "%choice%"=="2" (
+    dism /online /disable-feature /featurename:"Containers" /norestart
+    echo %c%✓ Windows Containers disabled%u%
+)
+if "%choice%"=="3" (
+    dism /online /enable-feature /featurename:"Containers-DisposableClientVM" /all /norestart
+    echo %c%✓ Windows Sandbox enabled%u%
+)
+if "%choice%"=="4" (
+    dism /online /disable-feature /featurename:"Containers-DisposableClientVM" /norestart
+    echo %c%✓ Windows Sandbox disabled%u%
+)
+pause
+goto CustomFeatures
+
+:ManagePrint
+cls
+echo %c%Print Feature Management%u%
+echo.
+echo %c%[1] Enable Print Foundation Features%u%
+echo %c%[2] Disable Print Foundation Features%u%
+echo %c%[3] Enable Print to PDF%u%
+echo %c%[4] Disable Print to PDF%u%
+echo.
+set /p choice="%c%Choose action »%u% "
+if "%choice%"=="1" (
+    dism /online /enable-feature /featurename:"Printing-Foundation-Features" /all /norestart
+    dism /online /enable-feature /featurename:"Printing-Foundation-LPDPrintService" /all /norestart
+    dism /online /enable-feature /featurename:"Printing-Foundation-LPRPortMonitor" /all /norestart
+    echo %c%✓ Print Foundation Features enabled%u%
+)
+if "%choice%"=="2" (
+    dism /online /disable-feature /featurename:"Printing-Foundation-Features" /norestart
+    dism /online /disable-feature /featurename:"Printing-Foundation-LPDPrintService" /norestart
+    dism /online /disable-feature /featurename:"Printing-Foundation-LPRPortMonitor" /norestart
+    echo %c%✓ Print Foundation Features disabled%u%
+)
+if "%choice%"=="3" (
+    dism /online /enable-feature /featurename:"Printing-PrintToPDFServices-Features" /all /norestart
+    echo %c%✓ Print to PDF enabled%u%
+)
+if "%choice%"=="4" (
+    dism /online /disable-feature /featurename:"Printing-PrintToPDFServices-Features" /norestart
+    echo %c%✓ Print to PDF disabled%u%
+)
+pause
+goto CustomFeatures
+
+:ManageLegacy
+cls
+echo %c%Legacy Component Feature Management%u%
+echo.
+echo %c%[1] Enable Legacy Components (DirectPlay)%u%
+echo %c%[2] Disable Legacy Components (DirectPlay)%u%
+echo %c%[3] Enable Windows XPS Viewer%u%
+echo %c%[4] Disable Windows XPS Viewer%u%
+echo.
+set /p choice="%c%Choose action »%u% "
+if "%choice%"=="1" (
+    dism /online /enable-feature /featurename:"LegacyComponents" /all /norestart
+    dism /online /enable-feature /featurename:"DirectPlay" /all /norestart
+    echo %c%✓ Legacy Components enabled%u%
+)
+if "%choice%"=="2" (
+    dism /online /disable-feature /featurename:"LegacyComponents" /norestart
+    dism /online /disable-feature /featurename:"DirectPlay" /norestart
+    echo %c%✓ Legacy Components disabled%u%
+)
+if "%choice%"=="3" (
+    dism /online /enable-feature /featurename:"Xps-Foundation-Xps-Viewer" /all /norestart
+    echo %c%✓ XPS Viewer enabled%u%
+)
+if "%choice%"=="4" (
+    dism /online /disable-feature /featurename:"Xps-Foundation-Xps-Viewer" /norestart
+    echo %c%✓ XPS Viewer disabled%u%
+)
+pause
+goto CustomFeatures
+
 :FeaturesComplete
 echo.
 echo %c%╔═══════════════════════════════════════════════════════════════════════════════╗
@@ -12412,6 +12818,11 @@ reg add "HKCU\SOFTWARE\Microsoft\Windows\CurrentVersion\Explorer\Advanced" /v "S
 reg add "HKCU\SOFTWARE\Microsoft\Windows\CurrentVersion\Explorer\Advanced" /v "ShowInfoTip" /t REG_DWORD /d "0" /f >nul 2>&1
 reg add "HKCU\SOFTWARE\Microsoft\Windows\CurrentVersion\Explorer\Advanced" /v "WebView" /t REG_DWORD /d "0" /f >nul 2>&1
 reg add "HKLM\SOFTWARE\Microsoft\Windows\CurrentVersion\Explorer" /v "AlwaysUnloadDLL" /t REG_DWORD /d "1" /f >nul 2>&1
+reg add "HKCU\SOFTWARE\Microsoft\Windows\CurrentVersion\Policies\Explorer" /v "NoNetCrawling" /t REG_DWORD /d "1" /f >nul 2>&1
+reg add "HKCU\SOFTWARE\Microsoft\Windows\CurrentVersion\Policies\Explorer" /v "NoRecentDocsMenu" /t REG_DWORD /d "1" /f >nul 2>&1
+reg add "HKCU\SOFTWARE\Policies\Microsoft\Windows\EdgeUI" /v "DisableCharms" /t REG_DWORD /d "1" /f >nul 2>&1
+reg add "HKCU\SOFTWARE\Policies\Microsoft\Windows\Explorer" /v "DisableThumbsDBOnNetworkFolders" /t REG_DWORD /d "1" /f >nul 2>&1
+reg add "HKCU\SOFTWARE\Microsoft\Windows\CurrentVersion\Explorer" /v "ShowRecommendations" /t REG_DWORD /d "0" /f >nul 2>&1
 echo %c%✓ Explorer performance optimizations applied%u%
 
 echo.
@@ -12445,7 +12856,7 @@ echo %c%✓ Windows bloatware registry entries removed%u%
 
 echo.
 echo %c%[7/8] Optimizing System Responsiveness...%u%
-reg add "HKLM\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Multimedia\SystemProfile" /v "SystemResponsiveness" /t REG_DWORD /d "10" /f >nul 2>&1
+reg add "HKLM\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Multimedia\SystemProfile" /v "SystemResponsiveness" /t REG_DWORD /d 10 /f >nul 2>&1
 reg add "HKLM\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Multimedia\SystemProfile" /v "NetworkThrottlingIndex" /t REG_DWORD /d "4294967295" /f >nul 2>&1
 
 reg add "HKCU\Control Panel\Desktop" /v "ForegroundLockTimeout" /t REG_DWORD /d "0" /f >nul 2>&1
@@ -12804,7 +13215,7 @@ reg add "HKCU\SOFTWARE\Microsoft\Windows\CurrentVersion\Explorer\Advanced" /v "L
 reg add "HKCU\SOFTWARE\Microsoft\Windows\CurrentVersion\Explorer\Advanced" /v "TaskbarAnimations" /t REG_DWORD /d "0" /f >nul 2>&1
 reg add "HKCU\Control Panel\Desktop\WindowMetrics" /v "MinAnimate" /t REG_SZ /d "0" /f >nul 2>&1
 reg add "HKCU\SOFTWARE\Microsoft\Windows\CurrentVersion\Explorer\VisualEffects" /v "VisualFXSetting" /t REG_DWORD /d "3" /f >nul 2>&1
-
+reg add "HKCU\Control Panel\International\User Profile" /v "HttpAcceptLanguageOptOut" /t REG_DWORD /d "1" /f >nul 2>&1
 reg add "HKCU\SOFTWARE\Microsoft\Windows\CurrentVersion\Explorer" /v "ShowQuickAccess" /t REG_DWORD /d "0" /f >nul 2>&1
 reg add "HKLM\SOFTWARE\Microsoft\Windows\CurrentVersion\Explorer" /v "HubMode" /t REG_DWORD /d "1" /f >nul 2>&1
 
@@ -12971,7 +13382,7 @@ echo %c%• Notification area configured for minimal distractions%u%
 echo %c%• Unnecessary shell extensions disabled%u%
 echo %c%• Explorer animations and bloat removed%u%
 echo %c%• Icon cache cleared and rebuilt%u%
-echo %c%• Long file paths enabled (>260 chars)%u%
+echo %c%• Long file paths enabled over 260 characters%u%
 echo %c%• Snap Assist flyout disabled (drag-to-resize kept)%u%
 echo %c%• End Task added to taskbar right-click menu%u%
 echo %c%• Transparency effects disabled%u%
@@ -13484,7 +13895,7 @@ if exist "%ProgramData%\Microsoft\Search\Data\Applications\Windows\Windows.edb" 
     del /f /q "%ProgramData%\Microsoft\Search\Data\Applications\Windows\Windows.edb" >nul 2>&1
     echo %c%✓ Search index database cleared%u%
 ) else (
-    echo %c%✓ Search index database not found (already clean)%u%
+    echo %c%✓ Search index database not found - already clean%u%
 )
 
 echo.
@@ -13798,6 +14209,25 @@ for /f "tokens=1,2 delims= " %%a in ('cmdkey /list ^| findstr "Target"') do (
 echo %c%✓ Credential Manager cleared%u%
 
 echo.
+echo %c%[16b/25] Removing ghost "defaultuser0" account...%u%
+net user defaultuser0 /delete >nul 2>&1
+echo %c%✓ defaultuser0 account removed (if it existed)%u%
+
+echo.
+echo %c%[16c/25] Removing Windows product key from registry...%u%
+cscript.exe //nologo "%SYSTEMROOT%\System32\slmgr.vbs" /cpky >nul 2>&1
+echo %c%✓ Product key cleared from registry%u%
+
+echo.
+echo %c%[16d/25] Removing default app association overrides...%u%
+if exist "%SYSTEMROOT%\System32\OEMDefaultAssociations.xml" (
+    dism /online /Remove-DefaultAppAssociations >nul 2>&1
+    echo %c%✓ Default app associations removed%u%
+) else (
+    echo %c%✓ Skipping, no OEM default app associations file found%u%
+)
+
+echo.
 echo %c%[17/25] Clearing Windows Update and SFC Logs...%u%
 if exist "%SYSTEMROOT%\Temp\CBS" (
     del /f /s /q "%SYSTEMROOT%\Temp\CBS\*" >nul 2>&1
@@ -13864,6 +14294,138 @@ del /f "%SYSTEMROOT%\Performance\WinSAT\winsat.log" >nul 2>&1
 echo %c%✓ WinSAT logs cleared%u%
 
 echo.
+echo %c%[Extra] Clearing Windows Search history (device search index)...%u%
+reg delete "HKCU\Software\Microsoft\Windows\CurrentVersion\Explorer\SearchHistory" /f >nul 2>&1
+echo %c%✓ Search history cleared%u%
+
+echo.
+echo %c%[Extra] Clearing Windows Media Player radio station history...%u%
+reg delete "HKCU\Software\Microsoft\MediaPlayer\Radio\MRUList" /f >nul 2>&1
+echo %c%✓ WMP radio history cleared%u%
+
+echo.
+echo %c%[Extra] Clearing Listary search index...%u%
+if exist "%APPDATA%\Listary\UserData" (
+    rd /s /q "%APPDATA%\Listary\UserData" >nul 2>&1
+)
+echo %c%✓ Listary index cleared%u%
+
+echo.
+echo %c%[Extra] Clearing Java deployment cache...%u%
+if exist "%APPDATA%\Sun\Java\Deployment\cache" (
+    rd /s /q "%APPDATA%\Sun\Java\Deployment\cache" >nul 2>&1
+)
+echo %c%✓ Java cache cleared%u%
+
+echo.
+echo %c%[Extra] Clearing .NET CLI telemetry...%u%
+if exist "%USERPROFILE%\.dotnet\TelemetryStorageService" (
+    rd /s /q "%USERPROFILE%\.dotnet\TelemetryStorageService" >nul 2>&1
+)
+echo %c%✓ .NET CLI telemetry cleared%u%
+
+echo.
+echo %c%[Extra] Removing old Visual Studio license registrations (2010-2022)...%u%
+for %%L in (
+    "77550D6B-6352-4E77-9DA3-537419DF564B"
+    "E79B3F9C-6543-4897-BBA5-5BFB0A02BB5C"
+    "4D8CFBCB-2F6A-4AD2-BABF-10E28F6F2C8F"
+    "5C505A59-E312-4B89-9508-E162F8150517"
+    "41717607-F34E-432C-A138-A3CFD7E25CDA"
+    "B16F0CF0-8AD1-4A5B-87BC-CB0DBE9C48FC"
+    "10D17DBA-761D-4CD8-A627-984E75A58700"
+    "1299B4B9-DFCC-476D-98F0-F65A2B46C96D"
+) do (
+    reg delete "HKLM\SOFTWARE\Classes\Licenses\%%~L" /f >nul 2>&1
+)
+echo %c%✓ Old VS license registrations cleared%u%
+
+echo.
+echo %c%[Extra] Clearing legacy Internet Explorer traces...%u%
+reg delete "HKCU\SOFTWARE\Microsoft\Internet Explorer\TypedURLs" /f >nul 2>&1
+reg delete "HKCU\SOFTWARE\Microsoft\Internet Explorer\TypedURLsTime" /f >nul 2>&1
+if exist "%LOCALAPPDATA%\Microsoft\Windows\Temporary Internet Files" (
+    del /f /s /q "%LOCALAPPDATA%\Microsoft\Windows\Temporary Internet Files\*" >nul 2>&1
+)
+if exist "%LOCALAPPDATA%\Microsoft\Feeds Cache" (
+    del /f /s /q "%LOCALAPPDATA%\Microsoft\Feeds Cache\*" >nul 2>&1
+)
+if exist "%APPDATA%\Microsoft\Windows\Cookies" (
+    del /f /s /q "%APPDATA%\Microsoft\Windows\Cookies\*" >nul 2>&1
+)
+if exist "%LOCALAPPDATA%\Microsoft\Windows\INetCookies" (
+    del /f /s /q "%LOCALAPPDATA%\Microsoft\Windows\INetCookies\*" >nul 2>&1
+)
+if exist "%LOCALAPPDATA%\Microsoft\InternetExplorer\DOMStore" (
+    del /f /s /q "%LOCALAPPDATA%\Microsoft\InternetExplorer\DOMStore\*" >nul 2>&1
+)
+if exist "%LOCALAPPDATA%\Microsoft\Internet Explorer" (
+    del /f /s /q "%LOCALAPPDATA%\Microsoft\Internet Explorer\*" >nul 2>&1
+)
+echo %c%✓ Legacy IE traces cleared%u%
+
+echo.
+echo %c%[Extra] Clearing Chrome crash reports...%u%
+if exist "%LOCALAPPDATA%\Google\Chrome\User Data\Crashpad\reports" (
+    del /f /s /q "%LOCALAPPDATA%\Google\Chrome\User Data\Crashpad\reports\*" >nul 2>&1
+)
+if exist "%LOCALAPPDATA%\Google\CrashReports" (
+    del /f /s /q "%LOCALAPPDATA%\Google\CrashReports\*" >nul 2>&1
+)
+echo %c%✓ Chrome crash reports cleared%u%
+
+echo.
+echo %c%[Extra] Clearing Explorer thumbnail cache...%u%
+del /f "%LOCALAPPDATA%\Microsoft\Windows\Explorer\*.db" >nul 2>&1
+echo %c%✓ Thumbnail cache cleared%u%
+
+echo.
+echo %c%[Extra] Clearing Windows Defender scan history...%u%
+if exist "%ProgramData%\Microsoft\Windows Defender\Scans\History" (
+    takeown /f "%ProgramData%\Microsoft\Windows Defender\Scans\History" /r /d y >nul 2>&1
+    icacls "%ProgramData%\Microsoft\Windows Defender\Scans\History" /grant administrators:F /t >nul 2>&1
+    del /f /s /q "%ProgramData%\Microsoft\Windows Defender\Scans\History\*" >nul 2>&1
+)
+echo %c%✓ Defender scan history cleared%u%
+
+echo.
+echo %c%[Extra] Clearing CBS.log, DISM.log, and related install logs...%u%
+del /f "%SYSTEMROOT%\Logs\CBS\CBS.log" >nul 2>&1
+del /f "%SYSTEMROOT%\Logs\DISM\DISM.log" >nul 2>&1
+if exist "%SYSTEMROOT%\Logs\NetSetup" (
+    del /f /s /q "%SYSTEMROOT%\Logs\NetSetup\*" >nul 2>&1
+)
+if exist "%SYSTEMROOT%\System32\LogFiles\setupcln" (
+    del /f /s /q "%SYSTEMROOT%\System32\LogFiles\setupcln\*" >nul 2>&1
+)
+del /f "%SYSTEMROOT%\debug\PASSWD.LOG" >nul 2>&1
+echo %c%✓ Additional install/setup logs cleared%u%
+
+echo.
+echo %c%[Extra] Clearing .NET Common Language Runtime usage traces...%u%
+if exist "%LOCALAPPDATA%\Microsoft\CLR_v4.0\UsageTraces" (
+    rd /s /q "%LOCALAPPDATA%\Microsoft\CLR_v4.0\UsageTraces" >nul 2>&1
+)
+if exist "%LOCALAPPDATA%\Microsoft\CLR_v4.0_32\UsageTraces" (
+    rd /s /q "%LOCALAPPDATA%\Microsoft\CLR_v4.0_32\UsageTraces" >nul 2>&1
+)
+echo %c%✓ CLR usage traces cleared%u%
+
+echo.
+echo %c%[Extra] Clearing Outlook logs, cache, and offline data...%u%
+if exist "%LOCALAPPDATA%\Microsoft\Olk\logs" rd /s /q "%LOCALAPPDATA%\Microsoft\Olk\logs" >nul 2>&1
+if exist "%LOCALAPPDATA%\Microsoft\Olk\cache" rd /s /q "%LOCALAPPDATA%\Microsoft\Olk\cache" >nul 2>&1
+if exist "%LOCALAPPDATA%\Microsoft\Olk\EBWebView\Default\Cache" rd /s /q "%LOCALAPPDATA%\Microsoft\Olk\EBWebView\Default\Cache" >nul 2>&1
+if exist "%LOCALAPPDATA%\Microsoft\Olk\EBWebView\Default\Code Cache" rd /s /q "%LOCALAPPDATA%\Microsoft\Olk\EBWebView\Default\Code Cache" >nul 2>&1
+if exist "%LOCALAPPDATA%\Microsoft\Olk\EBWebView\Default\WebStorage" rd /s /q "%LOCALAPPDATA%\Microsoft\Olk\EBWebView\Default\WebStorage" >nul 2>&1
+if exist "%LOCALAPPDATA%\Microsoft\Outlook\HubAppFileCache" rd /s /q "%LOCALAPPDATA%\Microsoft\Outlook\HubAppFileCache" >nul 2>&1
+if exist "%LOCALAPPDATA%\Microsoft\Outlook\RoamCache" rd /s /q "%LOCALAPPDATA%\Microsoft\Outlook\RoamCache" >nul 2>&1
+del /f "%LOCALAPPDATA%\Microsoft\Outlook\extend.dat" >nul 2>&1
+del /f "%APPDATA%\Microsoft\Outlook\OutlPrnt" >nul 2>&1
+del /f "%APPDATA%\Microsoft\Outlook\VbaProject.otm" >nul 2>&1
+echo %c%✓ Outlook logs and caches cleared%u%
+
+echo.
 echo %c%╔═══════════════════════════════════════════════════════════════════════════════╗
 echo ║                    ULTIMATE PRIVACY DATA CLEANUP COMPLETED                   ║
 echo ╚═══════════════════════════════════════════════════════════════════════════════╝%u%
@@ -13924,6 +14486,10 @@ echo %c%[1/11] Disabling Windows Error Reporting...%u%
 reg add "HKLM\SOFTWARE\Microsoft\Windows\Windows Error Reporting" /v "Disabled" /t REG_DWORD /d "1" /f >nul 2>&1
 reg add "HKLM\SOFTWARE\Policies\Microsoft\Windows\Windows Error Reporting" /v "Disabled" /t REG_DWORD /d "1" /f >nul 2>&1
 reg add "HKLM\SOFTWARE\Policies\Microsoft\PCHealth\ErrorReporting" /v "DoReport" /t REG_DWORD /d "0" /f >nul 2>&1
+reg add "HKLM\Software\Microsoft\Windows\Windows Error Reporting\Consent" /v "DefaultConsent" /t REG_DWORD /d "1" /f >nul 2>&1
+reg add "HKLM\Software\Microsoft\Windows\Windows Error Reporting\Consent" /v "DefaultOverrideBehavior" /t REG_DWORD /d "1" /f >nul 2>&1
+reg add "HKLM\Software\Microsoft\Windows\Windows Error Reporting" /v "DontSendAdditionalData" /t REG_DWORD /d "1" /f >nul 2>&1
+reg add "HKLM\Software\Microsoft\Windows\Windows Error Reporting" /v "LoggingDisabled" /t REG_DWORD /d "1" /f >nul 2>&1
 sc config "WerSvc" start= disabled >nul 2>&1
 net stop "WerSvc" >nul 2>&1
 echo %c%✓ Windows Error Reporting disabled%u%
@@ -13932,6 +14498,10 @@ echo.
 echo %c%[2/11] Blocking Microsoft Compatibility Telemetry...%u%
 reg add "HKLM\SOFTWARE\Policies\Microsoft\Windows\AppCompat" /v "AITEnable" /t REG_DWORD /d "0" /f >nul 2>&1
 reg add "HKLM\SOFTWARE\Policies\Microsoft\Windows\AppCompat" /v "DisableInventory" /t REG_DWORD /d "1" /f >nul 2>&1
+reg add "HKLM\Software\Policies\Microsoft\Windows\AppCompat" /v "DisableEngine" /t REG_DWORD /d "1" /f >nul 2>&1
+reg add "HKLM\Software\Policies\Microsoft\Windows\AppCompat" /v "DisablePropPage" /t REG_DWORD /d "1" /f >nul 2>&1
+reg add "HKLM\Software\Policies\Microsoft\Windows\AppCompat" /v "DisableUAR" /t REG_DWORD /d "1" /f >nul 2>&1
+reg add "HKLM\SOFTWARE\Policies\Microsoft\Windows\AppCompat" /v "DisablePCA" /t REG_DWORD /d "1" /f >nul 2>&1
 sc config "DiagTrack" start= disabled >nul 2>&1
 sc config "dmwappushservice" start= disabled >nul 2>&1
 net stop "DiagTrack" >nul 2>&1
@@ -13945,6 +14515,7 @@ echo %c%[3/11] Disabling Customer Experience Improvement Program...%u%
 reg add "HKLM\SOFTWARE\Microsoft\SQMClient\Windows" /v "CEIPEnable" /t REG_DWORD /d "0" /f >nul 2>&1
 reg add "HKLM\SOFTWARE\Policies\Microsoft\SQMClient\Windows" /v "CEIPEnable" /t REG_DWORD /d "0" /f >nul 2>&1
 reg add "HKCU\SOFTWARE\Microsoft\SQMClient\Windows" /v "CEIPEnable" /t REG_DWORD /d "0" /f >nul 2>&1
+reg add "HKLM\Software\Microsoft\SQMClient" /v "UploadDisableFlag" /t REG_DWORD /d "1" /f >nul 2>&1
 schtasks /Change /TN "Microsoft\Windows\Customer Experience Improvement Program\Consolidator" /Disable >nul 2>&1
 schtasks /Change /TN "Microsoft\Windows\Customer Experience Improvement Program\UsbCeip" /Disable >nul 2>&1
 echo %c%✓ Customer Experience Improvement Program disabled%u%
@@ -14113,6 +14684,9 @@ reg add "HKLM\SOFTWARE\Policies\Microsoft\Speech" /v "AllowSpeechModelUpdate" /t
 reg add "HKCU\SOFTWARE\Microsoft\Windows\CurrentVersion\Search" /v "VoiceShortcut" /t REG_DWORD /d "0" /f >nul 2>&1
 reg add "HKLM\SOFTWARE\Policies\Microsoft\InputPersonalization" /v "RestrictImplicitTextCollection" /t REG_DWORD /d "1" /f >nul 2>&1
 reg add "HKLM\SOFTWARE\Policies\Microsoft\InputPersonalization" /v "RestrictImplicitInkCollection" /t REG_DWORD /d "1" /f >nul 2>&1
+reg add "HKLM\SOFTWARE\Policies\Microsoft\Windows\HandwritingErrorReports" /v "PreventHandwritingErrorReports" /t REG_DWORD /d "1" /f >nul 2>&1
+reg add "HKLM\SOFTWARE\Policies\Microsoft\Windows\TabletPC" /v "PreventHandwritingDataSharing" /t REG_DWORD /d "1" /f >nul 2>&1
+reg add "HKLM\SOFTWARE\Policies\Microsoft\InputPersonalization" /v "AllowInputPersonalization" /t REG_DWORD /d "0" /f >nul 2>&1
 reg add "HKCU\Software\Microsoft\InputPersonalization\TrainedDataStore" /v "HarvestContacts" /t REG_DWORD /d "0" /f >nul 2>&1
 echo %c%✓ Voice, speech recognition and contact harvesting disabled%u%
 
@@ -14189,7 +14763,7 @@ echo %c%✓ OneDrive integration disabled%u%
 
 echo.
 echo %c%[2/7] Blocking Microsoft Account Sign-in Prompts...%u%
-reg add "HKLM\SOFTWARE\Microsoft\PolicyManager\default\Settings\AllowSignInOptions" /v "value" /t REG_DWORD /d "0" /f >nul 2>&1
+reg add "HKLM\SOFTWARE\Microsoft\PolicyManager\default\Settings\AllowSignInOptions" /v "value" /t REG_DWORD /d "1" /f >nul 2>&1
 reg add "HKLM\SOFTWARE\Policies\Microsoft\Windows\System" /v "BlockUserFromShowingAccountDetailsOnSignin" /t REG_DWORD /d "1" /f >nul 2>&1
 reg add "HKLM\SOFTWARE\Microsoft\Windows\CurrentVersion\Policies\System" /v "NoConnectedUser" /t REG_DWORD /d "3" /f >nul 2>&1
 reg add "HKLM\SOFTWARE\Policies\Microsoft\MicrosoftAccount" /v "DisableUserAuth" /t REG_DWORD /d "1" /f >nul 2>&1
@@ -14296,6 +14870,7 @@ reg add "HKLM\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Sensor\Overrides\{BFA
 reg add "HKLM\SYSTEM\CurrentControlSet\Services\lfsvc\Service\Configuration" /v "Status" /t REG_DWORD /d "0" /f >nul 2>&1
 reg add "HKLM\SOFTWARE\Policies\Microsoft\Windows\LocationAndSensors" /v "DisableLocation" /t REG_DWORD /d "1" /f >nul 2>&1
 reg add "HKLM\SOFTWARE\Policies\Microsoft\Windows\LocationAndSensors" /v "DisableLocationScripting" /t REG_DWORD /d "1" /f >nul 2>&1
+reg add "HKLM\SOFTWARE\Policies\Microsoft\Windows\LocationAndSensors" /v "DisableWindowsLocationProvider" /t REG_DWORD /d "1" /f >nul 2>&1
 sc config "lfsvc" start= disabled >nul 2>&1
 net stop "lfsvc" >nul 2>&1
 echo %c%✓ Location services system-wide disabled%u%
@@ -14352,6 +14927,19 @@ reg add "HKCU\SOFTWARE\Microsoft\Internet Explorer\Geolocation" /v "BlockAllWebs
 reg add "HKLM\SOFTWARE\Microsoft\Internet Explorer\Geolocation" /v "BlockAllWebsites" /t REG_DWORD /d "1" /f >nul 2>&1
 reg add "HKLM\SOFTWARE\Policies\Microsoft\MicrosoftEdge\PhishingFilter" /v "PreventOverride" /t REG_DWORD /d "0" /f >nul 2>&1
 reg add "HKCU\SOFTWARE\Classes\Local Settings\Software\Microsoft\Windows\CurrentVersion\AppContainer\Storage\microsoft.microsoftedge_8wekyb3d8bbwe\MicrosoftEdge\PhishingFilter" /v "EnabledV9" /t REG_DWORD /d "0" /f >nul 2>&1
+reg add "HKLM\Software\Policies\Microsoft\Windows\Explorer" /v "DisableSearchHistory" /t REG_DWORD /d "1" /f >nul 2>&1
+reg add "HKLM\SOFTWARE\Policies\Microsoft\Windows\Windows Search" /v "ConnectedSearchPrivacy" /t REG_DWORD /d "3" /f >nul 2>&1
+reg add "HKCU\SOFTWARE\Microsoft\Windows\CurrentVersion\SearchSettings" /v "IsMSACloudSearchEnabled" /t REG_DWORD /d "0" /f >nul 2>&1
+reg add "HKLM\SOFTWARE\Microsoft\Windows\CurrentVersion\Search" /v "CortanaInAmbientMode" /t REG_DWORD /d "0" /f >nul 2>&1
+reg add "HKCU\Software\Microsoft\Speech_OneCore\Preferences" /v "VoiceActivationOn" /t REG_DWORD /d "0" /f >nul 2>&1
+reg add "HKLM\Software\Microsoft\Speech_OneCore\Preferences" /v "VoiceActivationDefaultOn" /t REG_DWORD /d "0" /f >nul 2>&1
+reg add "HKCU\Software\Microsoft\Speech_OneCore\Preferences" /v "VoiceActivationEnableAboveLockscreen" /t REG_DWORD /d "0" /f >nul 2>&1
+reg add "HKCU\Software\Microsoft\Speech_OneCore\Preferences" /v "ModelDownloadAllowed" /t REG_DWORD /d "0" /f >nul 2>&1
+reg add "HKLM\SOFTWARE\Policies\Microsoft\Windows\Windows Search" /v "AlwaysUseAutoLangDetection" /t REG_DWORD /d "0" /f >nul 2>&1
+reg add "HKLM\SOFTWARE\Policies\Microsoft\Windows\Windows Search" /v "PreventRemoteQueries" /t REG_DWORD /d "1" /f >nul 2>&1
+reg add "HKLM\SOFTWARE\Policies\Microsoft\Windows\Windows Search" /v "PreventUnwantedAddIns" /t REG_SZ /d " " /f >nul 2>&1
+reg add "HKCU\Software\Microsoft\Windows\CurrentVersion\SearchSettings" /v "IsDynamicSearchBoxEnabled" /t REG_DWORD /d "0" /f >nul 2>&1
+reg add "HKCU\Software\Microsoft\Windows\CurrentVersion\Explorer\Advanced" /v "Start_IrisRecommendationEnabled" /t REG_DWORD /d "0" /f >nul 2>&1
 echo %c%✓ Geolocation in web browsers blocked%u%
 
 echo.
@@ -14392,6 +14980,7 @@ echo %c%This will secure app permissions and background activity:%u%
 echo %c%• Disable background apps globally%u%
 echo %c%• Block app access to contacts, calendar, email%u%
 echo %c%• Disable app access to call history and messaging%u%
+echo %c%  Remove Windows Recall, and Generative AI%u%
 echo %c%• Block access to documents, pictures, videos%u%
 echo %c%• Disable app notifications and diagnostics%u%
 echo %c%• Remove app access to other devices%u%
@@ -14401,7 +14990,7 @@ choice /C YN /M "%c%Apply comprehensive app permissions and background restricti
 if errorlevel 2 goto PrivacyMenu
 
 echo.
-echo %c%[1/8] Disabling Background Apps Globally...%u%
+echo %c%[1/11] Disabling Background Apps Globally...%u%
 reg add "HKCU\SOFTWARE\Microsoft\Windows\CurrentVersion\BackgroundAccessApplications" /v "GlobalUserDisabled" /t REG_DWORD /d "1" /f >nul 2>&1
 reg add "HKLM\SOFTWARE\Policies\Microsoft\Windows\AppPrivacy" /v "LetAppsRunInBackground" /t REG_DWORD /d "2" /f >nul 2>&1
 reg add "HKCU\SOFTWARE\Microsoft\Windows\CurrentVersion\Search" /v "BackgroundAppGlobalToggle" /t REG_DWORD /d "0" /f >nul 2>&1
@@ -14411,7 +15000,7 @@ chcp 65001 >nul
 echo %c%✓ Background apps globally disabled%u%
 
 echo.
-echo %c%[2/8] Blocking App Access to Contacts, Calendar, Email...%u%
+echo %c%[2/11] Blocking App Access to Contacts, Calendar, Email...%u%
 reg add "HKLM\SOFTWARE\Microsoft\Windows\CurrentVersion\CapabilityAccessManager\ConsentStore\contacts" /v "Value" /t REG_SZ /d "Deny" /f >nul 2>&1
 reg add "HKCU\SOFTWARE\Microsoft\Windows\CurrentVersion\CapabilityAccessManager\ConsentStore\contacts" /v "Value" /t REG_SZ /d "Deny" /f >nul 2>&1
 reg add "HKLM\SOFTWARE\Microsoft\Windows\CurrentVersion\CapabilityAccessManager\ConsentStore\appointments" /v "Value" /t REG_SZ /d "Deny" /f >nul 2>&1
@@ -14421,7 +15010,7 @@ reg add "HKCU\SOFTWARE\Microsoft\Windows\CurrentVersion\CapabilityAccessManager\
 echo %c%✓ App access to contacts, calendar, email blocked%u%
 
 echo.
-echo %c%[3/8] Disabling App Access to Call History and Messaging...%u%
+echo %c%[3/11] Disabling App Access to Call History and Messaging...%u%
 reg add "HKLM\SOFTWARE\Microsoft\Windows\CurrentVersion\CapabilityAccessManager\ConsentStore\phoneCall" /v "Value" /t REG_SZ /d "Deny" /f >nul 2>&1
 reg add "HKCU\SOFTWARE\Microsoft\Windows\CurrentVersion\CapabilityAccessManager\ConsentStore\phoneCall" /v "Value" /t REG_SZ /d "Deny" /f >nul 2>&1
 reg add "HKLM\SOFTWARE\Microsoft\Windows\CurrentVersion\CapabilityAccessManager\ConsentStore\phoneCallHistory" /v "Value" /t REG_SZ /d "Deny" /f >nul 2>&1
@@ -14431,7 +15020,7 @@ reg add "HKCU\SOFTWARE\Microsoft\Windows\CurrentVersion\CapabilityAccessManager\
 echo %c%✓ App access to call history and messaging blocked%u%
 
 echo.
-echo %c%[4/8] Blocking Access to Documents, Pictures, Videos...%u%
+echo %c%[4/11] Blocking Access to Documents, Pictures, Videos...%u%
 reg add "HKLM\SOFTWARE\Microsoft\Windows\CurrentVersion\CapabilityAccessManager\ConsentStore\documentsLibrary" /v "Value" /t REG_SZ /d "Deny" /f >nul 2>&1
 reg add "HKCU\SOFTWARE\Microsoft\Windows\CurrentVersion\CapabilityAccessManager\ConsentStore\documentsLibrary" /v "Value" /t REG_SZ /d "Deny" /f >nul 2>&1
 reg add "HKLM\SOFTWARE\Microsoft\Windows\CurrentVersion\CapabilityAccessManager\ConsentStore\picturesLibrary" /v "Value" /t REG_SZ /d "Deny" /f >nul 2>&1
@@ -14443,7 +15032,7 @@ reg add "HKCU\SOFTWARE\Microsoft\Windows\CurrentVersion\CapabilityAccessManager\
 echo %c%✓ App access to documents, pictures, videos blocked%u%
 
 echo.
-echo %c%[5/8] Disabling App Notifications and Diagnostics...%u%
+echo %c%[5/11] Disabling App Notifications and Diagnostics...%u%
 reg add "HKLM\SOFTWARE\Microsoft\Windows\CurrentVersion\CapabilityAccessManager\ConsentStore\userNotificationListener" /v "Value" /t REG_SZ /d "Deny" /f >nul 2>&1
 reg add "HKCU\SOFTWARE\Microsoft\Windows\CurrentVersion\CapabilityAccessManager\ConsentStore\userNotificationListener" /v "Value" /t REG_SZ /d "Deny" /f >nul 2>&1
 reg add "HKLM\SOFTWARE\Microsoft\Windows\CurrentVersion\CapabilityAccessManager\ConsentStore\appDiagnostics" /v "Value" /t REG_SZ /d "Deny" /f >nul 2>&1
@@ -14452,9 +15041,20 @@ reg add "HKCU\SOFTWARE\Microsoft\Windows\CurrentVersion\Notifications\Settings" 
 echo %c%✓ App notifications and diagnostics disabled%u%
 
 echo.
-echo %c%[6/8] Removing App Access to Other Devices...%u%
+echo %c%[6/11] Removing App Access to Other Devices...%u%
 reg add "HKLM\SOFTWARE\Microsoft\Windows\CurrentVersion\CapabilityAccessManager\ConsentStore\bluetoothSync" /v "Value" /t REG_SZ /d "Deny" /f >nul 2>&1
 reg add "HKCU\SOFTWARE\Microsoft\Windows\CurrentVersion\CapabilityAccessManager\ConsentStore\bluetoothSync" /v "Value" /t REG_SZ /d "Deny" /f >nul 2>&1
+reg add "HKLM\SOFTWARE\Microsoft\Windows\CurrentVersion\CapabilityAccessManager\ConsentStore\bluetooth" /v "Value" /t REG_SZ /d "Deny" /f >nul 2>&1
+reg add "HKLM\SOFTWARE\Microsoft\Windows\CurrentVersion\CapabilityAccessManager\ConsentStore\gazeInput" /v "Value" /t REG_SZ /d "Deny" /f >nul 2>&1
+reg add "HKLM\SOFTWARE\Microsoft\Windows\CurrentVersion\CapabilityAccessManager\ConsentStore\humanPresence" /v "Value" /t REG_SZ /d "Deny" /f >nul 2>&1
+reg add "HKLM\SOFTWARE\Microsoft\Windows\CurrentVersion\CapabilityAccessManager\ConsentStore\spatialPerception" /v "Value" /t REG_SZ /d "Deny" /f >nul 2>&1
+reg add "HKLM\SOFTWARE\Microsoft\Windows\CurrentVersion\CapabilityAccessManager\ConsentStore\backgroundSpatialPerception" /v "Value" /t REG_SZ /d "Deny" /f >nul 2>&1
+reg add "HKLM\SOFTWARE\Microsoft\Windows\CurrentVersion\CapabilityAccessManager\ConsentStore\graphicsCaptureProgrammatic" /v "Value" /t REG_SZ /d "Deny" /f >nul 2>&1
+reg add "HKLM\SOFTWARE\Microsoft\Windows\CurrentVersion\CapabilityAccessManager\ConsentStore\graphicsCaptureWithoutBorder" /v "Value" /t REG_SZ /d "Deny" /f >nul 2>&1
+reg add "HKLM\SOFTWARE\Microsoft\Windows\CurrentVersion\CapabilityAccessManager\ConsentStore\humanInterfaceDevice" /v "Value" /t REG_SZ /d "Deny" /f >nul 2>&1
+reg add "HKLM\SOFTWARE\Microsoft\Windows\CurrentVersion\CapabilityAccessManager\ConsentStore\userDataTasks" /v "Value" /t REG_SZ /d "Deny" /f >nul 2>&1
+reg add "HKCU\Software\Microsoft\Speech_OneCore\Settings\VoiceActivation\UserPreferenceForAllApps" /v "AgentActivationEnabled" /t REG_DWORD /d "0" /f >nul 2>&1
+reg add "HKCU\Software\Microsoft\Speech_OneCore\Settings\VoiceActivation\UserPreferenceForAllApps" /v "AgentActivationOnLockScreenEnabled" /t REG_DWORD /d "0" /f >nul 2>&1
 reg add "HKLM\SOFTWARE\Microsoft\Windows\CurrentVersion\CapabilityAccessManager\ConsentStore\wifiData" /v "Value" /t REG_SZ /d "Deny" /f >nul 2>&1
 reg add "HKCU\SOFTWARE\Microsoft\Windows\CurrentVersion\CapabilityAccessManager\ConsentStore\wifiData" /v "Value" /t REG_SZ /d "Deny" /f >nul 2>&1
 reg add "HKLM\SOFTWARE\Microsoft\Windows\CurrentVersion\CapabilityAccessManager\ConsentStore\serialCommunication" /v "Value" /t REG_SZ /d "Deny" /f >nul 2>&1
@@ -14462,7 +15062,7 @@ reg add "HKCU\SOFTWARE\Microsoft\Windows\CurrentVersion\CapabilityAccessManager\
 echo %c%✓ App access to other devices removed%u%
 
 echo.
-echo %c%[7/8] Blocking Automatic App Updates and Installations...%u%
+echo %c%[7/11] Blocking Automatic App Updates and Installations...%u%
 reg add "HKLM\SOFTWARE\Policies\Microsoft\Windows\CloudContent" /v "DisableWindowsConsumerFeatures" /t REG_DWORD /d "1" /f >nul 2>&1
 reg add "HKCU\SOFTWARE\Microsoft\Windows\CurrentVersion\ContentDeliveryManager" /v "ContentDeliveryAllowed" /t REG_DWORD /d "0" /f >nul 2>&1
 reg add "HKCU\SOFTWARE\Microsoft\Windows\CurrentVersion\ContentDeliveryManager" /v "SilentInstalledAppsEnabled" /t REG_DWORD /d "0" /f >nul 2>&1
@@ -14471,13 +15071,45 @@ reg add "HKLM\SOFTWARE\Policies\Microsoft\WindowsStore" /v "AutoDownload" /t REG
 echo %c%✓ Automatic app updates and installations blocked%u%
 
 echo.
-echo %c%[8/8] Final App Permission Restrictions...%u%
+echo %c%[8/11] Final App Permission Restrictions...%u%
 reg add "HKLM\SOFTWARE\Microsoft\Windows\CurrentVersion\CapabilityAccessManager\ConsentStore\userAccountInformation" /v "Value" /t REG_SZ /d "Deny" /f >nul 2>&1
 reg add "HKCU\SOFTWARE\Microsoft\Windows\CurrentVersion\CapabilityAccessManager\ConsentStore\userAccountInformation" /v "Value" /t REG_SZ /d "Deny" /f >nul 2>&1
 reg add "HKLM\SOFTWARE\Microsoft\Windows\CurrentVersion\CapabilityAccessManager\ConsentStore\musicLibrary" /v "Value" /t REG_SZ /d "Deny" /f >nul 2>&1
 reg add "HKCU\SOFTWARE\Microsoft\Windows\CurrentVersion\CapabilityAccessManager\ConsentStore\musicLibrary" /v "Value" /t REG_SZ /d "Deny" /f >nul 2>&1
 reg add "HKLM\SOFTWARE\Microsoft\Windows\CurrentVersion\CapabilityAccessManager\ConsentStore\radios" /v "Value" /t REG_SZ /d "Deny" /f >nul 2>&1
 reg add "HKCU\SOFTWARE\Microsoft\Windows\CurrentVersion\CapabilityAccessManager\ConsentStore\radios" /v "Value" /t REG_SZ /d "Deny" /f >nul 2>&1
+reg add "HKLM\SOFTWARE\Policies\Microsoft\Windows\WindowsAI" /v "AllowRecallEnablement" /t REG_DWORD /d "0" /f >nul 2>&1
+reg add "HKLM\SOFTWARE\Policies\Microsoft\Windows\WindowsAI" /v "DisableAIDataAnalysis" /t REG_DWORD /d "1" /f >nul 2>&1
+reg add "HKLM\SOFTWARE\Policies\Microsoft\Windows\WindowsAI" /v "DisableClickToDo" /t REG_DWORD /d "1" /f >nul 2>&1
+reg add "HKLM\SOFTWARE\Microsoft\Windows\CurrentVersion\Policies\Paint" /v "DisableCocreator" /t REG_DWORD /d "1" /f >nul 2>&1
+reg add "HKLM\SOFTWARE\Microsoft\Windows\CurrentVersion\Policies\Paint" /v "DisableGenerativeFill" /t REG_DWORD /d "1" /f >nul 2>&1
+reg add "HKLM\SOFTWARE\Microsoft\Windows\CurrentVersion\Policies\Paint" /v "DisableImageCreator" /t REG_DWORD /d "1" /f >nul 2>&1
+for %%C in (
+    LetAppsAccessLocation
+    LetAppsAccessAccountInfo
+    LetAppsAccessMotion
+    LetAppsAccessTrustedDevices
+    LetAppsSyncWithDevices
+    LetAppsAccessCamera
+    LetAppsGetDiagnosticInfo
+    LetAppsAccessContacts
+    LetAppsAccessNotifications
+    LetAppsAccessCalendar
+    LetAppsAccessEmail
+    LetAppsAccessTasks
+    LetAppsAccessRadios
+    LetAppsAccessBackgroundSpatialPerception
+    LetAppsAccessGazeInput
+    LetAppsAccessGraphicsCaptureProgrammatic
+    LetAppsAccessGraphicsCaptureWithoutBorder
+    LetAppsAccessCallHistory
+    LetAppsAccessPhone
+    LetAppsAccessMessaging
+    LetAppsActivateWithVoice
+    LetAppsActivateWithVoiceAboveLock
+) do (
+    reg add "HKLM\SOFTWARE\Policies\Microsoft\Windows\AppPrivacy" /v "%%C" /t REG_DWORD /d "2" /f >nul 2>&1
+)
 echo %c%✓ Final app permission restrictions applied%u%
 
 echo.
@@ -14551,6 +15183,12 @@ reg add "HKCU\SOFTWARE\Microsoft\Windows\CurrentVersion\AdvertisingInfo" /v "Ena
 reg add "HKLM\SOFTWARE\Policies\Microsoft\Windows\AdvertisingInfo" /v "DisabledByGroupPolicy" /t REG_DWORD /d "1" /f >nul 2>&1
 reg add "HKCU\SOFTWARE\Microsoft\Windows\CurrentVersion\Privacy" /v "TailoredExperiencesWithDiagnosticDataEnabled" /t REG_DWORD /d "0" /f >nul 2>&1
 reg add "HKLM\SOFTWARE\Microsoft\Windows\CurrentVersion\Policies\DataCollection" /v "AllowTelemetry" /t REG_DWORD /d "0" /f >nul 2>&1
+reg add "HKLM\SOFTWARE\Policies\Microsoft\Windows\DataCollection" /v "AllowCommercialDataPipeline" /t REG_DWORD /d "0" /f >nul 2>&1
+reg add "HKLM\SOFTWARE\Policies\Microsoft\Windows\DataCollection" /v "AllowDesktopAnalyticsProcessing" /t REG_DWORD /d "0" /f >nul 2>&1
+reg add "HKLM\SOFTWARE\Policies\Microsoft\Windows\DataCollection" /v "AllowDeviceNameInTelemetry" /t REG_DWORD /d "0" /f >nul 2>&1
+reg add "HKLM\SOFTWARE\Policies\Microsoft\Windows\DataCollection" /v "MicrosoftEdgeDataOptIn" /t REG_DWORD /d "0" /f >nul 2>&1
+reg add "HKLM\SOFTWARE\Policies\Microsoft\Windows\DataCollection" /v "AllowWUfBCloudProcessing" /t REG_DWORD /d "0" /f >nul 2>&1
+reg add "HKLM\SOFTWARE\Policies\Microsoft\Windows\DataCollection" /v "AllowUpdateComplianceProcessing" /t REG_DWORD /d "0" /f >nul 2>&1
 echo %c%✓ Advertising ID and tracking disabled%u%
 
 echo.
@@ -14585,6 +15223,7 @@ reg add "HKCU\SOFTWARE\Microsoft\Windows\CurrentVersion\ContentDeliveryManager" 
 reg add "HKCU\SOFTWARE\Microsoft\Windows\CurrentVersion\ContentDeliveryManager" /v "SubscribedContent-314559Enabled" /t REG_DWORD /d "0" /f >nul 2>&1
 reg add "HKCU\SOFTWARE\Microsoft\Windows\CurrentVersion\ContentDeliveryManager" /v "RotatingLockScreenOverlayEnabled" /t REG_DWORD /d "0" /f >nul 2>&1
 reg add "HKCU\SOFTWARE\Microsoft\Windows\CurrentVersion\ContentDeliveryManager" /v "RotatingLockScreenEnabled" /t REG_DWORD /d "0" /f >nul 2>&1
+reg add "HKLM\SOFTWARE\Microsoft\Windows\CurrentVersion\PushNotifications" /v "NoCloudApplicationNotification" /t REG_DWORD /d "1" /f >nul 2>&1
 reg add "HKLM\SOFTWARE\Policies\Microsoft\Windows\CloudContent" /v "DisableSoftLanding" /t REG_DWORD /d "1" /f >nul 2>&1
 echo %c%✓ Start Menu ads and promoted apps removed%u%
 
@@ -14619,6 +15258,7 @@ reg add "HKLM\SOFTWARE\Microsoft\Windows\CurrentVersion\Policies\Explorer" /v "A
 reg add "HKCU\SOFTWARE\Microsoft\Windows\CurrentVersion\Explorer\Advanced" /v "ShowSyncProviderNotifications" /t REG_DWORD /d "0" /f >nul 2>&1
 reg add "HKLM\SOFTWARE\Policies\Microsoft\Windows\CloudContent" /v "DisableTailoredExperiencesWithDiagnosticData" /t REG_DWORD /d "1" /f >nul 2>&1
 reg add "HKLM\SOFTWARE\Policies\Microsoft\Windows\DataCollection" /v "DoNotShowFeedbackNotifications" /t REG_DWORD /d "1" /f >nul 2>&1
+reg add "HKLM\Software\Policies\Microsoft\Windows\DataCollection" /v "DisableOneSettingsDownloads" /t REG_DWORD /d "1" /f >nul 2>&1
 echo %c%✓ Windows tips and promotional content removed%u%
 
 echo.
@@ -14649,33 +15289,17 @@ goto PrivacyMenu
 :AdvancedMenu
 :GameBoosters
 cls
-chcp 65001 >nul
+call :SetupConsole
+call :DisplayBanner
+echo %c%                            ╔═══════════════════════════════╦════════════════════════════════╗ %u%
+echo                             %c%║%u% [%c%1%u%] Batlez Toolbox            %c%║%u% [%c%6%u%] Affinity                   %c%║%u%
+echo                             %c%║%u% [%c%2%u%] Game Boosters             %c%║%u% [%c%7%u%] DirectX Optimization       %c%║%u%
+echo                             %c%║%u% [%c%3%u%] Scheduled Tasks           %c%║%u% [%c%8%u%] OBS Optimizer              %c%║%u%
+echo                             %c%║%u% [%c%4%u%] MSI Mode                  %c%║%u% [%c%9%u%] Stream Optimizer           %c%║%u%
+echo                             %c%║%u% [%c%5%u%] Program Debloat           %c%║%u% [%c%10%u%] DPC Latency Driver Fix    %c%║%u%
+echo %c%                            ╚═══════════════════════════════╩════════════════════════════════╝
 echo.
-echo     %c%    ██████╗ █████╗  ████████╗██╗     ███████╗███████╗  ████████╗ ██╗       ██╗███████╗ █████╗ ██╗  ██╗ ██████╗
-echo         ██╔══██╗██╔══██╗╚══██╔══╝██║     ██╔════╝╚════██║  ╚══██╔══╝ ██║  ██╗  ██║██╔════╝██╔══██╗██║ ██╔╝██╔════╝
-echo         ██████╦╝███████║   ██║   ██║     █████╗    ███╔═╝     ██║    ╚██╗████╗██╔╝█████╗  ███████║█████═╝ ╚█████╗  %u%
-echo         ██╔══██╗██╔══██║   ██║   ██║     ██╔══╝  ██╔══╝       ██║     ████╔═████║ ██╔══╝  ██╔══██║██╔═██╗  ╚═══██╗
-echo         ██████╦╝██║  ██║   ██║   ███████╗███████╗███████╗     ██║     ╚██╔╝ ╚██╔╝ ███████╗██║  ██║██║ ╚██╗██████╔╝
-echo         ╚═════╝ ╚═╝  ╚═╝   ╚═╝   ╚══════╝╚══════╝╚══════╝     ╚═╝      ╚═╝   ╚═╝  ╚══════╝╚═╝  ╚═╝╚═╝  ╚═╝╚═════╝
-echo.
-echo %c%                       ╔══════════════════════════════════════════════════╗ %u%
-echo                        %c%║%u%           [%c%1%u%] Batlez Toolbox                     %c%║%u%
-echo                        %c%║%u%           [%c%2%u%] Game Boosters                      %c%║%u%
-echo                        %c%║%u%           [%c%3%u%] Scheduled Tasks                    %c%║%u%
-echo                        %c%║%u%           [%c%4%u%] MSI Mode                           %c%║%u%
-echo                        %c%║%u%           [%c%5%u%] Program Debloat                    %c%║%u%
-echo                        %c%║%u%           [%c%6%u%] Affinity                           %c%║%u%
-echo                        %c%║%u%           [%c%7%u%] DirectX Optimization               %c%║%u%
-echo                        %c%║%u%           [%c%8%u%] OBS Optimizer                      %c%║%u%
-echo                        %c%║%u%           [%c%10%u%] Stream Optimizer                  %c%║%u%
-echo %c%                       ╚══════════════════════════════════════════════════╝
-echo %c%                             ║  %u%[%c%9%u%] Theme Presets    [%c%0%u%] Go Back    %c%║%u%
-echo %c%                             ║            %u% [%c%Quit%u%] Leave%c%             ║
-echo %c%                             ╚══════════════════════════════════════╝
-echo %u%                                      Current Version: %c%%version%
-echo %u%                                %u%User %c%%username% %u%- Date %c%%date% %u%
-echo.
-echo.
+echo                              %u%[%c%11%u%] Colour Presets   [%c%12%u%] Back to Main   [%red%X%u%] Exit Application
 echo.
 set /p M="%c%Choose an option »%u% "
 if "%M%"=="1" goto Toolbox
@@ -14686,14 +15310,241 @@ if "%M%"=="5" goto ProgramDebloat
 if "%M%"=="6" goto Affinity
 if "%M%"=="7" goto DirectXOptimization
 if "%M%"=="8" goto OBSOptimizer
-if "%M%"=="9" goto Presets
-if "%M%"=="10" goto StreamOptimizer
-if "%M%"=="0" goto menu
-if "%M%"=="Quit" goto Destruct
+if "%M%"=="9" goto StreamOptimizer
+if "%M%"=="10" goto DPCLatencyFix
+if /i "%M%"=="11" goto Presets
+if /i "%M%"=="12" goto menu
+if /i "%M%"=="0" goto menu
+if /i "%M%"=="X" goto Destruct
+if /i "%M%"=="Quit" goto Destruct
 cls
 echo %underline%%red%Invalid Input. Press any key to continue.%u%
 pause >nul
 goto AdvancedMenu
+
+:DPCLatencyFix
+cls
+call :SetupConsole
+echo.
+echo.
+echo %c%╔══════════════════════════════════════════════════════════════════════════════╗
+echo ║                  DPC LATENCY ^& GENERIC DRIVER OPTIMIZER                   ║
+echo ╚══════════════════════════════════════════════════════════════════════════════╝%u%
+echo.
+echo %c%Vendor audio and NIC drivers (especially Realtek rt640x64 / RTKVHD64) are a%u%
+echo %c%major source of DPC latency spikes, micro-stutters, and audio dropouts.%u%
+echo %c%This tool eliminates driver-induced latency overhead.%u%
+echo.
+echo %c%Optimization Features:%u%
+echo %c%  • Strip Realtek NIC DPC spikes (Disables EEE, Green Ethernet, Flow Control)%u%
+echo %c%  • Disable Interrupt Moderation ^& Large Send Offload (LSO) latency buffers%u%
+echo %c%  • Disable Realtek Audio background bloat services ^& high-latency APOs%u%
+echo %c%  • Enable fast switch to Microsoft Generic In-Box High Definition Audio%u%
+echo.
+echo %c%Choose an option:%u%
+echo %c%  [1] Optimize Network Adapters (Disable EEE, Green Mode ^& Latency Spikes)%u%
+echo %c%  [2] Disable Realtek Audio Services ^& Processing Latency (APOs)%u%
+echo %c%  [3] Apply Full DPC Latency Strip (Network ^& Audio Tweaks)%u%
+echo %c%  [4] Switch Realtek Audio to Microsoft Generic HD Audio (Device Guide)%u%
+echo %c%  [5] Scan System for Active Audio ^& Network Drivers%u%
+echo.
+echo %u%  [%c%0%u%] Back to Advanced Menu
+echo.
+set /p DPC_CHOICE="%c%Choose an option »%u% "
+if "%DPC_CHOICE%"=="0" goto AdvancedMenu
+if "%DPC_CHOICE%"=="1" goto DPC_NetworkOpt
+if "%DPC_CHOICE%"=="2" goto DPC_AudioOpt
+if "%DPC_CHOICE%"=="3" goto DPC_FullOpt
+if "%DPC_CHOICE%"=="4" goto DPC_GenericGuide
+if "%DPC_CHOICE%"=="5" goto DPC_ScanDrivers
+cls
+echo %underline%%red%Invalid Input. Press any key to continue.%u%
+pause >nul
+goto DPCLatencyFix
+
+:DPC_NetworkOpt
+cls
+call :SetupConsole
+echo.
+echo.
+echo %c%╔══════════════════════════════════════════════════════════════════════════════╗
+echo ║                    NETWORK DPC LATENCY OPTIMIZATION                      ║
+echo ╚══════════════════════════════════════════════════════════════════════════════╝%u%
+echo.
+echo %c%[1/2] Disabling Energy Efficient Ethernet, Green Ethernet ^& Power Savings...%u%
+powershell -NoProfile -Command "Get-NetAdapter -Physical -EA SilentlyContinue | ForEach-Object { $n = $_.Name; $props = @('Energy Efficient Ethernet','*EEE','Green Ethernet','*GreenEthernet','Gigabit Lite','Power Saving Mode','Advanced EEE','*FlowControl','Flow Control','*InterruptModeration','Interrupt Moderation','Large Send Offload v2 (IPv4)','Large Send Offload v2 (IPv6)','*LsoV2IPv4','*LsoV2IPv6'); foreach ($p in $props) { Set-NetAdapterAdvancedProperty -Name $n -DisplayName $p -DisplayValue 'Disabled' -NoRestart -EA SilentlyContinue; Set-NetAdapterAdvancedProperty -Name $n -RegistryKeyword $p -RegistryValue '0' -NoRestart -EA SilentlyContinue }; Set-NetAdapterPowerManagement -Name $n -SelectiveSuspend Disabled -DeviceSleepOnDisconnect Disabled -D0PacketCoalescing Disabled -EA SilentlyContinue; Write-Host ('  [+] Optimized: ' + $n) -ForegroundColor Green }"
+echo.
+echo %c%[2/2] Applying registry DPC latency network overrides...%u%
+for /f "tokens=*" %%a in ('reg query "HKLM\SYSTEM\CurrentControlSet\Control\Class\{4d36e972-e325-11ce-bfc1-08002be10318}" 2^>nul ^| findstr /r "\\00[0-9][0-9]$"') do (
+    reg query "%%a" /v "ComponentId" 2>nul | findstr /i "PCI\ USB\" >nul && (
+        reg add "%%a" /v "*EEE" /t REG_SZ /d "0" /f >nul 2>&1
+        reg add "%%a" /v "*GreenEthernet" /t REG_SZ /d "0" /f >nul 2>&1
+        reg add "%%a" /v "*FlowControl" /t REG_SZ /d "0" /f >nul 2>&1
+        reg add "%%a" /v "EEELinkDown" /t REG_SZ /d "0" /f >nul 2>&1
+        reg add "%%a" /v "EnablePMM" /t REG_SZ /d "0" /f >nul 2>&1
+        reg add "%%a" /v "GigaLite" /t REG_SZ /d "0" /f >nul 2>&1
+        reg add "%%a" /v "PowerSaveMode" /t REG_SZ /d "0" /f >nul 2>&1
+        reg add "%%a" /v "AutoPowerSaveMode" /t REG_SZ /d "0" /f >nul 2>&1
+        reg add "%%a" /v "SavePowerNowEnabled" /t REG_SZ /d "0" /f >nul 2>&1
+        reg add "%%a" /v "PnPCapabilities" /t REG_DWORD /d "24" /f >nul 2>&1
+    )
+)
+echo %green%✔ Network DPC spikes and power throttling eliminated!%u%
+echo.
+echo %c%══════════════════════════ PRESS ANY KEY TO CONTINUE ══════════════════════════%u%
+pause >nul
+goto DPCLatencyFix
+
+:DPC_AudioOpt
+cls
+call :SetupConsole
+echo.
+echo.
+echo %c%╔══════════════════════════════════════════════════════════════════════════════╗
+echo ║                     AUDIO DPC LATENCY OPTIMIZATION                       ║
+echo ╚══════════════════════════════════════════════════════════════════════════════╝%u%
+echo.
+echo %c%[1/3] Disabling Realtek and vendor background audio bloat services...%u%
+sc config "RtkAudioService" start= disabled >nul 2>&1
+net stop "RtkAudioService" >nul 2>&1
+sc config "Realtek Audio Universal Service" start= disabled >nul 2>&1
+net stop "Realtek Audio Universal Service" >nul 2>&1
+sc config "NahimicService" start= disabled >nul 2>&1
+net stop "NahimicService" >nul 2>&1
+sc config "WavesSysSvc" start= disabled >nul 2>&1
+net stop "WavesSysSvc" >nul 2>&1
+echo %green%  [+] Vendor audio background services stopped and disabled%u%
+echo.
+echo %c%[2/3] Disabling latency-inducing Audio Processing Objects (APOs)...%u%
+for /f "tokens=*" %%e in ('reg query "HKLM\SOFTWARE\Microsoft\Windows\CurrentVersion\MMDevices\Audio\Render" 2^>nul ^| findstr /r "{.*}$"') do (
+    reg add "%%e\FxProperties" /v "{1da5d803-d492-4edd-8c23-e0c0ffee7f0e},5" /t REG_DWORD /d "1" /f >nul 2>&1
+)
+for /f "tokens=*" %%e in ('reg query "HKLM\SOFTWARE\Microsoft\Windows\CurrentVersion\MMDevices\Audio\Capture" 2^>nul ^| findstr /r "{.*}$"') do (
+    reg add "%%e\FxProperties" /v "{1da5d803-d492-4edd-8c23-e0c0ffee7f0e},5" /t REG_DWORD /d "1" /f >nul 2>&1
+)
+echo %green%  [+] Audio enhancement latency bypassed (Playback & Recording)%u%
+echo.
+echo %c%[3/3] Setting MMCSS Priority for low-latency audio streaming...%u%
+reg add "HKLM\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Multimedia\SystemProfile\Tasks\Audio" /v "Affinity" /t REG_DWORD /d "0" /f >nul 2>&1
+reg add "HKLM\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Multimedia\SystemProfile\Tasks\Audio" /v "Background Only" /t REG_SZ /d "False" /f >nul 2>&1
+reg add "HKLM\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Multimedia\SystemProfile\Tasks\Audio" /v "Clock Rate" /t REG_DWORD /d "10000" /f >nul 2>&1
+reg add "HKLM\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Multimedia\SystemProfile\Tasks\Audio" /v "GPU Priority" /t REG_DWORD /d "8" /f >nul 2>&1
+reg add "HKLM\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Multimedia\SystemProfile\Tasks\Audio" /v "Priority" /t REG_DWORD /d "6" /f >nul 2>&1
+reg add "HKLM\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Multimedia\SystemProfile\Tasks\Audio" /v "Scheduling Category" /t REG_SZ /d "High" /f >nul 2>&1
+reg add "HKLM\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Multimedia\SystemProfile\Tasks\Audio" /v "SFIO Priority" /t REG_SZ /d "High" /f >nul 2>&1
+echo %green%✔ Audio latency optimizations applied!%u%
+echo.
+echo %c%══════════════════════════ PRESS ANY KEY TO CONTINUE ══════════════════════════%u%
+pause >nul
+goto DPCLatencyFix
+
+:DPC_FullOpt
+cls
+call :SetupConsole
+echo.
+echo.
+echo %c%╔══════════════════════════════════════════════════════════════════════════════╗
+echo ║                  FULL DPC LATENCY OPTIMIZATION STRIP                     ║
+echo ╚══════════════════════════════════════════════════════════════════════════════╝%u%
+echo.
+echo %c%Applying comprehensive DPC Latency Strip (Network + Audio)...%u%
+echo.
+echo %c%[1/4] Disabling NIC power saving, EEE, Green Ethernet ^& Interrupt Moderation...%u%
+powershell -NoProfile -Command "Get-NetAdapter -Physical -EA SilentlyContinue | ForEach-Object { $n = $_.Name; $props = @('Energy Efficient Ethernet','*EEE','Green Ethernet','*GreenEthernet','Gigabit Lite','Power Saving Mode','Advanced EEE','*FlowControl','Flow Control','*InterruptModeration','Interrupt Moderation','Large Send Offload v2 (IPv4)','Large Send Offload v2 (IPv6)','*LsoV2IPv4','*LsoV2IPv6'); foreach ($p in $props) { Set-NetAdapterAdvancedProperty -Name $n -DisplayName $p -DisplayValue 'Disabled' -NoRestart -EA SilentlyContinue; Set-NetAdapterAdvancedProperty -Name $n -RegistryKeyword $p -RegistryValue '0' -NoRestart -EA SilentlyContinue }; Set-NetAdapterPowerManagement -Name $n -SelectiveSuspend Disabled -DeviceSleepOnDisconnect Disabled -D0PacketCoalescing Disabled -EA SilentlyContinue; Write-Host ('  [+] Optimized: ' + $n) -ForegroundColor Green }"
+for /f "tokens=*" %%a in ('reg query "HKLM\SYSTEM\CurrentControlSet\Control\Class\{4d36e972-e325-11ce-bfc1-08002be10318}" 2^>nul ^| findstr /r "\\00[0-9][0-9]$"') do (
+    reg query "%%a" /v "ComponentId" 2>nul | findstr /i "PCI\ USB\" >nul && (
+        reg add "%%a" /v "*EEE" /t REG_SZ /d "0" /f >nul 2>&1
+        reg add "%%a" /v "*GreenEthernet" /t REG_SZ /d "0" /f >nul 2>&1
+        reg add "%%a" /v "*FlowControl" /t REG_SZ /d "0" /f >nul 2>&1
+        reg add "%%a" /v "EEELinkDown" /t REG_SZ /d "0" /f >nul 2>&1
+        reg add "%%a" /v "EnablePMM" /t REG_SZ /d "0" /f >nul 2>&1
+        reg add "%%a" /v "GigaLite" /t REG_SZ /d "0" /f >nul 2>&1
+        reg add "%%a" /v "PowerSaveMode" /t REG_SZ /d "0" /f >nul 2>&1
+        reg add "%%a" /v "AutoPowerSaveMode" /t REG_SZ /d "0" /f >nul 2>&1
+        reg add "%%a" /v "SavePowerNowEnabled" /t REG_SZ /d "0" /f >nul 2>&1
+        reg add "%%a" /v "PnPCapabilities" /t REG_DWORD /d "24" /f >nul 2>&1
+    )
+)
+echo.
+echo %c%[2/4] Disabling Realtek and vendor background audio bloat services...%u%
+sc config "RtkAudioService" start= disabled >nul 2>&1
+net stop "RtkAudioService" >nul 2>&1
+sc config "Realtek Audio Universal Service" start= disabled >nul 2>&1
+net stop "Realtek Audio Universal Service" >nul 2>&1
+sc config "NahimicService" start= disabled >nul 2>&1
+net stop "NahimicService" >nul 2>&1
+sc config "WavesSysSvc" start= disabled >nul 2>&1
+net stop "WavesSysSvc" >nul 2>&1
+echo.
+echo %c%[3/4] Disabling latency-inducing Audio Processing Objects (APOs)...%u%
+for /f "tokens=*" %%e in ('reg query "HKLM\SOFTWARE\Microsoft\Windows\CurrentVersion\MMDevices\Audio\Render" 2^>nul ^| findstr /r "{.*}$"') do (
+    reg add "%%e\FxProperties" /v "{1da5d803-d492-4edd-8c23-e0c0ffee7f0e},5" /t REG_DWORD /d "1" /f >nul 2>&1
+)
+for /f "tokens=*" %%e in ('reg query "HKLM\SOFTWARE\Microsoft\Windows\CurrentVersion\MMDevices\Audio\Capture" 2^>nul ^| findstr /r "{.*}$"') do (
+    reg add "%%e\FxProperties" /v "{1da5d803-d492-4edd-8c23-e0c0ffee7f0e},5" /t REG_DWORD /d "1" /f >nul 2>&1
+)
+echo.
+echo %c%[4/4] Setting MMCSS Priority for low-latency audio...%u%
+reg add "HKLM\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Multimedia\SystemProfile\Tasks\Audio" /v "Affinity" /t REG_DWORD /d "0" /f >nul 2>&1
+reg add "HKLM\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Multimedia\SystemProfile\Tasks\Audio" /v "Background Only" /t REG_SZ /d "False" /f >nul 2>&1
+reg add "HKLM\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Multimedia\SystemProfile\Tasks\Audio" /v "Clock Rate" /t REG_DWORD /d "10000" /f >nul 2>&1
+reg add "HKLM\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Multimedia\SystemProfile\Tasks\Audio" /v "GPU Priority" /t REG_DWORD /d "8" /f >nul 2>&1
+reg add "HKLM\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Multimedia\SystemProfile\Tasks\Audio" /v "Priority" /t REG_DWORD /d "6" /f >nul 2>&1
+reg add "HKLM\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Multimedia\SystemProfile\Tasks\Audio" /v "Scheduling Category" /t REG_SZ /d "High" /f >nul 2>&1
+reg add "HKLM\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Multimedia\SystemProfile\Tasks\Audio" /v "SFIO Priority" /t REG_SZ /d "High" /f >nul 2>&1
+echo.
+echo %green%✔ Full DPC Latency and Driver Optimization completed successfully!%u%
+echo.
+echo %c%══════════════════════════ PRESS ANY KEY TO CONTINUE ══════════════════════════%u%
+pause >nul
+goto DPCLatencyFix
+
+:DPC_GenericGuide
+cls
+call :SetupConsole
+echo.
+echo.
+echo %c%╔══════════════════════════════════════════════════════════════════════════════╗
+echo ║             HOW TO SWITCH TO MICROSOFT GENERIC INBOX DRIVERS               ║
+echo ╚══════════════════════════════════════════════════════════════════════════════╝%u%
+echo.
+echo %c%Windows provides high-speed, zero-bloat generic inbox drivers. Swapping%u%
+echo %c%Realtek Audio or Realtek NIC to Microsoft Generic eliminates vendor DPC spikes:%u%
+echo.
+echo %yellow%Step 1:%u% %c%Press [Y] below to open Windows Device Manager.%u%
+echo %yellow%Step 2:%u% %c%Expand "Sound, video and game controllers".%u%
+echo %yellow%Step 3:%u% %c%Right-click "Realtek High Definition Audio" → "Update driver".%u%
+echo %yellow%Step 4:%u% %c%Select "Browse my computer for drivers".%u%
+echo %yellow%Step 5:%u% %c%Select "Let me pick from a list of available drivers on my computer".%u%
+echo %yellow%Step 6:%u% %c%Select "High Definition Audio Device" (Microsoft) and click Next.%u%
+echo.
+echo %c%You can also do the same for Realtek PCIe GbE/2.5GbE under "Network adapters".%u%
+echo.
+choice /C YN /M "Open Device Manager now? (Y/N)"
+if errorlevel 1 if not errorlevel 2 start "" devmgmt.msc
+goto DPCLatencyFix
+
+:DPC_ScanDrivers
+cls
+call :SetupConsole
+echo.
+echo.
+echo %c%╔══════════════════════════════════════════════════════════════════════════════╗
+echo ║                   AUDIO ^& NETWORK DRIVER DIAGNOSTICS                     ║
+echo ╚══════════════════════════════════════════════════════════════════════════════╝%u%
+echo.
+echo %c%════════════════════ ACTIVE NETWORK CONTROLLERS ════════════════════%u%
+powershell -NoProfile -Command "Get-NetAdapter -Physical -EA SilentlyContinue | Select-Object Name, InterfaceDescription, DriverFileName, DriverVersion | Format-Table -AutoSize"
+echo.
+echo %c%═════════════════════ ACTIVE AUDIO CONTROLLERS ═════════════════════%u%
+powershell -NoProfile -Command "Get-CimInstance Win32_PnPSignedDriver | Where-Object { $_.DeviceClass -eq 'MEDIA' } | Select-Object DeviceName, DriverProviderName, DriverVersion | Format-Table -AutoSize"
+echo.
+echo %c%══════════════════════ DPC DRIVER WATCHLIST ════════════════════════%u%
+powershell -NoProfile -Command "$sys = @('rt640x64.sys','rtvhd64.sys','rtkaudioservice64.exe','e1d68x64.sys','ndis.sys','hdaudio.sys'); $run = @(Get-CimInstance Win32_SystemDriver | Where-Object { $_.State -eq 'Running' } | ForEach-Object { [System.IO.Path]::GetFileName($_.PathName).ToLower() }); $proc = @(Get-Process -EA SilentlyContinue | ForEach-Object { ($_.Name + '.exe').ToLower() }); foreach ($f in $sys) { $p = 'C:\Windows\System32\drivers\' + $f; $fl = $f.ToLower(); if ($run -contains $fl -or $proc -contains $fl) { Write-Host ('  [ACTIVE / LOADED IN KERNEL]       ' + $f) -ForegroundColor Yellow } elseif (Test-Path $p) { Write-Host ('  [PRESENT ON DISK ONLY / INACTIVE] ' + $f) -ForegroundColor DarkGray } }"
+echo.
+echo %c%══════════════════════════ PRESS ANY KEY TO CONTINUE ══════════════════════════%u%
+pause >nul
+goto DPCLatencyFix
 
 :StreamOptimizer
 cls
@@ -14791,7 +15642,7 @@ echo %c%✓ Page file set to 2x RAM (capped at 32GB)%u%
 
 echo.
 echo %c%[7/10] Disabling HPET (reduces Ryzen micro-stutter)...%u%
-bcdedit /set useplatformclock false >nul 2>&1
+bcdedit /deletevalue useplatformclock >nul 2>&1
 bcdedit /set disabledynamictick yes >nul 2>&1
 bcdedit /deletevalue useplatformtick >nul 2>&1
 echo %c%✓ HPET disabled via BCD (takes effect after reboot)%u%
@@ -14842,7 +15693,7 @@ echo.                                         %c%══════════�
 echo.
 echo %c%Manual steps to do in-app after rebooting:%u%
 echo %c%  TikTok Studio : Encoder=NVENC H.264, CBR, 4500 kbps, disable scene preview%u%
-echo %c%  Fortnite      : Enable Performance Mode in Settings > Video > Rendering Mode%u%
+echo %c%  Fortnite      : Enable Performance Mode in Settings → Video → Rendering Mode%u%
 echo %c%  Tikinfinity   : Use simple overlays, unload sources when not visible%u%
 pause >nul
 goto AdvancedMenu
@@ -15316,75 +16167,84 @@ echo %c%╔═══════════════════════
 echo ║                           DISCORD DEBLOAT                                   ║
 echo ╚══════════════════════════════════════════════════════════════════════════════╝%u%
 echo.
-echo %c%Removing Discord bloat and unused modules:%u%
-echo %c%• Discord process killed and leftover shortcuts deleted%u%
-echo %c%• Squirrel updater and logs removed%u%
-echo %c%• Unused modules removed: cloudsync, dispatch, erlpack,%u%
-echo %c%  game utils, media, spellcheck, krisp, rpc, overlay%u%
+echo %c%Choose a Discord Debloat mode:%u%
+echo.
+echo %c%  [1] Safe Debloat (Recommended)%u%
+echo %c%      • Preserves Krisp (AI Noise Suppression), Rich Presence (RPC) ^& Overlay%u%
+echo %c%      • Strips Squirrel updater, setup logs, cloudsync, dispatch ^& spellcheck%u%
+echo.
+echo %c%  [2] Aggressive Strip%u%
+echo %c%      • Strips all optional modules including Krisp, RPC, Overlay ^& Game SDK%u%
+echo %c%      • Minimal footprint for systems where Discord is voice-only or bare-bones%u%
+echo.
+echo %u%  [%c%0%u%] Back to Program Debloat
+echo.
+set /p DISC_CHOICE="%c%Choose an option »%u% "
+if "%DISC_CHOICE%"=="0" goto ProgramDebloat
+if "%DISC_CHOICE%"=="1" goto debloatdiscord_safe
+if "%DISC_CHOICE%"=="2" goto debloatdiscord_aggressive
+cls
+echo %underline%%red%Invalid Input. Press any key to continue.%u%
+pause >nul
+goto debloatdiscord
+
+:debloatdiscord_safe
+set "_disc_modules=cloudsync dispatch spellcheck"
+set "_disc_strip_sdk="
+goto debloatdiscord_apply
+
+:debloatdiscord_aggressive
+set "_disc_modules=cloudsync dispatch erlpack game_utils media spellcheck krisp rpc overlay desktop_overlay"
+set "_disc_strip_sdk=1"
+goto debloatdiscord_apply
+
+:debloatdiscord_apply
+cls
+call :SetupConsole
 echo.
 echo.
-TASKKILL /T /F /IM  discord.exe
-DEL "%HOMEPATH%\Desktop\Discord.lnk" /F /Q
-DEL "%HOMEPATH%\Desktop\Discord.lnk - Shortcut" /F /Q
-DEL "%HOMEPATH%\Desktop\Update.exe" /F /Q
-DEL "%HOMEPATH%\Desktop\Update.exe - Shortcut" /F /Q
-DEL "%HOMEPATH%\Desktop\Discord.exe" /F /Q
-DEL "%HOMEPATH%\Desktop\Discord.exe - Shortcut" /F /Q
-DEL "%HOMEPATH%\appdata\Local\discord\Update.exe" /F /Q
-DEL "%HOMEPATH%\appdata\Local\discord\app-0.0.309\Squirrel.exe" /F /Q
-DEL "%HOMEPATH%\appdata\Local\discord\app-0.0.308\Squirrel.exe" /F /Q
-DEL "%HOMEPATH%\appdata\Local\discord\app-0.0.307\Squirrel.exe" /F /Q
-DEL "%HOMEPATH%\appdata\Local\discord\app-0.0.306\Squirrel.exe" /F /Q
-DEL "%HOMEPATH%\appdata\Local\discord\SquirrelSetup.log" /F /Q
-DEL "%HOMEPATH%\appdata\Local\discord\app-0.0.309\SquirrelSetup.log" /F /Q
-DEL "%HOMEPATH%\appdata\Local\discord\app-0.0.308\SquirrelSetup.log" /F /Q
-DEL "%HOMEPATH%\appdata\Local\discord\app-0.0.307\SquirrelSetup.log" /F /Q
-DEL "%HOMEPATH%\appdata\Local\discord\app-0.0.306\SquirrelSetup.log" /F /Q
-rd /s /q "%HOMEPATH%\appdata\Local\discord\Packages"
-DEL "%HOMEPATH%\appdata\Roaming\discord\0.0.309\modules\discord_modules\397863cd8f\2\discord_game_sdk_x64.dll" /F /Q
-DEL "%HOMEPATH%\appdata\Roaming\discord\0.0.308\modules\discord_modules\397863cd8f\2\discord_game_sdk_x64.dll" /F /Q
-DEL "%HOMEPATH%\appdata\Roaming\discord\0.0.307\modules\discord_modules\397863cd8f\2\discord_game_sdk_x64.dll" /F /Q
-DEL "%HOMEPATH%\appdata\Roaming\discord\0.0.306\modules\discord_modules\397863cd8f\2\discord_game_sdk_x64.dll" /F /Q
-DEL "%HOMEPATH%\appdata\Roaming\discord\0.0.309\modules\discord_modules\397863cd8f\2\discord_game_sdk_x86.dll" /F /Q
-DEL "%HOMEPATH%\appdata\Roaming\discord\0.0.308\modules\discord_modules\397863cd8f\2\discord_game_sdk_x86.dll" /F /Q
-DEL "%HOMEPATH%\appdata\Roaming\discord\0.0.307\modules\discord_modules\397863cd8f\2\discord_game_sdk_x86.dll" /F /Q
-DEL "%HOMEPATH%\appdata\Roaming\discord\0.0.306\modules\discord_modules\397863cd8f\2\discord_game_sdk_x86.dll" /F /Q
-rd /s /q "%HOMEPATH%\appdata\Roaming\discord\0.0.309\modules\discord_cloudsync"
-rd /s /q "%HOMEPATH%\appdata\Roaming\discord\0.0.308\modules\discord_cloudsync"
-rd /s /q "%HOMEPATH%\appdata\Roaming\discord\0.0.307\modules\discord_cloudsync"
-rd /s /q "%HOMEPATH%\appdata\Roaming\discord\0.0.306\modules\discord_cloudsync"
-rd /s /q "%HOMEPATH%\appdata\Roaming\discord\0.0.309\modules\discord_dispatch"
-rd /s /q "%HOMEPATH%\appdata\Roaming\discord\0.0.308\modules\discord_dispatch"
-rd /s /q "%HOMEPATH%\appdata\Roaming\discord\0.0.307\modules\discord_dispatch"
-rd /s /q "%HOMEPATH%\appdata\Roaming\discord\0.0.306\modules\discord_dispatch"
-rd /s /q "%HOMEPATH%\appdata\Roaming\discord\0.0.309\modules\discord_erlpack"
-rd /s /q "%HOMEPATH%\appdata\Roaming\discord\0.0.308\modules\discord_erlpack"
-rd /s /q "%HOMEPATH%\appdata\Roaming\discord\0.0.307\modules\discord_erlpack"
-rd /s /q "%HOMEPATH%\appdata\Roaming\discord\0.0.306\modules\discord_erlpack"
-rd /s /q "%HOMEPATH%\appdata\Roaming\discord\0.0.309\modules\discord_game_utils"
-rd /s /q "%HOMEPATH%\appdata\Roaming\discord\0.0.308\modules\discord_game_utils"
-rd /s /q "%HOMEPATH%\appdata\Roaming\discord\0.0.307\modules\discord_game_utils"
-rd /s /q "%HOMEPATH%\appdata\Roaming\discord\0.0.306\modules\discord_game_utils"
-rd /s /q "%HOMEPATH%\appdata\Roaming\discord\0.0.309\modules\discord_media"
-rd /s /q "%HOMEPATH%\appdata\Roaming\discord\0.0.308\modules\discord_media"
-rd /s /q "%HOMEPATH%\appdata\Roaming\discord\0.0.307\modules\discord_media"
-rd /s /q "%HOMEPATH%\appdata\Roaming\discord\0.0.306\modules\discord_media"
-rd /s /q "%HOMEPATH%\appdata\Roaming\discord\0.0.309\modules\discord_spellcheck"
-rd /s /q "%HOMEPATH%\appdata\Roaming\discord\0.0.308\modules\discord_spellcheck"
-rd /s /q "%HOMEPATH%\appdata\Roaming\discord\0.0.307\modules\discord_spellcheck"
-rd /s /q "%HOMEPATH%\appdata\Roaming\discord\0.0.306\modules\discord_spellcheck"
-rd /s /q "%HOMEPATH%\appdata\Roaming\discord\0.0.309\modules\discord_krisp"
-rd /s /q "%HOMEPATH%\appdata\Roaming\discord\0.0.308\modules\discord_krisp"
-rd /s /q "%HOMEPATH%\appdata\Roaming\discord\0.0.307\modules\discord_krisp"
-rd /s /q "%HOMEPATH%\appdata\Roaming\discord\0.0.306\modules\discord_krisp"
-rd /s /q "%HOMEPATH%\appdata\Roaming\discord\0.0.309\modules\discord_rpc"
-rd /s /q "%HOMEPATH%\appdata\Roaming\discord\0.0.308\modules\discord_rpc"
-rd /s /q "%HOMEPATH%\appdata\Roaming\discord\0.0.307\modules\discord_rpc"
-rd /s /q "%HOMEPATH%\appdata\Roaming\discord\0.0.306\modules\discord_rpc"
-rd /s /q "%HOMEPATH%\appdata\Roaming\discord\0.0.309\modules\discord_overlay2"
-rd /s /q "%HOMEPATH%\appdata\Roaming\discord\0.0.308\modules\discord_overlay2"
-rd /s /q "%HOMEPATH%\appdata\Roaming\discord\0.0.307\modules\discord_overlay2"
-rd /s /q "%HOMEPATH%\appdata\Roaming\discord\0.0.306\modules\discord_overlay2"
+echo %c%╔══════════════════════════════════════════════════════════════════════════════╗
+echo ║                           DISCORD DEBLOAT                                   ║
+echo ╚══════════════════════════════════════════════════════════════════════════════╝%u%
+echo.
+echo %c%Applying Discord optimizations...%u%
+taskkill /t /f /im discord.exe >nul 2>&1
+taskkill /t /f /im discordcanary.exe >nul 2>&1
+taskkill /t /f /im discordptb.exe >nul 2>&1
+del "%USERPROFILE%\Desktop\Discord*.lnk" /f /q >nul 2>&1
+del "%USERPROFILE%\Desktop\Update.exe*" /f /q >nul 2>&1
+del "%USERPROFILE%\Desktop\Discord.exe*" /f /q >nul 2>&1
+del "%PUBLIC%\Desktop\Discord*.lnk" /f /q >nul 2>&1
+
+for /d %%D in ("%LOCALAPPDATA%\discord*") do (
+    del "%%D\Update.exe" /f /q >nul 2>&1
+    del "%%D\SquirrelSetup.log" /f /q >nul 2>&1
+    rd /s /q "%%D\packages" >nul 2>&1
+    rd /s /q "%%D\Packages" >nul 2>&1
+    for /d %%i in ("%%D\app-*") do (
+        del "%%i\Squirrel.exe" /f /q >nul 2>&1
+        del "%%i\SquirrelSetup.log" /f /q >nul 2>&1
+        if defined _disc_strip_sdk del /s /f /q "%%i\modules\*game_sdk*.dll" >nul 2>&1
+        for %%b in (%_disc_modules%) do (
+            for /d %%m in ("%%i\modules\discord_%%b*") do rd /s /q "%%m" >nul 2>&1
+        )
+    )
+)
+
+for /d %%D in ("%APPDATA%\discord*") do (
+    for /d %%v in ("%%D\*") do (
+        if exist "%%v\modules" (
+            if defined _disc_strip_sdk del /s /f /q "%%v\modules\*game_sdk*.dll" >nul 2>&1
+            for %%b in (%_disc_modules%) do (
+                for /d %%m in ("%%v\modules\discord_%%b*") do rd /s /q "%%m" >nul 2>&1
+            )
+        )
+    )
+)
+
+set "_disc_modules="
+set "_disc_strip_sdk="
+
 cls
 echo.
 echo.                                         %c%═══════════════════════════════════════════════════════
@@ -15412,24 +16272,7 @@ echo.
 echo.
 @echo off
 
-reg add "HKLM\Software\Policies\Microsoft\VisualStudio\SQM" /v "OptIn" /t REG_DWORD /d 0 /f
-reg add "HKLM\SOFTWARE\Microsoft\VSCommon\14.0\SQM" /v "OptIn" /t REG_DWORD /d 0 /f
-reg add "HKLM\SOFTWARE\Wow6432Node\Microsoft\VSCommon\14.0\SQM" /v "OptIn" /t REG_DWORD /d 0 /f
-reg add "HKLM\SOFTWARE\Microsoft\VSCommon\15.0\SQM" /v "OptIn" /t REG_DWORD /d 0 /f
-reg add "HKLM\SOFTWARE\Wow6432Node\Microsoft\VSCommon\15.0\SQM" /v "OptIn" /t REG_DWORD /d 0 /f
-reg add "HKLM\SOFTWARE\Microsoft\VSCommon\16.0\SQM" /v "OptIn" /t REG_DWORD /d 0 /f
-reg add "HKLM\SOFTWARE\Wow6432Node\Microsoft\VSCommon\16.0\SQM" /v "OptIn" /t REG_DWORD /d 0 /f
-reg add "HKLM\SOFTWARE\Wow6432Node\Microsoft\VSCommon\17.0\SQM" /v "OptIn" /t REG_DWORD /d 0 /f
-reg add "HKCU\Software\Microsoft\VisualStudio\Telemetry" /v "TurnOffSwitch" /t REG_DWORD /d 1 /f
-reg add "HKLM\SOFTWARE\Policies\Microsoft\VisualStudio\Feedback" /v "DisableFeedbackDialog" /t REG_DWORD /d 1 /f
-reg add "HKLM\SOFTWARE\Policies\Microsoft\VisualStudio\Feedback" /v "DisableEmailInput" /t REG_DWORD /d 1 /f
-reg add "HKLM\SOFTWARE\Policies\Microsoft\VisualStudio\Feedback" /v "DisableScreenshotCapture" /t REG_DWORD /d 1 /f
-reg add "HKLM\SOFTWARE\Policies\Microsoft\VisualStudio\IntelliCode" /v "DisableRemoteAnalysis" /t REG_DWORD /d 1 /f
-reg add "HKCU\SOFTWARE\Microsoft\VSCommon\16.0\IntelliCode" /v "DisableRemoteAnalysis" /t REG_DWORD /d 1 /f
-reg add "HKCU\SOFTWARE\Microsoft\VSCommon\17.0\IntelliCode" /v "DisableRemoteAnalysis" /t REG_DWORD /d 1 /f
-
-sc stop "VSStandardCollectorService150" >nul 2>&1
-sc config "VSStandardCollectorService150" start= disabled >nul 2>&1
+call :DisableThirdPartyTelemetry
 
 if exist "%ProgramFiles%\NVIDIA Corporation\Installer2\InstallerCore\NVI2.DLL" (
     rundll32 "%PROGRAMFILES%\NVIDIA Corporation\Installer2\InstallerCore\NVI2.DLL",UninstallPackage NvTelemetryContainer
@@ -15444,22 +16287,8 @@ for /r "%PROGRAMFILES%\NVIDIA Corporation\NvTelemetry" %%F in (*) do (
     move "%%F" "%%F.OLD"
 )
 
-reg add "HKLM\SOFTWARE\NVIDIA Corporation\NvControlPanel2\Client" /v "OptInOrOutPreference" /t REG_DWORD /d 0 /f
-reg add "HKLM\SOFTWARE\NVIDIA Corporation\Global\FTS" /v "EnableRID44231" /t REG_DWORD /d 0 /f
-reg add "HKLM\SOFTWARE\NVIDIA Corporation\Global\FTS" /v "EnableRID64640" /t REG_DWORD /d 0 /f
-reg add "HKLM\SOFTWARE\NVIDIA Corporation\Global\FTS" /v "EnableRID66610" /t REG_DWORD /d 0 /f
 reg add "HKLM\SYSTEM\CurrentControlSet\Services\nvlddmkm\Global\Startup" /v "SendTelemetryData" /t REG_DWORD /d 0 /f
 
-sc stop "NvTelemetryContainer" >nul 2>&1
-sc config "NvTelemetryContainer" start= disabled >nul 2>&1
-
-reg add "HKCU\Software\Piriform\CCleaner" /v "Monitoring" /t REG_DWORD /d 0 /f
-reg add "HKCU\Software\Piriform\CCleaner" /v "HelpImproveCCleaner" /t REG_DWORD /d 0 /f
-reg add "HKCU\Software\Piriform\CCleaner" /v "SystemMonitoring" /t REG_DWORD /d 0 /f
-reg add "HKCU\Software\Piriform\CCleaner" /v "UpdateAuto" /t REG_DWORD /d 0 /f
-reg add "HKCU\Software\Piriform\CCleaner" /v "UpdateCheck" /t REG_DWORD /d 0 /f
-reg add "HKCU\Software\Piriform\CCleaner" /v "UpdateBackground" /t REG_DWORD /d 0 /f
-reg add "HKCU\Software\Piriform\CCleaner" /v "CheckTrialOffer" /t REG_DWORD /d 0 /f
 reg add "HKCU\Software\Piriform\CCleaner" /v "(Cfg)HealthCheck" /t REG_DWORD /d 0 /f
 reg add "HKCU\Software\Piriform\CCleaner" /v "(Cfg)QuickClean" /t REG_DWORD /d 0 /f
 reg add "HKCU\Software\Piriform\CCleaner" /v "(Cfg)QuickCleanIpm" /t REG_DWORD /d 0 /f
@@ -15567,31 +16396,34 @@ if "!NumberOfCores!" == "2" (
 	goto HyperThreading
 )
 if !NumberOfCores! gtr 4 (
-	for /f %%i in ('wmic path Win32_VideoController get PNPDeviceID^| findstr /l "PCI\VEN_"') do (
-		reg.exe add "HKLM\SYSTEM\CurrentControlSet\Enum\%%i\Device Parameters\Interrupt Management\Affinity Policy" /v "DevicePolicy" /t REG_DWORD /d "3" /f
-		reg.exe delete "HKLM\SYSTEM\CurrentControlSet\Enum\%%i\Device Parameters\Interrupt Management\Affinity Policy" /v "AssignmentSetOverride" /f
-	) > nul 2> nul
-	for /f %%i in ('wmic path Win32_NetworkAdapter get PNPDeviceID^| findstr /l "PCI\VEN_"') do (
-		reg.exe add "HKLM\SYSTEM\CurrentControlSet\Enum\%%i\Device Parameters\Interrupt Management\Affinity Policy" /v "DevicePolicy" /t REG_DWORD /d "5" /f
-		reg.exe delete "HKLM\SYSTEM\CurrentControlSet\Enum\%%i\Device Parameters\Interrupt Management\Affinity Policy" /v "AssignmentSetOverride" /f
-	) > nul 2> nul
+	chcp 437 >nul
+	for /f "delims=" %%i in ('powershell -NoProfile -Command "(Get-CimInstance Win32_VideoController).PNPDeviceID | Where-Object { $_ -like 'PCI\VEN_*' }" 2^>nul') do (
+		reg.exe add "HKLM\SYSTEM\CurrentControlSet\Enum\%%i\Device Parameters\Interrupt Management\Affinity Policy" /v "DevicePolicy" /t REG_DWORD /d "3" /f >nul 2>&1
+		reg.exe delete "HKLM\SYSTEM\CurrentControlSet\Enum\%%i\Device Parameters\Interrupt Management\Affinity Policy" /v "AssignmentSetOverride" /f >nul 2>&1
+	)
+	for /f "delims=" %%i in ('powershell -NoProfile -Command "(Get-CimInstance Win32_NetworkAdapter).PNPDeviceID | Where-Object { $_ -like 'PCI\VEN_*' }" 2^>nul') do (
+		reg.exe add "HKLM\SYSTEM\CurrentControlSet\Enum\%%i\Device Parameters\Interrupt Management\Affinity Policy" /v "DevicePolicy" /t REG_DWORD /d "5" /f >nul 2>&1
+		reg.exe delete "HKLM\SYSTEM\CurrentControlSet\Enum\%%i\Device Parameters\Interrupt Management\Affinity Policy" /v "AssignmentSetOverride" /f >nul 2>&1
+	)
+	chcp 65001 >nul
 )
 
-:: Hyper Threading ; Credits to HoneCtrl
 :HyperThreading
 if !NumberOfLogicalProcessors! gtr !NumberOfCores! (
-for /f %%i in ('wmic path Win32_USBController get PNPDeviceID^| findstr /l "PCI\VEN_"') do (
-	reg.exe add "HKLM\SYSTEM\CurrentControlSet\Enum\%%i\Device Parameters\Interrupt Management\Affinity Policy" /v "DevicePolicy" /t REG_DWORD /d "4" /f
-	reg.exe add "HKLM\SYSTEM\CurrentControlSet\Enum\%%i\Device Parameters\Interrupt Management\Affinity Policy" /v "AssignmentSetOverride" /t REG_BINARY /d "C0" /f
-	) > nul 2> nul
-for /f %%i in ('wmic path Win32_VideoController get PNPDeviceID^| findstr /l "PCI\VEN_"') do (
-	reg.exe add "HKLM\SYSTEM\CurrentControlSet\Enum\%%i\Device Parameters\Interrupt Management\Affinity Policy" /v "DevicePolicy" /t REG_DWORD /d "3" /f
-	reg.exe delete "HKLM\SYSTEM\CurrentControlSet\Enum\%%i\Device Parameters\Interrupt Management\Affinity Policy" /v "AssignmentSetOverride" /f
-	) > nul 2> nul
-for /f %%i in ('wmic path Win32_NetworkAdapter get PNPDeviceID^| findstr /l "PCI\VEN_"') do (
-	reg.exe add "HKLM\SYSTEM\CurrentControlSet\Enum\%%i\Device Parameters\Interrupt Management\Affinity Policy" /v "DevicePolicy" /t REG_DWORD /d "4" /f
-	reg.exe add "HKLM\SYSTEM\CurrentControlSet\Enum\%%i\Device Parameters\Interrupt Management\Affinity Policy" /v "AssignmentSetOverride" /t REG_BINARY /d "30" /f
-	) > nul 2> nul
+chcp 437 >nul
+for /f "delims=" %%i in ('powershell -NoProfile -Command "(Get-CimInstance Win32_USBController -ErrorAction SilentlyContinue).PNPDeviceID | Where-Object { $_ -like 'PCI\VEN_*' }" 2^>nul') do (
+	reg.exe add "HKLM\SYSTEM\CurrentControlSet\Enum\%%i\Device Parameters\Interrupt Management\Affinity Policy" /v "DevicePolicy" /t REG_DWORD /d "4" /f >nul 2>&1
+	reg.exe add "HKLM\SYSTEM\CurrentControlSet\Enum\%%i\Device Parameters\Interrupt Management\Affinity Policy" /v "AssignmentSetOverride" /t REG_BINARY /d "C0" /f >nul 2>&1
+)
+for /f "delims=" %%i in ('powershell -NoProfile -Command "(Get-CimInstance Win32_VideoController).PNPDeviceID | Where-Object { $_ -like 'PCI\VEN_*' }" 2^>nul') do (
+	reg.exe add "HKLM\SYSTEM\CurrentControlSet\Enum\%%i\Device Parameters\Interrupt Management\Affinity Policy" /v "DevicePolicy" /t REG_DWORD /d "3" /f >nul 2>&1
+	reg.exe delete "HKLM\SYSTEM\CurrentControlSet\Enum\%%i\Device Parameters\Interrupt Management\Affinity Policy" /v "AssignmentSetOverride" /f >nul 2>&1
+)
+for /f "delims=" %%i in ('powershell -NoProfile -Command "(Get-CimInstance Win32_NetworkAdapter).PNPDeviceID | Where-Object { $_ -like 'PCI\VEN_*' }" 2^>nul') do (
+	reg.exe add "HKLM\SYSTEM\CurrentControlSet\Enum\%%i\Device Parameters\Interrupt Management\Affinity Policy" /v "DevicePolicy" /t REG_DWORD /d "4" /f >nul 2>&1
+	reg.exe add "HKLM\SYSTEM\CurrentControlSet\Enum\%%i\Device Parameters\Interrupt Management\Affinity Policy" /v "AssignmentSetOverride" /t REG_BINARY /d "30" /f >nul 2>&1
+)
+chcp 65001 >nul
 )
 echo.
 echo.                                         %yellow%═══════════════════════════════════════════════════════
@@ -15602,35 +16434,38 @@ goto :GameBoosters
 
 :MSIMode
 cls
-for /f %%i in ('wmic path Win32_USBController get PNPDeviceID ^| findstr /l "PCI\VEN_"') do (
-	reg.exe add "HKLM\SYSTEM\CurrentControlSet\Enum\%%i\Device Parameters\Interrupt Management\MessageSignaledInterruptProperties" /v "MSISupported" /t REG_DWORD /d "1" /f
-	reg.exe delete "HKLM\SYSTEM\CurrentControlSet\Enum\%%i\Device Parameters\Interrupt Management\Affinity Policy" /v "DevicePriority" /f
-) > nul 2> nul
+chcp 437 >nul
+for /f "delims=" %%i in ('powershell -NoProfile -Command "(Get-CimInstance Win32_USBController -ErrorAction SilentlyContinue).PNPDeviceID | Where-Object { $_ -like 'PCI\VEN_*' }" 2^>nul') do (
+	reg.exe add "HKLM\SYSTEM\CurrentControlSet\Enum\%%i\Device Parameters\Interrupt Management\MessageSignaledInterruptProperties" /v "MSISupported" /t REG_DWORD /d "1" /f >nul 2>&1
+	reg.exe delete "HKLM\SYSTEM\CurrentControlSet\Enum\%%i\Device Parameters\Interrupt Management\Affinity Policy" /v "DevicePriority" /f >nul 2>&1
+)
 
-for /f %%i in ('wmic path Win32_VideoController get PNPDeviceID ^| findstr /l "PCI\VEN_"') do (
-	reg.exe add "HKLM\SYSTEM\CurrentControlSet\Enum\%%i\Device Parameters\Interrupt Management\MessageSignaledInterruptProperties" /v "MSISupported" /t REG_DWORD /d "1" /f
-	reg.exe delete "HKLM\SYSTEM\CurrentControlSet\Enum\%%i\Device Parameters\Interrupt Management\Affinity Policy" /v "DevicePriority" /f
-) > nul 2> nul
+for /f "delims=" %%i in ('powershell -NoProfile -Command "(Get-CimInstance Win32_VideoController).PNPDeviceID | Where-Object { $_ -like 'PCI\VEN_*' }" 2^>nul') do (
+	reg.exe add "HKLM\SYSTEM\CurrentControlSet\Enum\%%i\Device Parameters\Interrupt Management\MessageSignaledInterruptProperties" /v "MSISupported" /t REG_DWORD /d "1" /f >nul 2>&1
+	reg.exe delete "HKLM\SYSTEM\CurrentControlSet\Enum\%%i\Device Parameters\Interrupt Management\Affinity Policy" /v "DevicePriority" /f >nul 2>&1
+)
 
-for /f %%i in ('wmic path Win32_NetworkAdapter get PNPDeviceID ^| findstr /l "PCI\VEN_"') do (
-	reg.exe add "HKLM\SYSTEM\CurrentControlSet\Enum\%%i\Device Parameters\Interrupt Management\MessageSignaledInterruptProperties" /v "MSISupported" /t REG_DWORD /d "1" /f
-	reg.exe delete "HKLM\SYSTEM\CurrentControlSet\Enum\%%i\Device Parameters\Interrupt Management\Affinity Policy" /v "DevicePriority" /f
-) > nul 2> nul
+for /f "delims=" %%i in ('powershell -NoProfile -Command "(Get-CimInstance Win32_NetworkAdapter).PNPDeviceID | Where-Object { $_ -like 'PCI\VEN_*' }" 2^>nul') do (
+	reg.exe add "HKLM\SYSTEM\CurrentControlSet\Enum\%%i\Device Parameters\Interrupt Management\MessageSignaledInterruptProperties" /v "MSISupported" /t REG_DWORD /d "1" /f >nul 2>&1
+	reg.exe delete "HKLM\SYSTEM\CurrentControlSet\Enum\%%i\Device Parameters\Interrupt Management\Affinity Policy" /v "DevicePriority" /f >nul 2>&1
+)
 
-for /f %%i in ('wmic path Win32_IDEController get PNPDeviceID ^| findstr /l "PCI\VEN_"') do (
-	reg.exe add "HKLM\SYSTEM\CurrentControlSet\Enum\%%i\Device Parameters\Interrupt Management\MessageSignaledInterruptProperties" /v "MSISupported" /t REG_DWORD /d "1" /f
-	reg.exe delete "HKLM\SYSTEM\CurrentControlSet\Enum\%%i\Device Parameters\Interrupt Management\Affinity Policy" /v "DevicePriority" /f
-) > nul 2> nul
+for /f "delims=" %%i in ('powershell -NoProfile -Command "(Get-CimInstance Win32_IDEController -ErrorAction SilentlyContinue).PNPDeviceID | Where-Object { $_ -like 'PCI\VEN_*' }" 2^>nul') do (
+	reg.exe add "HKLM\SYSTEM\CurrentControlSet\Enum\%%i\Device Parameters\Interrupt Management\MessageSignaledInterruptProperties" /v "MSISupported" /t REG_DWORD /d "1" /f >nul 2>&1
+	reg.exe delete "HKLM\SYSTEM\CurrentControlSet\Enum\%%i\Device Parameters\Interrupt Management\Affinity Policy" /v "DevicePriority" /f >nul 2>&1
+)
+chcp 65001 >nul
 
 chcp 437 >nul
 for /f %%i in ('powershell -NoProfile -Command "(Get-CimInstance Win32_NetworkAdapter).PNPDeviceID"') do (
     set "str=%%i"
     if "!str:PCI\VEN_=!" neq "!str!" (
-for /f "delims=" %%# in ('powershell -NoProfile -Command "(Get-CimInstance Win32_ComputerSystem).Manufacturer"') do set "Manufacturer=%%#"
-    if "!Manufacturer:VMware=!" neq "!Manufacturer!" (set "VMWare= /t REG_DWORD /d 2") else (set "VMWare=")
-	reg.exe add "HKLM\SYSTEM\CurrentControlSet\Enum\%%i\Device Parameters\Interrupt Management\Affinity Policy" /v "DevicePriority"%VMWare% /f
-	reg.exe add "HKLM\SYSTEM\CurrentControlSet\Enum\%%i\Device Parameters\Interrupt Management\MessageSignaledInterruptProperties" /v "MSISupported" /t REG_DWORD /d "1" /f
-	reg.exe add "HKLM\SYSTEM\CurrentControlSet\Enum\%%i\Device Parameters\Interrupt Management\Affinity Policy" /v "DevicePriority" /t REG_DWORD /d "2" /f
+        for /f "delims=" %%# in ('powershell -NoProfile -Command "(Get-CimInstance Win32_ComputerSystem).Manufacturer"') do set "Manufacturer=%%#"
+        if "!Manufacturer:VMware=!" neq "!Manufacturer!" (set "VMWare= /t REG_DWORD /d 2") else (set "VMWare=")
+        reg.exe add "HKLM\SYSTEM\CurrentControlSet\Enum\%%i\Device Parameters\Interrupt Management\Affinity Policy" /v "DevicePriority"%VMWare% /f
+        reg.exe add "HKLM\SYSTEM\CurrentControlSet\Enum\%%i\Device Parameters\Interrupt Management\MessageSignaledInterruptProperties" /v "MSISupported" /t REG_DWORD /d "1" /f
+        reg.exe add "HKLM\SYSTEM\CurrentControlSet\Enum\%%i\Device Parameters\Interrupt Management\Affinity Policy" /v "DevicePriority" /t REG_DWORD /d "2" /f
+    )
 ) > nul 2> nul
 chcp 65001 >nul
 echo.
@@ -15647,6 +16482,11 @@ schtasks /change /tn "\Microsoft\Windows\Customer Experience Improvement Program
 schtasks /change /tn "\Microsoft\Windows\Customer Experience Improvement Program\KernelCeipTask" /disable >nul 2>&1
 schtasks /change /tn "\Microsoft\Windows\Customer Experience Improvement Program\UsbCeip" /disable >nul 2>&1
 schtasks /change /tn "\Microsoft\Windows\Customer Experience Improvement Program\Uploader" /disable >nul 2>&1
+schtasks /change /tn "\Microsoft\Windows\Application Experience\PcaPatchDbTask" /disable >nul 2>&1
+schtasks /change /tn "\Microsoft\Windows\Application Experience\SdbinstMergeDbTask" /disable >nul 2>&1
+schtasks /change /tn "\Microsoft\Windows\Customer Experience Improvement Program\Server\ServerCeipAssistant" /disable >nul 2>&1
+schtasks /change /tn "\Microsoft\Windows\Customer Experience Improvement Program\Server\ServerRoleCollector" /disable >nul 2>&1
+schtasks /change /tn "\Microsoft\Windows\Customer Experience Improvement Program\Server\ServerRoleUsageCollector" /disable >nul 2>&1
 schtasks /change /tn "\Microsoft\Windows\Application Experience\Microsoft Compatibility Appraiser" /disable >nul 2>&1
 schtasks /change /tn "\Microsoft\Windows\Application Experience\ProgramDataUpdater" /disable >nul 2>&1
 schtasks /change /tn "\Microsoft\Windows\Application Experience\StartupAppTask" /disable >nul 2>&1
@@ -15707,12 +16547,15 @@ schtasks /change /tn "\Microsoft\Windows\ApplicationData\DsSvcCleanup" /disable 
 schtasks /change /tn "\Microsoft\Windows\Shell\IndexerAutomaticMaintenance" /disable >nul 2>&1
 schtasks /change /tn "\Microsoft\Windows\Maps\MapsToastTask" /disable >nul 2>&1
 schtasks /change /tn "\Microsoft\Windows\Maps\MapsUpdateTask" /disable >nul 2>&1
+reg add "HKLM\SOFTWARE\Policies\Microsoft\Windows\Maps" /v "AllowUntriggeredNetworkTrafficOnSettingsPage" /t REG_DWORD /d "0" /f >nul 2>&1
+reg add "HKLM\SOFTWARE\Policies\Microsoft\Windows\Maps" /v "AutoDownloadAndUpdateMapData" /t REG_DWORD /d "0" /f >nul 2>&1
 schtasks /change /tn "\Microsoft\Windows\MemoryDiagnostic\ProcessMemoryDiagnosticEvents" /disable >nul 2>&1
 schtasks /change /tn "\Microsoft\Windows\MemoryDiagnostic\RunFullMemoryDiagnostic" /disable >nul 2>&1
 schtasks /Change /TN "\Microsoft\Windows\WS\CrossDeviceResume" /Disable >nul 2>&1
 schtasks /Change /TN "\Microsoft\Windows\WS\CrossDeviceResumeTrigger" /Disable >nul 2>&1
 reg add "HKCU\Software\Microsoft\Windows\CurrentVersion\CrossDeviceResume" /v "Enabled" /t REG_DWORD /d 0 /f >nul 2>&1
 reg add "HKCU\Software\Microsoft\Windows\CurrentVersion\CrossDeviceResume" /v "UsePerformanceMode" /t REG_DWORD /d 0 /f >nul 2>&1
+reg add "HKLM\Software\Policies\Microsoft\Windows NT\CurrentVersion\Software Protection Platform" /v "NoGenTicket" /t REG_DWORD /d "1" /f >nul 2>&1
 echo.
 echo.                                         %yellow%═══════════════════════════════════════════════════════
 echo.                                           %c%  Operation Completed, Press any key to continue%u% 
@@ -15730,7 +16573,8 @@ echo                        %c%║%u%           [%c%2%u%] Counter-Strike 2      
 echo                        %c%║%u%           [%c%3%u%] Minecraft                          %c%║%u%
 echo                        %c%║%u%           [%c%4%u%] Fortnite                           %c%║%u%
 echo                        %c%║%u%           [%c%5%u%] Warzone                            %c%║%u%
-echo                        %c%║%u%           [%c%6%u%] Select your Own Game               %c%║%u%
+echo                        %c%║%u%           [%c%6%u%] Roblox                             %c%║%u%
+echo                        %c%║%u%           [%c%7%u%] Select your Own Game               %c%║%u%
 echo %c%                       ╚══════════════════════════════════════════════════╝
 echo %c%                                   ║  %u%[%c%0%u%] Go Back    [%red%X%u%] Exit%c%  ║%u%
 echo %c%                                   ╚═══════════════════════════════╝%u%
@@ -15743,9 +16587,11 @@ if "%M%"=="2" goto CS2
 if "%M%"=="3" goto Minecraft
 if "%M%"=="4" goto Fortnite
 if "%M%"=="5" goto Warzone
-if "%M%"=="6" goto SelectGame
+if "%M%"=="6" goto Roblox
+if "%M%"=="7" goto SelectGame
 if "%M%"=="X" goto Destruct
 if "%M%"=="x" goto Destruct
+
 cls
 echo %underline%%red%Invalid Input. Press any key to continue.%u%
 pause >nul
@@ -15867,43 +16713,147 @@ call :SetupConsole
 echo.
 echo.
 echo %c%╔══════════════════════════════════════════════════════════════════════════════╗
-echo ║                          FORTNITE OPTIMIZER                                  ║
+echo ║                          FORTNITE ULTIMATE OPTIMIZER                         ║
 echo ╚══════════════════════════════════════════════════════════════════════════════╝%u%
 echo.
-echo %c%Applying Fortnite-specific optimizations:%u%
-echo %c%• FortniteClient CPU priority set to High%u%
-echo %c%• Junk cache cleared from LocalAppData%u%
-echo %c%• Priority separation and multimedia priority tweaked%u%
-echo %c%• Low-quality Unreal Engine settings applied for max FPS%u%
-echo %c%• Game DVR and Fullscreen Optimizations disabled%u%
+echo %c%Applying comprehensive competitive optimizations for Fortnite:%u%
+echo %c%• Auto-detect installation across all drives and Epic Games manifests%u%
+echo %c%• Direct GPU preference routing (High Performance DirectX)%u%
+echo %c%• CPU priority and I/O scheduling elevated to High via IFEO%u%
+echo %c%• Fullscreen Optimizations disabled and High DPI scaling awareness%u%
+echo %c%• QoS DSCP 46 (Expedited Forwarding) network packet prioritization%u%
+echo %c%• Safe temporary cache cleanup (webcache, crashes, D3D pipeline blobs)%u%
+echo %c%• In-place GameUserSettings tuning (0 shadows/grass, 100%% 3D resolution)%u%
+echo %c%• Preserves user keybindings, sensitivities, and custom resolutions%u%
 echo.
 echo.
-reg add "HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Image File Execution Options\FortniteClient-Win64-Shipping.exe\PerfOptions" /t REG_DWORD /v CpuPriorityClass /d 3 /f >nul 2>&1
-if exist "%localappdata%\FortniteGame" (
-    rmdir /s /q "%localappdata%\FortniteGame"
+setlocal enabledelayedexpansion
+
+set "FN_Found="
+set "FN_Path="
+set "FN_Dir="
+
+if exist "C:\ProgramData\Epic\EpicGamesLauncher\Data\Manifests" (
+    for /f "delims=" %%M in ('powershell -NoProfile -Command "$p = 'C:\ProgramData\Epic\EpicGamesLauncher\Data\Manifests'; Get-ChildItem -Path $p -Filter '*.item' -ErrorAction SilentlyContinue | ForEach-Object { try { $j = Get-Content $_.FullName | ConvertFrom-Json; if($j.AppName -eq 'Fortnite'){ $exe = Join-Path $j.InstallLocation 'FortniteGame\Binaries\Win64\FortniteClient-Win64-Shipping.exe'; if(Test-Path $exe){ Write-Output $exe; break } } } catch{} }" 2^>nul') do (
+        if exist "%%M" (
+            set "FN_Path=%%M"
+            set "FN_Found=1"
+        )
+    )
 )
-reg add "HKLM\SYSTEM\CurrentControlSet\Control\PriorityControl" /v "Win32PrioritySeparation" /t REG_DWORD /d 38 /f >nul 2>&1
-reg add "HKLM\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Multimedia\WMPlayer" /v "Priority" /t REG_DWORD /d 2 /f >nul 2>&1
-reg add "HKLM\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Multimedia\Audio" /v "Priority" /t REG_DWORD /d 1 /f >nul 2>&1
-reg add "HKCU\Software\Epic Games\Unreal Engine\Identifiers\Fortnite" /v "sg.ResolutionQuality" /t REG_DWORD /d 30 /f >nul 2>&1
-reg add "HKCU\Software\Epic Games\Unreal Engine\Identifiers\Fortnite" /v "sg.ShadowQuality" /t REG_DWORD /d 0 /f >nul 2>&1
-reg add "HKCU\Software\Epic Games\Unreal Engine\Identifiers\Fortnite" /v "sg.EffectsQuality" /t REG_DWORD /d 0 /f >nul 2>&1
-reg add "HKCU\Software\Epic Games\Unreal Engine\Identifiers\Fortnite" /v "sg.TexturesQuality" /t REG_DWORD /d 0 /f >nul 2>&1
-reg add "HKCU\Software\Epic Games\Unreal Engine\Identifiers\Fortnite" /v "sg.bSmoothFrameRate" /t REG_DWORD /d 0 /f >nul 2>&1
-reg add "HKCU\Software\Epic Games\Unreal Engine\Identifiers\Fortnite" /v "sg.ViewDistanceQuality" /t REG_DWORD /d 0 /f >nul 2>&1
-reg add "HKCU\Software\Epic Games\Unreal Engine\Identifiers\Fortnite" /v "sg.GameThreadPriority" /t REG_DWORD /d 0 /f >nul 2>&1
-reg add "HKCU\System\GameConfigStore" /v "GameDVR_Enabled" /t REG_DWORD /d 0 /f >nul 2>&1
-reg add "HKCU\System\GameConfigStore" /v "GameDVR_FSEBehavior" /t REG_DWORD /d 2 /f >nul 2>&1
-reg add "HKCU\System\GameConfigStore" /v "GameDVR_FSEBehaviorMode" /t REG_DWORD /d 2 /f >nul 2>&1
-reg add "HKCU\Control Panel\Mouse" /v "MouseSensitivity" /t REG_SZ /d "10" /f >nul 2>&1
-reg add "HKCU\Control Panel\Mouse" /v "MouseSpeed" /t REG_SZ /d "0" /f >nul 2>&1
-cls
+
+if not defined FN_Found (
+    for %%D in (C D E F G) do (
+        if not defined FN_Found (
+            if exist "%%D:\Program Files\Epic Games\Fortnite\FortniteGame\Binaries\Win64\FortniteClient-Win64-Shipping.exe" (
+                set "FN_Path=%%D:\Program Files\Epic Games\Fortnite\FortniteGame\Binaries\Win64\FortniteClient-Win64-Shipping.exe"
+                set "FN_Found=1"
+            )
+        )
+        if not defined FN_Found (
+            if exist "%%D:\Epic Games\Fortnite\FortniteGame\Binaries\Win64\FortniteClient-Win64-Shipping.exe" (
+                set "FN_Path=%%D:\Epic Games\Fortnite\FortniteGame\Binaries\Win64\FortniteClient-Win64-Shipping.exe"
+                set "FN_Found=1"
+            )
+        )
+        if not defined FN_Found (
+            if exist "%%D:\Games\Fortnite\FortniteGame\Binaries\Win64\FortniteClient-Win64-Shipping.exe" (
+                set "FN_Path=%%D:\Games\Fortnite\FortniteGame\Binaries\Win64\FortniteClient-Win64-Shipping.exe"
+                set "FN_Found=1"
+            )
+        )
+    )
+)
+
+if defined FN_Found (
+    echo %green%✓%u% %white%Found Fortnite Executable:%u% %silver%!FN_Path!%u%
+    for %%F in ("!FN_Path!") do set "FN_Dir=%%~dpF"
+    
+    reg add "HKCU\SOFTWARE\Microsoft\DirectX\UserGpuPreferences" /v "!FN_Path!" /t REG_SZ /d "GpuPreference=2;" /f >nul 2>&1
+    if exist "!FN_Dir!FortniteClient-Win64-Shipping_EAC.exe" reg add "HKCU\SOFTWARE\Microsoft\DirectX\UserGpuPreferences" /v "!FN_Dir!FortniteClient-Win64-Shipping_EAC.exe" /t REG_SZ /d "GpuPreference=2;" /f >nul 2>&1
+    if exist "!FN_Dir!FortniteClient-Win64-Shipping_BE.exe" reg add "HKCU\SOFTWARE\Microsoft\DirectX\UserGpuPreferences" /v "!FN_Dir!FortniteClient-Win64-Shipping_BE.exe" /t REG_SZ /d "GpuPreference=2;" /f >nul 2>&1
+    if exist "!FN_Dir!FortniteLauncher.exe" reg add "HKCU\SOFTWARE\Microsoft\DirectX\UserGpuPreferences" /v "!FN_Dir!FortniteLauncher.exe" /t REG_SZ /d "GpuPreference=2;" /f >nul 2>&1
+    
+    reg add "HKCU\Software\Microsoft\Windows NT\CurrentVersion\AppCompatFlags\Layers" /v "!FN_Path!" /t REG_SZ /d "~ DISABLEDXMAXIMIZEDWINDOWEDMODE HIGHDPIAWARE" /f >nul 2>&1
+    if exist "!FN_Dir!FortniteClient-Win64-Shipping_EAC.exe" reg add "HKCU\Software\Microsoft\Windows NT\CurrentVersion\AppCompatFlags\Layers" /v "!FN_Dir!FortniteClient-Win64-Shipping_EAC.exe" /t REG_SZ /d "~ DISABLEDXMAXIMIZEDWINDOWEDMODE HIGHDPIAWARE" /f >nul 2>&1
+    if exist "!FN_Dir!FortniteClient-Win64-Shipping_BE.exe" reg add "HKCU\Software\Microsoft\Windows NT\CurrentVersion\AppCompatFlags\Layers" /v "!FN_Dir!FortniteClient-Win64-Shipping_BE.exe" /t REG_SZ /d "~ DISABLEDXMAXIMIZEDWINDOWEDMODE HIGHDPIAWARE" /f >nul 2>&1
+    echo %green%✓%u% %white%DirectX High Performance GPU & FSO bypass applied to binaries%u%
+) else (
+    echo %silver%Fortnite executable not in standard paths; global IFEO and network rules will be applied.%u%
+)
+
+reg add "HKLM\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Image File Execution Options\FortniteClient-Win64-Shipping.exe\PerfOptions" /v "CpuPriorityClass" /t REG_DWORD /d "3" /f >nul 2>&1
+reg add "HKLM\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Image File Execution Options\FortniteClient-Win64-Shipping.exe\PerfOptions" /v "IoPriority" /t REG_DWORD /d "3" /f >nul 2>&1
+reg add "HKLM\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Image File Execution Options\FortniteClient-Win64-Shipping_EAC.exe\PerfOptions" /v "CpuPriorityClass" /t REG_DWORD /d "3" /f >nul 2>&1
+reg add "HKLM\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Image File Execution Options\FortniteClient-Win64-Shipping_BE.exe\PerfOptions" /v "CpuPriorityClass" /t REG_DWORD /d "3" /f >nul 2>&1
+echo %green%✓%u% %white%CPU Priority and I/O elevated to High via Image File Execution Options%u%
+
+reg add "HKLM\SYSTEM\CurrentControlSet\Control\PriorityControl" /v "Win32PrioritySeparation" /t REG_DWORD /d "38" /f >nul 2>&1
+reg add "HKLM\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Multimedia\SystemProfile\Tasks\Games" /v "GPU Priority" /t REG_DWORD /d "8" /f >nul 2>&1
+reg add "HKLM\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Multimedia\SystemProfile\Tasks\Games" /v "Priority" /t REG_DWORD /d "6" /f >nul 2>&1
+reg add "HKLM\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Multimedia\SystemProfile\Tasks\Games" /v "Scheduling Category" /t REG_SZ /d "High" /f >nul 2>&1
+reg add "HKLM\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Multimedia\SystemProfile\Tasks\Games" /v "SFIO Priority" /t REG_SZ /d "High" /f >nul 2>&1
+echo %green%✓%u% %white%Win32 Priority Separation (0x26) & Multimedia Game Tasks tuned%u%
+
+reg add "HKCU\System\GameConfigStore" /v "GameDVR_Enabled" /t REG_DWORD /d "0" /f >nul 2>&1
+reg add "HKCU\System\GameConfigStore" /v "GameDVR_FSEBehavior" /t REG_DWORD /d "2" /f >nul 2>&1
+reg add "HKCU\System\GameConfigStore" /v "GameDVR_FSEBehaviorMode" /t REG_DWORD /d "2" /f >nul 2>&1
+reg add "HKCU\System\GameConfigStore" /v "GameDVR_HonorUserFSEBehaviorMode" /t REG_DWORD /d "1" /f >nul 2>&1
+reg add "HKCU\System\GameConfigStore" /v "GameDVR_DXGIHonorFSEWindowsCompatible" /t REG_DWORD /d "1" /f >nul 2>&1
+reg add "HKLM\SOFTWARE\Policies\Microsoft\Windows\GameDVR" /v "AllowGameDVR" /t REG_DWORD /d "0" /f >nul 2>&1
+echo %green%✓%u% %white%Game DVR and background recording overhead disabled%u%
+
+reg add "HKLM\SOFTWARE\Policies\Microsoft\Windows\QoS\Fortnite" /v "Version" /t REG_SZ /d "1.0" /f >nul 2>&1
+reg add "HKLM\SOFTWARE\Policies\Microsoft\Windows\QoS\Fortnite" /v "Application Name" /t REG_SZ /d "FortniteClient-Win64-Shipping.exe" /f >nul 2>&1
+reg add "HKLM\SOFTWARE\Policies\Microsoft\Windows\QoS\Fortnite" /v "Protocol" /t REG_SZ /d "*" /f >nul 2>&1
+reg add "HKLM\SOFTWARE\Policies\Microsoft\Windows\QoS\Fortnite" /v "Local Port" /t REG_SZ /d "*" /f >nul 2>&1
+reg add "HKLM\SOFTWARE\Policies\Microsoft\Windows\QoS\Fortnite" /v "Local IP" /t REG_SZ /d "*" /f >nul 2>&1
+reg add "HKLM\SOFTWARE\Policies\Microsoft\Windows\QoS\Fortnite" /v "Local IP Prefix Length" /t REG_SZ /d "*" /f >nul 2>&1
+reg add "HKLM\SOFTWARE\Policies\Microsoft\Windows\QoS\Fortnite" /v "Remote Port" /t REG_SZ /d "*" /f >nul 2>&1
+reg add "HKLM\SOFTWARE\Policies\Microsoft\Windows\QoS\Fortnite" /v "Remote IP" /t REG_SZ /d "*" /f >nul 2>&1
+reg add "HKLM\SOFTWARE\Policies\Microsoft\Windows\QoS\Fortnite" /v "Remote IP Prefix Length" /t REG_SZ /d "*" /f >nul 2>&1
+reg add "HKLM\SOFTWARE\Policies\Microsoft\Windows\QoS\Fortnite" /v "DSCP Value" /t REG_SZ /d "46" /f >nul 2>&1
+reg add "HKLM\SOFTWARE\Policies\Microsoft\Windows\QoS\Fortnite" /v "Throttle Rate" /t REG_SZ /d "-1" /f >nul 2>&1
+echo %green%✓%u% %white%Network QoS rule applied: DSCP 46 Expedited Forwarding for Fortnite%u%
+
+if exist "%localappdata%\FortniteGame\Saved\webcache" rd /s /q "%localappdata%\FortniteGame\Saved\webcache" >nul 2>&1
+if exist "%localappdata%\FortniteGame\Saved\Crashes" rd /s /q "%localappdata%\FortniteGame\Saved\Crashes" >nul 2>&1
+if exist "%localappdata%\FortniteGame\Saved\LMS" rd /s /q "%localappdata%\FortniteGame\Saved\LMS" >nul 2>&1
+if exist "%localappdata%\FortniteGame\Saved\D3DDriverByteCodeBlobs" rd /s /q "%localappdata%\FortniteGame\Saved\D3DDriverByteCodeBlobs" >nul 2>&1
+echo %green%✓%u% %white%Stale webcache, crash logs, and pipeline shader blobs cleared safely%u%
+
+set "FN_INI=%USERPROFILE%\AppData\Local\FortniteGame\Saved\Config\WindowsClient\GameUserSettings.ini"
+if not exist "!FN_INI!" goto SkipFNIni
+attrib -r "!FN_INI!" >nul 2>&1
+chcp 437 >nul
+powershell -NoProfile -Command "$f='%USERPROFILE%\AppData\Local\FortniteGame\Saved\Config\WindowsClient\GameUserSettings.ini'; if(Test-Path $f){ $lines = Get-Content $f; $out = foreach($l in $lines){ if($l -match '^bShowGrass='){'bShowGrass=False'}elseif($l -match '^bMotionBlur='){'bMotionBlur=False'}elseif($l -match '^bShowFPS='){'bShowFPS=True'}elseif($l -match '^bUseVSync='){'bUseVSync=False'}elseif($l -match '^sg\.ResolutionQuality='){'sg.ResolutionQuality=100.000000'}elseif($l -match '^sg\.ViewDistanceQuality='){'sg.ViewDistanceQuality=0'}elseif($l -match '^sg\.AntiAliasingQuality='){'sg.AntiAliasingQuality=0'}elseif($l -match '^sg\.ShadowQuality='){'sg.ShadowQuality=0'}elseif($l -match '^sg\.GlobalIlluminationQuality='){'sg.GlobalIlluminationQuality=0'}elseif($l -match '^sg\.ReflectionQuality='){'sg.ReflectionQuality=0'}elseif($l -match '^sg\.PostProcessQuality='){'sg.PostProcessQuality=0'}elseif($l -match '^sg\.TextureQuality='){'sg.TextureQuality=0'}elseif($l -match '^sg\.EffectsQuality='){'sg.EffectsQuality=0'}elseif($l -match '^sg\.FoliageQuality='){'sg.FoliageQuality=0'}elseif($l -match '^sg\.ShadingQuality='){'sg.ShadingQuality=0'}elseif($l -match '^bRayTracing='){'bRayTracing=False'}elseif($l -match '^bUseNanite='){'bUseNanite=False'}else{$l} }; $out | Set-Content $f }" >nul 2>&1
+chcp 65001 >nul
+echo %green%✓%u% %white%GameUserSettings.ini optimized: 0 shadows/grass, 100%% 3D res, binds kept%u%
+:SkipFNIni
+
+echo.
+echo %c%────────────────────────────────────────────────────────────────────────────────%u%
+echo %c%▌%u% %white%RECOMMENDED EPIC GAMES LAUNCH ARGUMENTS:%u%
+echo.
+echo   %c%-USEALLAVAILABLECORES -NOSPLASH -NOTEXTURESTREAMING -LANPLAY -limitclientticks%u%
+echo.
+echo   %silver%• -USEALLAVAILABLECORES  Forces Unreal Engine to use all physical CPU cores%u%
+echo   %silver%• -NOSPLASH              Skips intro splash screen for fastest game launch%u%
+echo   %silver%• -NOTEXTURESTREAMING    Loads textures directly into VRAM (eliminates hitches)%u%
+echo   %silver%• -LANPLAY               Reduces client packet tickrate throttling%u%
+echo   %silver%• -limitclientticks      Prevents frametime spikes from overloading CPU%u%
+echo.
+echo   %white%To apply: Open Epic Games Launcher → Settings → Fortnite → Additional Command Line%u%
+echo %c%────────────────────────────────────────────────────────────────────────────────%u%
+echo.
 echo.
 echo.                                         %c%═══════════════════════════════════════════════════════
 echo.                                           %c%  Operation Completed, Press any key to continue%u% 
 echo.                                         %c%═══════════════════════════════════════════════════════%u%
 pause >nul
+endlocal
 goto Boosters
+
 
 :CS2
 cls
@@ -16103,13 +17053,117 @@ echo.                                         %c%══════════�
 pause >nul
 goto Boosters
 
+
+:Roblox
+cls
+call :SetupConsole
+echo.
+echo.
+echo %c%╔══════════════════════════════════════════════════════════════════════════════╗
+echo ║                           ROBLOX OPTIMIZER                                   ║
+echo ╚══════════════════════════════════════════════════════════════════════════════╝%u%
+echo.
+echo %c%Applying Roblox-specific performance optimizations:%u%
+echo %c%• Auto-detect Roblox Player installation (AppData and Program Files)%u%
+echo %c%• GPU Preference set to High Performance (DirectX)%u%
+echo %c%• CPU Priority elevated to High (Image File Execution Options)%u%
+echo %c%• Fullscreen Optimizations disabled and High DPI awareness enabled%u%
+echo %c%• Framerate cap unlocked via ClientAppSettings and GlobalBasicSettings%u%
+echo.
+echo.
+setlocal enabledelayedexpansion
+set "RobloxFound="
+set "RobloxExe="
+set "RobloxVerDir="
+
+for /f "delims=" %%R in ('dir "%USERPROFILE%\AppData\Local\Roblox\Versions\version-*" /ad /b /o:-d 2^>nul') do (
+    if not defined RobloxFound (
+        if exist "%USERPROFILE%\AppData\Local\Roblox\Versions\%%R\RobloxPlayerBeta.exe" (
+            set "RobloxExe=%USERPROFILE%\AppData\Local\Roblox\Versions\%%R\RobloxPlayerBeta.exe"
+            set "RobloxVerDir=%USERPROFILE%\AppData\Local\Roblox\Versions\%%R"
+            set "RobloxFound=1"
+        )
+    )
+)
+
+if not defined RobloxFound (
+    for /f "delims=" %%R in ('dir "%ProgramFiles(x86)%\Roblox\Versions\version-*" /ad /b /o:-d 2^>nul') do (
+        if not defined RobloxFound (
+            if exist "%ProgramFiles(x86)%\Roblox\Versions\%%R\RobloxPlayerBeta.exe" (
+                set "RobloxExe=%ProgramFiles(x86)%\Roblox\Versions\%%R\RobloxPlayerBeta.exe"
+                set "RobloxVerDir=%ProgramFiles(x86)%\Roblox\Versions\%%R"
+                set "RobloxFound=1"
+            )
+        )
+    )
+)
+
+if not defined RobloxFound (
+    for /f "delims=" %%R in ('dir "%ProgramFiles%\Roblox\Versions\version-*" /ad /b /o:-d 2^>nul') do (
+        if not defined RobloxFound (
+            if exist "%ProgramFiles%\Roblox\Versions\%%R\RobloxPlayerBeta.exe" (
+                set "RobloxExe=%ProgramFiles%\Roblox\Versions\%%R\RobloxPlayerBeta.exe"
+                set "RobloxVerDir=%ProgramFiles%\Roblox\Versions\%%R"
+                set "RobloxFound=1"
+            )
+        )
+    )
+)
+
+if not defined RobloxFound (
+    echo %red%Roblox Player installation was not found on this system.%u%
+    echo %silver%Please make sure Roblox is installed, or use 'Select your Own Game'.%u%
+    echo.
+    echo %c%══════════════════════════ PRESS ANY KEY TO CONTINUE ══════════════════════════%u%
+    pause >nul
+    endlocal
+    goto Boosters
+)
+
+echo %green%✓%u% %white%Found Roblox Executable:%u% %silver%!RobloxExe!%u%
+echo.
+
+reg add "HKCU\SOFTWARE\Microsoft\DirectX\UserGpuPreferences" /v "!RobloxExe!" /t REG_SZ /d "GpuPreference=2;" /f >nul 2>&1
+echo %green%✓%u% %white%DirectX GPU Preference set to High Performance%u%
+
+reg add "HKLM\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Image File Execution Options\RobloxPlayerBeta.exe\PerfOptions" /v "CpuPriorityClass" /t REG_DWORD /d "3" /f >nul 2>&1
+echo %green%✓%u% %white%CPU Priority elevated to High via IFEO%u%
+
+reg add "HKCU\Software\Microsoft\Windows NT\CurrentVersion\AppCompatFlags\Layers" /v "!RobloxExe!" /t REG_SZ /d "~ DISABLEDXMAXIMIZEDWINDOWEDMODE HIGHDPIAWARE" /f >nul 2>&1
+echo %green%✓%u% %white%Fullscreen Optimizations disabled and High DPI awareness enabled%u%
+
+if not defined RobloxVerDir goto SkipClientSettings
+if not exist "!RobloxVerDir!\ClientSettings" mkdir "!RobloxVerDir!\ClientSettings" >nul 2>&1
+echo {"DFIntTaskSchedulerTargetFps": 9999} > "!RobloxVerDir!\ClientSettings\ClientAppSettings.json"
+echo %green%✓%u% %white%Framerate uncapped via ClientAppSettings.json (Target: 9999 FPS)%u%
+:SkipClientSettings
+
+set "SettingsXML=%USERPROFILE%\AppData\Local\Roblox\GlobalBasicSettings_13.xml"
+if not exist "!SettingsXML!" goto SkipRobloxXML
+attrib -r "!SettingsXML!" >nul 2>&1
+chcp 437 >nul
+powershell -NoProfile -Command "try { $c = Get-Content -Raw '%USERPROFILE%\AppData\Local\Roblox\GlobalBasicSettings_13.xml'; if ($c -match '<int name=\"FramerateCap\">') { $c -replace '<int name=\"FramerateCap\">.*?</int>', '<int name=\"FramerateCap\">9999</int>' | Set-Content '%USERPROFILE%\AppData\Local\Roblox\GlobalBasicSettings_13.xml' } else { $c -replace '</Settings>', '  <int name=\"FramerateCap\">9999</int>`n</Settings>' | Set-Content '%USERPROFILE%\AppData\Local\Roblox\GlobalBasicSettings_13.xml' }; exit 0 } catch { exit 1 }" >nul 2>&1
+chcp 65001 >nul
+echo %green%✓%u% %white%GlobalBasicSettings_13.xml framerate cap updated%u%
+:SkipRobloxXML
+
+echo.
+echo.
+echo.                                         %c%═══════════════════════════════════════════════════════
+echo.                                           %c%  Operation Completed, Press any key to continue%u% 
+echo.                                         %c%═══════════════════════════════════════════════════════%u%
+pause >nul
+endlocal
+goto Boosters
+
+
 :Toolbox
 cls
 call :SetupConsole
 call :DisplayBanner
-echo %c%╔══════════════════════════════════════════════════════════════════════════════╗
-echo ║                              BATLEZ TOOLBOX                                   ║
-echo ╚══════════════════════════════════════════════════════════════════════════════╝%u%
+echo                       %c%╔══════════════════════════════════════════════════════════════════════════════╗
+echo                         ║                               BATLEZ TOOLBOX                                 ║
+echo                         ╚══════════════════════════════════════════════════════════════════════════════╝%u%
 echo.
 echo                                 %c%Batlez Toolbox allows you to install any app or software!%u%
 echo.
@@ -16581,7 +17635,7 @@ if errorlevel 1 (
     if errorlevel 1 (
         echo %red%✘ Failed to install %name% even with checksum bypass.%u%
     ) else (
-        echo %c%✔ Successfully installed %name% (checksum bypassed)!%u%
+        echo %c%✔ Successfully installed %name% - checksum bypassed!%u%
     )
 ) else (
     echo %c%✔ Successfully installed %name%!%u%
@@ -16631,7 +17685,7 @@ if /I "%confirmInstall%"=="Y" (
         if errorlevel 1 (
             echo %red%✘ Failed to install %name% even with checksum bypass.%u%
         ) else (
-            echo %c%✔ Successfully installed %name% (checksum bypassed)!%u%
+            echo %c%✔ Successfully installed %name% - checksum bypassed!%u%
         )
     ) else (
         echo %c%✔ Successfully installed %name%!%u%
