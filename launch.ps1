@@ -29,7 +29,7 @@ Write-Host "  |           github.com/Batlez/Batlez-Tweaks                |" -For
 Write-Host "  +==========================================================+" -ForegroundColor Cyan
 Write-Host ""
 
-$url  = "https://raw.githubusercontent.com/Batlez/Batlez-Tweaks/main/Batlez%20Tweaks.bat"
+$url  = "https://raw.githubusercontent.com/Batlez/Batlez-Tweaks/main/Batlez-Tweaks.bat"
 $path = "$env:TEMP\Batlez-Tweaks.bat"
 
 Write-Host "  Downloading latest version..." -ForegroundColor Gray
